@@ -51,10 +51,10 @@
     | Masks         | 3 | 0 | 6 | current, end, i, last, bytes, masks                  |
     | Skips         | 2 | 2 | 6 | current, end, i, last, bytes,        skips           |
     |               | 2 | 0 | 5 | current, end, i, last, bytes                         |
-    | Suffixes      | 3 | 0 | 5 | current, end, i, last, bytes,        skips, suffixes |
+    | Suffixes      | 2 | 3 | 7 | current, end, i, last, bytes,        skips, suffixes |
     +---------------+---+---+---+------------------------------------------------------+
 
-    To avoid accessing the stack during the main scap loop, you would need at least 1 register per variable plus a temporary register for operations.
+    To avoid accessing the stack during the main scap loop, you would need at least 1 register per variable plus at least 1 or 2 temporary registers for operations.
     This is of course assuming the compiler is smart enough to use all of the registers efficiently. Lots of them aren't.
 */
 
