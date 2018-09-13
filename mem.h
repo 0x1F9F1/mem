@@ -20,70 +20,7 @@
 #if !defined(MEM_BRICK_H)
 #define MEM_BRICK_H
 
-#if defined(__x86_64__) || defined(_M_X64)
-# define MEM_ARCH_X64
-#elif defined(__i386) || defined(_M_IX86)
-# define MEM_ARCH_X86
-#endif
-
-#if defined(MEM_AUTO_PLATFORM)
-# if defined(_WIN32) || defined(_WIN64)
-#  define MEM_PLATFORM_WINDOWS
-# endif
-#endif // MEM_AUTO_PLATFORM
-
-/*
-    PATTERN SCANNING
-    ================
-
-    +------+--------------------------------------------------+
-    | Arch | Regs                                             |
-    +------+-----+--------------------------------------------+
-    |  x86 |   7 | eax, rbx, ecx, edx, esi, edi, ebp          |
-    |  x64 |  15 | rax, rbx, rcx, rdx, rsi, rdi, rbp, r[8-15] |
-    |  ARM | 13+ | r[0-12]                                    |
-    +------+-----+--------------------------------------------+
-
-    +---------------+-------+----------------------------------------------------------+
-    | Type          | Reads |  Vars                                                    |
-    +---------------+---+---+---+------------------------------------------------------+
-    | Masks + Skips | 3 | 2 | 8 | current, end, i, last, bytes, masks, skips, skip_pos |
-    | Masks         | 3 | 0 | 6 | current, end, i, last, bytes, masks                  |
-    | Skips         | 2 | 2 | 6 | current, end, i, last, bytes,        skips           |
-    |               | 2 | 0 | 5 | current, end, i, last, bytes                         |
-    | Suffixes      | 2 | 3 | 7 | current, end, i, last, bytes,        skips, suffixes |
-    +---------------+---+---+---+------------------------------------------------------+
-
-    To avoid accessing the stack during the main scap loop, you would need at least 1 register per variable plus at least 1 or 2 temporary registers for operations.
-    This is of course assuming the compiler is smart enough to use all of the registers efficiently. Lots of them aren't.
-*/
-
-// TODO: Should this be calculated at runtime?
-#if !defined(MEM_MIN_SKIP)
-# if defined(MEM_ARCH_X86)
-#  define MEM_MIN_SKIP 10 // TODO: Find optimal skip
-# elif defined(MEM_ARCH_X64)
-#  define MEM_MIN_SKIP 4
-# else
-#  define MEM_MIN_SKIP 8
-# endif
-#endif
-
-#if !defined(MEM_CONSTEXPR)
-# if __cpp_constexpr >= 200704
-#  define MEM_CONSTEXPR constexpr
-# else
-#  define MEM_CONSTEXPR
-# endif
-#endif
-
-#if !defined(MEM_CONSTEXPR_14)
-# if __cpp_constexpr >= 201304
-#  define MEM_CONSTEXPR_14 constexpr
-# else
-#  define MEM_CONSTEXPR_14
-# endif
-#endif
+#include "mem_defines.h"
 
 #include <type_traits>
 
@@ -213,6 +150,49 @@ namespace mem
         std::string hex(bool upper_case = true, bool padded = false) const;
     };
 
+    /*
+        PATTERN SCANNING
+        ================
+
+        +------+--------------------------------------------------+
+        | Arch | Regs                                             |
+        +------+-----+--------------------------------------------+
+        |  x86 |   7 | eax, rbx, ecx, edx, esi, edi, ebp          |
+        |  x64 |  15 | rax, rbx, rcx, rdx, rsi, rdi, rbp, r[8-15] |
+        |  ARM | 13+ | r[0-12]                                    |
+        +------+-----+--------------------------------------------+
+
+        +---------------+-------+----------------------------------------------------------+
+        | Type          | Reads |  Vars                                                    |
+        +---------------+---+---+---+------------------------------------------------------+
+        | Masks + Skips | 3 | 2 | 8 | current, end, i, last, bytes, masks, skips, skip_pos |
+        | Masks         | 3 | 0 | 6 | current, end, i, last, bytes, masks                  |
+        | Skips         | 2 | 2 | 6 | current, end, i, last, bytes,        skips           |
+        |               | 2 | 0 | 5 | current, end, i, last, bytes                         |
+        | Suffixes      | 2 | 3 | 7 | current, end, i, last, bytes,        skips, suffixes |
+        +---------------+---+---+---+------------------------------------------------------+
+
+        To avoid accessing the stack during the main scap loop, you would need at least 1 register per variable plus at least 1 or 2 temporary registers for operations.
+        This is of course assuming the compiler is smart enough to use all of the registers efficiently. Lots of them aren't.
+    */
+    class pattern_settings
+    {
+    public:
+        size_t min_bad_char_skip {0};
+        size_t min_good_suffix_skip {0};
+    };
+
+    static MEM_CONSTEXPR const pattern_settings default_pattern_settings =
+    {
+#if defined(MEM_ARCH_X86)
+        10, 10
+#elif defined(MEM_ARCH_X64)
+        4, 4
+#else
+        8, 8
+#endif
+    };
+
     class pattern
     {
     protected:
@@ -222,20 +202,20 @@ namespace mem
         std::vector<size_t> bad_char_skips_;
         std::vector<size_t> good_suffix_skips_;
 
-        bool is_prefix(const size_t pos) const;
-        size_t get_suffix_length(const size_t pos) const;
-
         size_t skip_pos_ {0};
         size_t original_size_ {0};
 
-        void finalize();
+        bool is_prefix(const size_t pos) const;
+        size_t get_suffix_length(const size_t pos) const;
+
+        void finalize(const pattern_settings& settings);
 
     public:
         pattern() = default;
 
-        pattern(const char* pattern);
-        pattern(const char* pattern, const char* mask);
-        pattern(const char* pattern, const char* mask, const size_t length);
+        pattern(const char* pattern, const pattern_settings& settings = default_pattern_settings);
+        pattern(const char* pattern, const char* mask, const pattern_settings& settings = default_pattern_settings);
+        pattern(const char* pattern, const char* mask, const size_t length, const pattern_settings& settings = default_pattern_settings);
 
         pointer scan(const region& region) const noexcept;
         bool match(const pointer& address) const noexcept;
@@ -601,7 +581,7 @@ namespace mem
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
     };
 
-    inline pattern::pattern(const char* pattern)
+    inline pattern::pattern(const char* pattern, const pattern_settings& settings)
     {
         while (true)
         {
@@ -655,10 +635,10 @@ namespace mem
             }
         }
 
-        finalize();
+        finalize(settings);
     }
 
-    inline pattern::pattern(const char* pattern, const char* mask)
+    inline pattern::pattern(const char* pattern, const char* mask, const pattern_settings& settings)
     {
         if (mask)
         {
@@ -699,10 +679,10 @@ namespace mem
             }
         }
 
-        finalize();
+        finalize(settings);
     }
 
-    inline pattern::pattern(const char* pattern, const char* mask, const size_t length)
+    inline pattern::pattern(const char* pattern, const char* mask, const size_t length, const pattern_settings& settings)
     {
         bytes_.resize(length);
         masks_.resize(length);
@@ -716,7 +696,7 @@ namespace mem
             masks_[i] = static_cast<uint8_t>(m);
         }
 
-        finalize();
+        finalize(settings);
     }
 
     inline bool pattern::is_prefix(const size_t pos) const
@@ -748,9 +728,9 @@ namespace mem
         return i;
     }
 
-    inline void pattern::finalize()
+    inline void pattern::finalize(const pattern_settings& settings)
     {
-        if (bytes_.empty() || masks_.empty())
+        if (bytes_.empty() || masks_.empty() || (bytes_.size() != masks_.size()))
         {
             bytes_.clear();
             masks_.clear();
@@ -806,7 +786,7 @@ namespace mem
             }
         }
 
-        if (max_skip > MEM_MIN_SKIP)
+        if (max_skip > settings.min_bad_char_skip)
         {
             bad_char_skips_.resize(256, max_skip);
             skip_pos_ = skip_pos + max_skip - 1;
@@ -821,7 +801,7 @@ namespace mem
         {
             masks_.clear();
 
-            if (!bad_char_skips_.empty())
+            if (!bad_char_skips_.empty() && (max_skip > settings.min_good_suffix_skip))
             {
                 good_suffix_skips_.resize(bytes_.size());
 
@@ -852,12 +832,6 @@ namespace mem
             }
         }
     }
-
-#if defined(__GNUC__) || defined(__clang__)
-# define MEM_LIKELY(x) __builtin_expect(static_cast<bool>(x), 1)
-#else
-# define MEM_LIKELY(x) static_cast<bool>(x)
-#endif
 
     inline pointer pattern::scan(const region& region) const noexcept
     {
@@ -1056,8 +1030,6 @@ namespace mem
             return true;
         }
     }
-
-#undef MEM_LIKELY
 
     inline size_t pattern::size() const noexcept
     {
