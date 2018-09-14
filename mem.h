@@ -95,7 +95,7 @@ namespace mem
         MEM_CONSTEXPR bool operator<=(const pointer& value) const noexcept;
         MEM_CONSTEXPR bool operator>=(const pointer& value) const noexcept;
 
-        template <typename T>
+        template <typename T = pointer>
         typename std::add_lvalue_reference<T>::type at(const ptrdiff_t offset) const noexcept;
 
         template <typename T>
@@ -220,9 +220,12 @@ namespace mem
         pointer scan(const region& region) const noexcept;
         bool match(const pointer& address) const noexcept;
 
-        size_t size() const noexcept;
-
         std::vector<pointer> scan_all(const region& region) const;
+
+        const std::vector<uint8_t>& bytes() const noexcept;
+        const std::vector<uint8_t>& masks() const noexcept;
+
+        size_t size() const noexcept;
     };
 
 #if defined(MEM_PLATFORM_WINDOWS)
@@ -1046,6 +1049,16 @@ namespace mem
         }
 
         return results;
+    }
+
+    inline const std::vector<uint8_t>& pattern::bytes() const noexcept
+    {
+        return bytes_;
+    }
+
+    inline const std::vector<uint8_t>& pattern::masks() const noexcept
+    {
+        return masks_;
     }
 
 #if defined(MEM_PLATFORM_WINDOWS)
