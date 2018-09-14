@@ -205,6 +205,8 @@ namespace mem
         size_t skip_pos_ {0};
         size_t original_size_ {0};
 
+        size_t get_longest_run(size_t& length) const;
+
         bool is_prefix(const size_t pos) const;
         size_t get_suffix_length(const size_t pos) const;
 
@@ -702,6 +704,44 @@ namespace mem
         finalize(settings);
     }
 
+    inline size_t pattern::get_longest_run(size_t& length) const
+    {
+        size_t max_skip = 0;
+        size_t skip_pos = 0;
+
+        {
+            size_t current_skip = 0;
+
+            for (size_t i = 0; i < bytes_.size(); ++i)
+            {
+                if (masks_[i] != 0xFF)
+                {
+                    if (current_skip > max_skip)
+                    {
+                        max_skip = current_skip;
+                        skip_pos = i - current_skip;
+                    }
+
+                    current_skip = 0;
+                }
+                else
+                {
+                    ++current_skip;
+                }
+            }
+
+            if (current_skip > max_skip)
+            {
+                max_skip = current_skip;
+                skip_pos = bytes_.size() - current_skip;
+            }
+        }
+
+        length = max_skip;
+
+        return skip_pos;
+    }
+
     inline bool pattern::is_prefix(const size_t pos) const
     {
         const size_t suffix_length = bytes_.size() - pos;
@@ -759,37 +799,9 @@ namespace mem
         masks_.resize(last_mask);
 
         size_t max_skip = 0;
-        size_t skip_pos = 0;
+        size_t skip_pos = get_longest_run(max_skip);
 
-        {
-            size_t current_skip = 0;
-
-            for (size_t i = 0; i < bytes_.size(); ++i)
-            {
-                if (masks_[i] != 0xFF)
-                {
-                    if (current_skip > max_skip)
-                    {
-                        max_skip = current_skip;
-                        skip_pos = i - current_skip;
-                    }
-
-                    current_skip = 0;
-                }
-                else
-                {
-                    ++current_skip;
-                }
-            }
-
-            if (current_skip > max_skip)
-            {
-                max_skip = current_skip;
-                skip_pos = bytes_.size() - current_skip;
-            }
-        }
-
-        if (max_skip > settings.min_bad_char_skip)
+        if ((settings.min_bad_char_skip > 0) && (max_skip > settings.min_bad_char_skip))
         {
             bad_char_skips_.resize(256, max_skip);
             skip_pos_ = skip_pos + max_skip - 1;
@@ -800,11 +812,11 @@ namespace mem
             }
         }
 
-        if (max_skip == masks_.size())
+        if ((skip_pos == 0) && (max_skip == masks_.size()))
         {
             masks_.clear();
 
-            if (!bad_char_skips_.empty() && (max_skip > settings.min_good_suffix_skip))
+            if (!bad_char_skips_.empty() && (settings.min_good_suffix_skip > 0) && (max_skip > settings.min_good_suffix_skip))
             {
                 good_suffix_skips_.resize(bytes_.size());
 
