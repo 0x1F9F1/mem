@@ -875,7 +875,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY((current[i] ^ bytes[i]) & masks[i]))
+                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                         {
                             goto $mask_skip_next;
                         }
@@ -896,7 +896,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY((current[i] ^ bytes[i]) & masks[i]))
+                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                         {
                             goto $mask_noskip_next;
                         }
@@ -924,7 +924,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY(*current ^ bytes[i]))
+                        if (MEM_LIKELY(*current != bytes[i]))
                         {
                             goto $suffix_skip_next;
                         }
@@ -953,7 +953,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY(current[i] ^ bytes[i]))
+                        if (MEM_LIKELY(current[i] != bytes[i]))
                         {
                             goto $nomask_skip_next;
                         }
@@ -974,7 +974,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY(current[i] ^ bytes[i]))
+                        if (MEM_LIKELY(current[i] != bytes[i]))
                         {
                             goto $nomask_noskip_next;
                         }
