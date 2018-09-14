@@ -178,11 +178,12 @@ namespace mem
     class pattern_settings
     {
     public:
+        // 0 = Disabled
         size_t min_bad_char_skip {0};
         size_t min_good_suffix_skip {0};
     };
 
-    static MEM_CONSTEXPR const pattern_settings default_pattern_settings =
+    static MEM_CONSTEXPR const pattern_settings default_pattern_settings
     {
 #if defined(MEM_ARCH_X86)
         10, 10
@@ -193,12 +194,32 @@ namespace mem
 #endif
     };
 
+    struct ida_style_t
+    {
+        explicit MEM_CONSTEXPR ida_style_t() noexcept = default;
+    };
+
+    struct code_style_t
+    {
+        explicit MEM_CONSTEXPR code_style_t() noexcept = default;
+    };
+
+    struct raw_style_t
+    {
+        explicit MEM_CONSTEXPR raw_style_t() noexcept = default;
+    };
+
+    static MEM_CONSTEXPR const ida_style_t ida_style {};
+    static MEM_CONSTEXPR const code_style_t code_style {};
+    static MEM_CONSTEXPR const raw_style_t raw_style {};
+
     class pattern
     {
     protected:
         std::vector<uint8_t> bytes_;
         std::vector<uint8_t> masks_;
 
+        // Boyer–Moore + Boyer–Moore–Horspool Implementation
         std::vector<size_t> bad_char_skips_;
         std::vector<size_t> good_suffix_skips_;
 
@@ -215,9 +236,9 @@ namespace mem
     public:
         pattern() = default;
 
-        pattern(const char* pattern, const pattern_settings& settings = default_pattern_settings);
-        pattern(const char* pattern, const char* mask, const pattern_settings& settings = default_pattern_settings);
-        pattern(const char* pattern, const char* mask, const size_t length, const pattern_settings& settings = default_pattern_settings);
+        pattern(ida_style_t, const char* pattern, const pattern_settings& settings = default_pattern_settings);
+        pattern(code_style_t, const char* pattern, const char* mask, const char wildcard = '?', const pattern_settings& settings = default_pattern_settings);
+        pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings& settings = default_pattern_settings);
 
         pointer scan(const region& region) const noexcept;
         bool match(const pointer& address) const noexcept;
@@ -545,6 +566,7 @@ namespace mem
         return result;
     }
 
+    // '0'-'9' => 0-9, 'a'-'f' => 0xA-0xF, 'A'-'F' => 0xA-0xF
     static MEM_CONSTEXPR const int8_t hex_char_table[256]
     {
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x00 => 0x0F
@@ -586,7 +608,7 @@ namespace mem
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
     };
 
-    inline pattern::pattern(const char* pattern, const pattern_settings& settings)
+    inline pattern::pattern(ida_style_t, const char* pattern, const pattern_settings& settings)
     {
         while (true)
         {
@@ -611,7 +633,7 @@ namespace mem
 
                         if (value != -1)
                         {
-                            b |= value;
+                            b |= (value & mask);
                         }
                     }
 
@@ -643,7 +665,7 @@ namespace mem
         finalize(settings);
     }
 
-    inline pattern::pattern(const char* pattern, const char* mask, const pattern_settings& settings)
+    inline pattern::pattern(code_style_t, const char* pattern, const char* mask, const char wildcard, const pattern_settings& settings)
     {
         if (mask)
         {
@@ -654,7 +676,7 @@ namespace mem
 
             for (size_t i = 0; i < size; ++i)
             {
-                if (mask[i] == '?')
+                if (mask[i] == wildcard)
                 {
                     bytes_[i] = 0x00;
                     masks_[i] = 0x00;
@@ -687,18 +709,32 @@ namespace mem
         finalize(settings);
     }
 
-    inline pattern::pattern(const char* pattern, const char* mask, const size_t length, const pattern_settings& settings)
+    inline pattern::pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings& settings)
     {
-        bytes_.resize(length);
-        masks_.resize(length);
-
-        for (size_t i = 0; i < length; ++i)
+        if (mask)
         {
-            const char c = pattern[i];
-            const char m = mask[i];
+            bytes_.resize(length);
+            masks_.resize(length);
 
-            bytes_[i] = static_cast<uint8_t>(c);
-            masks_[i] = static_cast<uint8_t>(m);
+            for (size_t i = 0; i < length; ++i)
+            {
+                const uint8_t v = static_cast<const uint8_t*>(pattern)[i];
+                const uint8_t m = static_cast<const uint8_t*>(mask)[i];
+
+                bytes_[i] = v & m;
+                masks_[i] = m;
+            }
+        }
+        else
+        {
+            bytes_.resize(length);
+            masks_.resize(length);
+
+            for (size_t i = 0; i < length; ++i)
+            {
+                bytes_[i] = static_cast<const uint8_t*>(pattern)[i];
+                masks_[i] = 0xFF;
+            }        
         }
 
         finalize(settings);
