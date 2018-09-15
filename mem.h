@@ -196,7 +196,7 @@ namespace mem
     static MEM_CONSTEXPR const ida_style_t ida_style {};
     static MEM_CONSTEXPR const code_style_t code_style {};
     static MEM_CONSTEXPR const raw_style_t raw_style {};
-    
+
     class pattern_settings
     {
     public:
@@ -236,7 +236,11 @@ namespace mem
         pattern(code_style_t, const char* pattern, const char* mask, const pattern_settings* settings = nullptr);
         pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings* settings = nullptr);
 
+        template <typename UnaryPredicate>
+        pointer scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))));
+
         pointer scan(const region& region) const noexcept;
+
         bool match(const pointer& address) const noexcept;
 
         std::vector<pointer> scan_all(const region& region) const;
@@ -772,7 +776,7 @@ namespace mem
             {
                 bytes_[i] = static_cast<const uint8_t*>(pattern)[i];
                 masks_[i] = 0xFF;
-            }        
+            }
         }
 
         finalize(*settings);
@@ -922,7 +926,8 @@ namespace mem
         }
     }
 
-    inline pointer pattern::scan(const region& region) const noexcept
+    template <typename UnaryPredicate>
+    inline pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
     {
         if (bytes_.empty())
         {
@@ -968,7 +973,10 @@ namespace mem
                         }
                     } while (MEM_LIKELY(i--));
 
-                    return current;
+                    if (pred(current))
+                    {
+                        return current;
+                    }
 
                 $mask_skip_next:;
                 }
@@ -989,7 +997,10 @@ namespace mem
                         }
                     } while (MEM_LIKELY(i--));
 
-                    return current;
+                    if (pred(current))
+                    {
+                        return current;
+                    }
 
                 $mask_noskip_next:;
                 }
@@ -1016,13 +1027,21 @@ namespace mem
                         {
                             goto $suffix_skip_next;
                         }
-                        else
+                        else if (MEM_LIKELY(i))
                         {
                             --current;
+                            --i;
                         }
-                    } while (MEM_LIKELY(i--));
+                        else
+                        {
+                            break;
+                        }
+                    } while (true);
 
-                    return current + 1;
+                    if (pred(current))
+                    {
+                        return current;
+                    }
 
                 $suffix_skip_next:
                     const size_t bc_skip = skips[*current];
@@ -1047,7 +1066,10 @@ namespace mem
                         }
                     } while (MEM_LIKELY(i--));
 
-                    return current;
+                    if (pred(current))
+                    {
+                        return current;
+                    }
 
                 $nomask_skip_next:;
                 }
@@ -1068,7 +1090,10 @@ namespace mem
                         }
                     } while (MEM_LIKELY(i--));
 
-                    return current;
+                    if (pred(current))
+                    {
+                        return current;
+                    }
 
                 $nomask_noskip_next:;
                 }
@@ -1076,6 +1101,23 @@ namespace mem
                 return nullptr;
             }
         }
+    }
+
+    namespace detail
+    {
+        struct always_true
+        {
+            template <typename... Args>
+            inline MEM_CONSTEXPR bool operator()(Args&&...) const noexcept
+            {
+                return true;
+            }
+        };
+    }
+
+    inline pointer pattern::scan(const region& region) const noexcept
+    {
+        return scan_predicate(region, detail::always_true {});
     }
 
     inline bool pattern::match(const pointer& address) const noexcept
@@ -1122,19 +1164,16 @@ namespace mem
         }
     }
 
-    inline size_t pattern::size() const noexcept
-    {
-        return original_size_;
-    }
-
     inline std::vector<pointer> pattern::scan_all(const region& region) const
     {
         std::vector<pointer> results;
 
-        for (pointer current = region.base; current = scan(region.sub_region(current)), !current.null(); ++current)
+        scan_predicate(region, [&results] (const uint8_t* result)
         {
-            results.push_back(current);
-        }
+            results.emplace_back(result);
+
+            return false;
+        });
 
         return results;
     }
@@ -1147,6 +1186,11 @@ namespace mem
     inline const std::vector<uint8_t>& pattern::masks() const noexcept
     {
         return masks_;
+    }
+
+    inline size_t pattern::size() const noexcept
+    {
+        return original_size_;
     }
 
 #if defined(MEM_PLATFORM_WINDOWS)
