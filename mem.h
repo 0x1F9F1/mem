@@ -1060,7 +1060,7 @@ namespace mem
 
             do
             {
-                if (MEM_LIKELY((current[i] ^ bytes[i]) & masks[i]))
+                if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                 {
                     return false;
                 }
@@ -1074,7 +1074,7 @@ namespace mem
 
             do
             {
-                if (MEM_LIKELY(current[i] ^ bytes[i]))
+                if (MEM_LIKELY(current[i] != bytes[i]))
                 {
                     return false;
                 }
