@@ -233,7 +233,7 @@ namespace mem
         pattern() = default;
 
         pattern(ida_style_t, const char* pattern, const pattern_settings* settings = nullptr);
-        pattern(code_style_t, const char* pattern, const char* mask, const char wildcard = '?', const pattern_settings* settings = nullptr);
+        pattern(code_style_t, const char* pattern, const char* mask, const pattern_settings* settings = nullptr);
         pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings* settings = nullptr);
 
         pointer scan(const region& region) const noexcept;
@@ -691,12 +691,14 @@ namespace mem
         finalize(*settings);
     }
 
-    inline pattern::pattern(code_style_t, const char* pattern, const char* mask, const char wildcard, const pattern_settings* settings)
+    inline pattern::pattern(code_style_t, const char* pattern, const char* mask, const pattern_settings* settings)
     {
         if (settings == nullptr)
         {
             settings = &default_pattern_settings;
         }
+
+        const char wildcard = settings->code_style_wildcard;
 
         if (mask)
         {
