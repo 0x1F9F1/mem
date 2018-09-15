@@ -900,9 +900,10 @@ namespace mem
         }
 
         const uint8_t* const region_base = region.base.as<const uint8_t*>();
+        const uint8_t* const region_end = region_base + region_size;
 
         const uint8_t* current = region_base;
-        const uint8_t* const end = region_base + region_size - original_size;
+        const uint8_t* const end = region_end - original_size;
 
         const size_t last = bytes_.size() - 1;
 
@@ -965,8 +966,9 @@ namespace mem
             if (suffixes)
             {
                 current += last;
+                const uint8_t* const end_plus_last = end + last;
 
-                for (; MEM_LIKELY(current <= end);)
+                for (; MEM_LIKELY(current <= end_plus_last);)
                 {
                     size_t i = last;
 
