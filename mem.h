@@ -177,24 +177,6 @@ namespace mem
         To avoid accessing the stack during the main scap loop, you would need at least 1 register per variable plus at least 1 or 2 temporary registers for operations.
         This is of course assuming the compiler is smart enough to use all of the registers efficiently. Lots of them aren't.
     */
-    class pattern_settings
-    {
-    public:
-        // 0 = Disabled
-        size_t min_bad_char_skip {0};
-        size_t min_good_suffix_skip {0};
-    };
-
-    static MEM_CONSTEXPR const pattern_settings default_pattern_settings
-    {
-#if defined(MEM_ARCH_X86)
-        10, 10
-#elif defined(MEM_ARCH_X64)
-        4, 4
-#else
-        8, 8
-#endif
-    };
 
     struct ida_style_t
     {
@@ -214,6 +196,18 @@ namespace mem
     static MEM_CONSTEXPR const ida_style_t ida_style {};
     static MEM_CONSTEXPR const code_style_t code_style {};
     static MEM_CONSTEXPR const raw_style_t raw_style {};
+    
+    class pattern_settings
+    {
+    public:
+        // 0 = Disabled
+        size_t min_bad_char_skip {0};
+        size_t min_good_suffix_skip {0};
+
+        char code_style_wildcard {'?'};
+
+        const int8_t* ida_style_mask_char_table {nullptr};
+    };
 
     class pattern
     {
@@ -238,9 +232,9 @@ namespace mem
     public:
         pattern() = default;
 
-        pattern(ida_style_t, const char* pattern, const pattern_settings& settings = default_pattern_settings);
-        pattern(code_style_t, const char* pattern, const char* mask, const char wildcard = '?', const pattern_settings& settings = default_pattern_settings);
-        pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings& settings = default_pattern_settings);
+        pattern(ida_style_t, const char* pattern, const pattern_settings* settings = nullptr);
+        pattern(code_style_t, const char* pattern, const char* mask, const char wildcard = '?', const pattern_settings* settings = nullptr);
+        pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings* settings = nullptr);
 
         pointer scan(const region& region) const noexcept;
         bool match(const pointer& address) const noexcept;
@@ -595,7 +589,7 @@ namespace mem
     };
 
     // Current Mask Chars: '*', '.', '?', 'x', 'X'
-    static MEM_CONSTEXPR const int8_t mask_char_table[256]
+    static MEM_CONSTEXPR const int8_t default_mask_char_table[256]
     {
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x00 => 0x0F
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x10 => 0x1F
@@ -615,8 +609,33 @@ namespace mem
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
     };
 
-    inline pattern::pattern(ida_style_t, const char* pattern, const pattern_settings& settings)
+    static MEM_CONSTEXPR const pattern_settings default_pattern_settings
     {
+#if defined(MEM_ARCH_X86)
+        10, 10,
+#elif defined(MEM_ARCH_X64)
+        4, 4,
+#else
+        8, 8,
+#endif
+        '?',
+        default_mask_char_table
+    };
+
+    inline pattern::pattern(ida_style_t, const char* pattern, const pattern_settings* settings)
+    {
+        if (settings == nullptr)
+        {
+            settings = &default_pattern_settings;
+        }
+
+        const int8_t* mask_char_table = settings->ida_style_mask_char_table;
+
+        if (mask_char_table == nullptr)
+        {
+            mask_char_table = default_mask_char_table;
+        }
+
         while (true)
         {
             uint8_t b = 0x00;
@@ -669,11 +688,16 @@ namespace mem
             }
         }
 
-        finalize(settings);
+        finalize(*settings);
     }
 
-    inline pattern::pattern(code_style_t, const char* pattern, const char* mask, const char wildcard, const pattern_settings& settings)
+    inline pattern::pattern(code_style_t, const char* pattern, const char* mask, const char wildcard, const pattern_settings* settings)
     {
+        if (settings == nullptr)
+        {
+            settings = &default_pattern_settings;
+        }
+
         if (mask)
         {
             const size_t size = strlen(mask);
@@ -713,11 +737,16 @@ namespace mem
             }
         }
 
-        finalize(settings);
+        finalize(*settings);
     }
 
-    inline pattern::pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings& settings)
+    inline pattern::pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings* settings)
     {
+        if (settings == nullptr)
+        {
+            settings = &default_pattern_settings;
+        }
+
         if (mask)
         {
             bytes_.resize(length);
@@ -744,7 +773,7 @@ namespace mem
             }        
         }
 
-        finalize(settings);
+        finalize(*settings);
     }
 
     inline size_t pattern::get_longest_run(size_t& length) const
