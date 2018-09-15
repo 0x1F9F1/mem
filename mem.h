@@ -77,6 +77,8 @@ namespace mem
         MEM_CONSTEXPR pointer operator+(const ptrdiff_t value) const noexcept;
         MEM_CONSTEXPR pointer operator-(const ptrdiff_t value) const noexcept;
 
+        MEM_CONSTEXPR ptrdiff_t operator-(const pointer& value) const noexcept;
+
         MEM_CONSTEXPR_14 pointer& operator+=(const ptrdiff_t value) noexcept;
         MEM_CONSTEXPR_14 pointer& operator-=(const ptrdiff_t value) noexcept;
 
@@ -349,6 +351,11 @@ namespace mem
     MEM_CONSTEXPR inline pointer pointer::operator-(const ptrdiff_t value) const noexcept
     {
         return value_ - value;
+    }
+
+    MEM_CONSTEXPR inline ptrdiff_t pointer::operator-(const pointer& value) const noexcept
+    {
+        return static_cast<ptrdiff_t>(value_ - value.value_);
     }
 
     MEM_CONSTEXPR_14 inline pointer& pointer::operator+=(const ptrdiff_t value) noexcept
