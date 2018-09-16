@@ -178,25 +178,6 @@ namespace mem
         This is of course assuming the compiler is smart enough to use all of the registers efficiently. Lots of them aren't.
     */
 
-    struct ida_style_t
-    {
-        explicit MEM_CONSTEXPR ida_style_t() noexcept = default;
-    };
-
-    struct code_style_t
-    {
-        explicit MEM_CONSTEXPR code_style_t() noexcept = default;
-    };
-
-    struct raw_style_t
-    {
-        explicit MEM_CONSTEXPR raw_style_t() noexcept = default;
-    };
-
-    static MEM_CONSTEXPR const ida_style_t ida_style {};
-    static MEM_CONSTEXPR const code_style_t code_style {};
-    static MEM_CONSTEXPR const raw_style_t raw_style {};
-
     class pattern_settings
     {
     public:
@@ -204,9 +185,19 @@ namespace mem
         size_t min_bad_char_skip {0};
         size_t min_good_suffix_skip {0};
 
-        char code_style_wildcard {'?'};
+        char wildcard {'?'};
+    };
 
-        const int8_t* ida_style_mask_char_table {nullptr};
+    static MEM_CONSTEXPR const pattern_settings default_pattern_settings
+    {
+#if defined(MEM_ARCH_X86)
+        10, 10,
+#elif defined(MEM_ARCH_X64)
+        4, 4,
+#else
+        8, 8,
+#endif
+        '?',
     };
 
     class pattern
@@ -232,9 +223,9 @@ namespace mem
     public:
         pattern() = default;
 
-        pattern(ida_style_t, const char* pattern, const pattern_settings* settings = nullptr);
-        pattern(code_style_t, const char* pattern, const char* mask, const pattern_settings* settings = nullptr);
-        pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings* settings = nullptr);
+        pattern(const char* pattern, const pattern_settings& settings = default_pattern_settings);
+        pattern(const char* pattern, const char* mask, const pattern_settings& settings = default_pattern_settings);
+        pattern(const void* pattern, const void* mask, const size_t length, const pattern_settings& settings = default_pattern_settings);
 
         template <typename UnaryPredicate>
         pointer scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))));
@@ -571,75 +562,34 @@ namespace mem
         return result;
     }
 
-    // '0'-'9' => 0-9, 'a'-'f' => 0xA-0xF, 'A'-'F' => 0xA-0xF
-    static MEM_CONSTEXPR const int8_t hex_char_table[256]
+    namespace detail
     {
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x00 => 0x0F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x10 => 0x1F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x20 => 0x2F
-         0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1, // 0x30 => 0x3F
-        -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x40 => 0x4F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x50 => 0x5F
-        -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x60 => 0x6F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x70 => 0x7F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x80 => 0x8F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x90 => 0x9F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xA0 => 0xAF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xB0 => 0xBF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xC0 => 0xCF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xD0 => 0xDF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xE0 => 0xEF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
-    };
-
-    // Current Mask Chars: '*', '.', '?', 'x', 'X'
-    static MEM_CONSTEXPR const int8_t default_mask_char_table[256]
-    {
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x00 => 0x0F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x10 => 0x1F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1,-1,-1, 0,-1, // 0x20 => 0x2F
-        15,15,15,15,15,15,15,15,15,15,-1,-1,-1,-1,-1, 0, // 0x30 => 0x3F
-        -1,15,15,15,15,15,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x40 => 0x4F
-        -1,-1,-1,-1,-1,-1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1, // 0x50 => 0x5F
-        -1,15,15,15,15,15,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x60 => 0x6F
-        -1,-1,-1,-1,-1,-1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1, // 0x70 => 0x7F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x80 => 0x8F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x90 => 0x9F
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xA0 => 0xAF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xB0 => 0xBF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xC0 => 0xCF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xD0 => 0xDF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xE0 => 0xEF
-        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
-    };
-
-    static MEM_CONSTEXPR const pattern_settings default_pattern_settings
-    {
-#if defined(MEM_ARCH_X86)
-        10, 10,
-#elif defined(MEM_ARCH_X64)
-        4, 4,
-#else
-        8, 8,
-#endif
-        '?',
-        default_mask_char_table
-    };
-
-    inline pattern::pattern(ida_style_t, const char* pattern, const pattern_settings* settings)
-    {
-        if (settings == nullptr)
+        // '0'-'9' => 0x0-0x9
+        // 'a'-'f' => 0xA-0xF
+        // 'A'-'F' => 0xA-0xF
+        static MEM_CONSTEXPR const int8_t hex_char_table[256]
         {
-            settings = &default_pattern_settings;
-        }
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x00 => 0x0F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x10 => 0x1F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x20 => 0x2F
+             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1, // 0x30 => 0x3F
+            -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x40 => 0x4F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x50 => 0x5F
+            -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x60 => 0x6F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x70 => 0x7F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x80 => 0x8F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x90 => 0x9F
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xA0 => 0xAF
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xB0 => 0xBF
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xC0 => 0xCF
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xD0 => 0xDF
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xE0 => 0xEF
+            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
+        };
+    }
 
-        const int8_t* mask_char_table = settings->ida_style_mask_char_table;
-
-        if (mask_char_table == nullptr)
-        {
-            mask_char_table = default_mask_char_table;
-        }
-
+    inline pattern::pattern(const char* pattern, const pattern_settings& settings)
+    {
         while (true)
         {
             uint8_t b = 0x00;
@@ -650,24 +600,19 @@ namespace mem
 
             while ((c = *pattern++) != '\0')
             {
-                const int8_t mask = mask_char_table[c];
+                const int8_t value = detail::hex_char_table[c];
+                const bool is_wildcard = c == settings.wildcard;
 
-                if (mask != -1)
+                if ((value >= 0) && (value <= 0xF) || is_wildcard)
                 {
                     b <<= 4;
                     m <<= 4;
 
-                    if (mask > 0)
+                    if (!is_wildcard)
                     {
-                        const int8_t value = hex_char_table[c];
-
-                        if (value != -1)
-                        {
-                            b |= (value & mask);
-                        }
+                        b |= value;
+                        m |= 0xF;
                     }
-
-                    m |= mask;
 
                     if (++i >= 2)
                     {
@@ -680,8 +625,13 @@ namespace mem
                 }
             }
 
-            if (c || i)
+            if (i)
             {
+                if ((i == 1) && (m != 0))
+                {
+                    m |= 0xF0;
+                }
+
                 bytes_.push_back(b);
                 masks_.push_back(m);
             }
@@ -692,18 +642,11 @@ namespace mem
             }
         }
 
-        finalize(*settings);
+        finalize(settings);
     }
 
-    inline pattern::pattern(code_style_t, const char* pattern, const char* mask, const pattern_settings* settings)
+    inline pattern::pattern(const char* pattern, const char* mask, const pattern_settings& settings)
     {
-        if (settings == nullptr)
-        {
-            settings = &default_pattern_settings;
-        }
-
-        const char wildcard = settings->code_style_wildcard;
-
         if (mask)
         {
             const size_t size = strlen(mask);
@@ -713,7 +656,7 @@ namespace mem
 
             for (size_t i = 0; i < size; ++i)
             {
-                if (mask[i] == wildcard)
+                if (mask[i] == settings.wildcard)
                 {
                     bytes_[i] = 0x00;
                     masks_[i] = 0x00;
@@ -743,16 +686,11 @@ namespace mem
             }
         }
 
-        finalize(*settings);
+        finalize(settings);
     }
 
-    inline pattern::pattern(raw_style_t, const void* pattern, const void* mask, const size_t length, const pattern_settings* settings)
+    inline pattern::pattern(const void* pattern, const void* mask, const size_t length, const pattern_settings& settings)
     {
-        if (settings == nullptr)
-        {
-            settings = &default_pattern_settings;
-        }
-
         if (mask)
         {
             bytes_.resize(length);
@@ -779,7 +717,7 @@ namespace mem
             }
         }
 
-        finalize(*settings);
+        finalize(settings);
     }
 
     inline size_t pattern::get_longest_run(size_t& length) const
