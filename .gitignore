@@ -1,0 +1,21 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]uild/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Ll]ib/
+[Bb]in/
+[Oo]bj/
+
+.vs/
+.vscode/
