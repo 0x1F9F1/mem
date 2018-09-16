@@ -80,16 +80,16 @@ void check_pattern_results(const mem::region& whole_region, const char* pattern,
 void check_patterns()
 {
     SYSTEM_INFO si;
-	GetSystemInfo(&si);
+    GetSystemInfo(&si);
 
-	size_t size = si.dwPageSize * (4 + 2); // 4 Pages + Guard Page Before/After
+    size_t size = si.dwPageSize * (4 + 2); // 4 Pages + Guard Page Before/After
     uint8_t* data = (uint8_t*) VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-	memset(data, 0, size);
+    memset(data, 0, size);
 
-	DWORD dwOld = 0;
-	VirtualProtect(data, si.dwPageSize, PAGE_NOACCESS, &dwOld);
-	VirtualProtect(data + size - si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &dwOld);
+    DWORD dwOld = 0;
+    VirtualProtect(data, si.dwPageSize, PAGE_NOACCESS, &dwOld);
+    VirtualProtect(data + size - si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &dwOld);
 
     mem::region scan_region(data + si.dwPageSize, size - (2 * si.dwPageSize));
 
@@ -148,7 +148,7 @@ void check_patterns()
         Assert(false, "Exception Scanning");
     }
 
-	VirtualFree(data, 0, MEM_RELEASE);
+    VirtualFree(data, 0, MEM_RELEASE);
 }
 
 void check_pattern_parsing()
