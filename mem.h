@@ -104,7 +104,10 @@ namespace mem
         typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
 
         template <typename T>
-        typename std::enable_if<std::is_pointer<T>::value || std::is_member_pointer<T>::value, T>::type as() const noexcept;
+        typename std::enable_if<std::is_pointer<T>::value, T>::type as() const noexcept;
+
+        template <typename T>
+        typename std::enable_if<std::is_member_pointer<T>::value, T>::type as() const noexcept;
 
         template <typename T>
         typename std::enable_if<std::is_lvalue_reference<T>::value, T>::type as() const noexcept;
@@ -438,9 +441,15 @@ namespace mem
     }
 
     template <typename T>
-    inline typename std::enable_if<std::is_pointer<T>::value || std::is_member_pointer<T>::value, T>::type pointer::as() const noexcept
+    inline typename std::enable_if<std::is_pointer<T>::value, T>::type pointer::as() const noexcept
     {
-        static_assert(sizeof(T) == sizeof(uintptr_t), "But first you must ask yourself, what is a pointer?");
+        return reinterpret_cast<T>(value_);
+    }
+
+    template <typename T>
+    inline typename std::enable_if<std::is_member_pointer<T>::value, T>::type pointer::as() const noexcept
+    {
+        static_assert(sizeof(value) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
 
         return reinterpret_cast<const T&>(value_);
     }
@@ -448,13 +457,13 @@ namespace mem
     template <typename T>
     inline typename std::enable_if<std::is_lvalue_reference<T>::value, T>::type pointer::as() const noexcept
     {
-        return *as<typename std::add_pointer<T>::type>();
+        return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
     template <typename T>
     inline typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::as() const noexcept
     {
-        return as<typename std::add_lvalue_reference<T>::type>();
+        return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
     MEM_CONSTEXPR inline region::region(const pointer& base, const size_t size) noexcept
