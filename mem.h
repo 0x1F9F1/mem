@@ -278,107 +278,107 @@ namespace mem
     };
 #endif // MEM_PLATFORM_WINDOWS
 
-    MEM_CONSTEXPR inline pointer::pointer(const std::nullptr_t) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer::pointer(const std::nullptr_t) noexcept
         : value_(0)
     { }
 
-    MEM_CONSTEXPR inline pointer::pointer(const uintptr_t value) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer::pointer(const uintptr_t value) noexcept
         : value_(value)
     { }
 
     template <typename T>
-    inline pointer::pointer(T* const value) noexcept
+    MEM_STRONG_INLINE pointer::pointer(T* const value) noexcept
         : value_(reinterpret_cast<uintptr_t>(value))
     { }
 
     template <typename T, typename C>
-    inline pointer::pointer(T(C::* const value)) noexcept
+    MEM_STRONG_INLINE pointer::pointer(T(C::* const value)) noexcept
         : value_(reinterpret_cast<const uintptr_t&>(value))
     {
         static_assert(sizeof(value) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
     }
 
-    MEM_CONSTEXPR inline bool pointer::null() const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::null() const noexcept
     {
         return !value_;
     }
 
-    MEM_CONSTEXPR inline pointer pointer::add(const ptrdiff_t value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::add(const ptrdiff_t value) const noexcept
     {
         return value_ + value;
     }
 
-    MEM_CONSTEXPR inline pointer pointer::sub(const ptrdiff_t value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::sub(const ptrdiff_t value) const noexcept
     {
         return value_ - value;
     }
 
-    MEM_CONSTEXPR inline ptrdiff_t pointer::dist(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE ptrdiff_t pointer::dist(const pointer& value) const noexcept
     {
         return static_cast<ptrdiff_t>(value.value_ - value_);
     }
 
-    MEM_CONSTEXPR inline pointer pointer::shift(const pointer& from, const pointer& to) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::shift(const pointer& from, const pointer& to) const noexcept
     {
         return (value_ - from.value_) + to.value_;
     }
 
 #if defined(MEM_ARCH_X64)
-    inline pointer pointer::rip(const uint8_t offset) const noexcept
+    MEM_STRONG_INLINE pointer pointer::rip(const uint8_t offset) const noexcept
     {
         return value_ + offset + as<int32_t&>();
     }
 #endif // MEM_ARCH_X64
 
-    inline pointer& pointer::deref() const noexcept
+    MEM_STRONG_INLINE pointer& pointer::deref() const noexcept
     {
         return as<pointer&>();
     }
 
-    MEM_CONSTEXPR inline pointer pointer::operator+(const ptrdiff_t value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::operator+(const ptrdiff_t value) const noexcept
     {
         return value_ + value;
     }
 
-    MEM_CONSTEXPR inline pointer pointer::operator-(const ptrdiff_t value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::operator-(const ptrdiff_t value) const noexcept
     {
         return value_ - value;
     }
 
-    MEM_CONSTEXPR inline ptrdiff_t pointer::operator-(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE ptrdiff_t pointer::operator-(const pointer& value) const noexcept
     {
         return static_cast<ptrdiff_t>(value_ - value.value_);
     }
 
-    MEM_CONSTEXPR_14 inline pointer& pointer::operator+=(const ptrdiff_t value) noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator+=(const ptrdiff_t value) noexcept
     {
         value_ += value;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 inline pointer& pointer::operator-=(const ptrdiff_t value) noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator-=(const ptrdiff_t value) noexcept
     {
         value_ -= value;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 inline pointer& pointer::operator++() noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator++() noexcept
     {
         ++value_;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 inline pointer& pointer::operator--() noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator--() noexcept
     {
         --value_;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 inline pointer pointer::operator++(int) noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer pointer::operator++(int) noexcept
     {
         pointer result = *this;
 
@@ -387,7 +387,7 @@ namespace mem
         return result;
     }
 
-    MEM_CONSTEXPR_14 inline pointer pointer::operator--(int) noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer pointer::operator--(int) noexcept
     {
         pointer result = *this;
 
@@ -396,44 +396,44 @@ namespace mem
         return result;
     }
 
-    MEM_CONSTEXPR inline bool pointer::operator==(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator==(const pointer& value) const noexcept
     {
         return value_ == value.value_;
     }
 
-    MEM_CONSTEXPR inline bool pointer::operator!=(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator!=(const pointer& value) const noexcept
     {
         return value_ != value.value_;
     }
 
-    MEM_CONSTEXPR inline bool pointer::operator<(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator<(const pointer& value) const noexcept
     {
         return value_ < value.value_;
     }
 
-    MEM_CONSTEXPR inline bool pointer::operator>(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator>(const pointer& value) const noexcept
     {
         return value_ > value.value_;
     }
 
-    MEM_CONSTEXPR inline bool pointer::operator<=(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator<=(const pointer& value) const noexcept
     {
         return value_ <= value.value_;
     }
 
-    MEM_CONSTEXPR inline bool pointer::operator>=(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator>=(const pointer& value) const noexcept
     {
         return value_ >= value.value_;
     }
 
     template <typename T>
-    inline typename std::add_lvalue_reference<T>::type pointer::at(const ptrdiff_t offset) const noexcept
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type pointer::at(const ptrdiff_t offset) const noexcept
     {
         return add(offset).as<typename std::add_lvalue_reference<T>::type>();
     }
 
     template <typename T>
-    inline typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const noexcept
     {
         static_assert(std::is_same<typename std::make_unsigned<T>::type, uintptr_t>::value, "Invalid Integer Type");
 
@@ -441,13 +441,13 @@ namespace mem
     }
 
     template <typename T>
-    inline typename std::enable_if<std::is_pointer<T>::value, T>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE typename std::enable_if<std::is_pointer<T>::value, T>::type pointer::as() const noexcept
     {
         return reinterpret_cast<T>(value_);
     }
 
     template <typename T>
-    inline typename std::enable_if<std::is_member_pointer<T>::value, T>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE typename std::enable_if<std::is_member_pointer<T>::value, T>::type pointer::as() const noexcept
     {
         static_assert(sizeof(T) == sizeof(value_), "That's no pointer. It's a space station.");
 
@@ -455,81 +455,81 @@ namespace mem
     }
 
     template <typename T>
-    inline typename std::enable_if<std::is_lvalue_reference<T>::value, T>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE typename std::enable_if<std::is_lvalue_reference<T>::value, T>::type pointer::as() const noexcept
     {
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
     template <typename T>
-    inline typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::as() const noexcept
     {
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
-    MEM_CONSTEXPR inline region::region(const pointer& base, const size_t size) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE region::region(const pointer& base, const size_t size) noexcept
         : base(base)
         , size(size)
     { }
 
-    MEM_CONSTEXPR inline pointer region::at(const size_t offset) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer region::at(const size_t offset) const noexcept
     {
         return (offset < size) ? base.add(offset) : nullptr;
     }
 
-    MEM_CONSTEXPR inline bool region::contains(const region& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const region& value) const noexcept
     {
         return (base.dist(value.base) + value.size) <= size;
     }
 
-    MEM_CONSTEXPR inline bool region::contains(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
         return contains(region(value, 1));
     }
 
-    MEM_CONSTEXPR inline bool region::contains(const pointer& value, const size_t length) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value, const size_t length) const noexcept
     {
         return contains(region(value, length));
     }
 
     template <typename T>
-    MEM_CONSTEXPR inline bool region::contains(const pointer& value) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
         return contains(value, sizeof(T));
     }
 
-    inline void region::copy(const pointer& source) const noexcept
+    MEM_STRONG_INLINE void region::copy(const pointer& source) const noexcept
     {
         std::memcpy(base.as<void*>(), source.as<const void*>(), size);
     }
 
-    inline void region::fill(const uint8_t value) const noexcept
+    MEM_STRONG_INLINE void region::fill(const uint8_t value) const noexcept
     {
         std::memset(base.as<void*>(), value, size);
     }
 
-    MEM_CONSTEXPR inline region region::sub_region(const pointer& address) const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE region region::sub_region(const pointer& address) const noexcept
     {
         return region(address, size - base.dist(address));
     }
 
 #if defined(MEM_PLATFORM_WINDOWS)
-    inline protect region::unprotect() const noexcept
+    MEM_STRONG_INLINE protect region::unprotect() const noexcept
     {
         return protect(*this, PAGE_EXECUTE_READWRITE);
     }
 #endif // MEM_PLATFORM_WINDOWS
 
-    inline pointer region::scan(const pattern& pattern) const noexcept
+    MEM_STRONG_INLINE pointer region::scan(const pattern& pattern) const noexcept
     {
         return pattern.scan(*this);
     }
 
-    inline std::vector<pointer> region::scan_all(const pattern& pattern) const
+    MEM_STRONG_INLINE std::vector<pointer> region::scan_all(const pattern& pattern) const
     {
         return pattern.scan_all(*this);
     }
 
-    inline bool region::is_ascii() const noexcept
+    MEM_STRONG_INLINE bool region::is_ascii() const noexcept
     {
         for (size_t i = 0; i < size; ++i)
         {
@@ -542,7 +542,7 @@ namespace mem
         return true;
     }
 
-    inline std::string region::str() const
+    MEM_STRONG_INLINE std::string region::str() const
     {
         return std::string(base.as<const char*>(), size);
     }
@@ -874,7 +874,7 @@ namespace mem
     }
 
     template <typename UnaryPredicate>
-    inline pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
+    MEM_HOT inline pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
     {
         if (bytes_.empty())
         {
@@ -1055,14 +1055,14 @@ namespace mem
         struct always_true
         {
             template <typename... Args>
-            inline MEM_CONSTEXPR bool operator()(Args&&...) const noexcept
+            MEM_STRONG_INLINE MEM_CONSTEXPR bool operator()(Args&&...) const noexcept
             {
                 return true;
             }
         };
     }
 
-    inline pointer pattern::scan(const region& region) const noexcept
+    MEM_STRONG_INLINE pointer pattern::scan(const region& region) const noexcept
     {
         return scan_predicate(region, detail::always_true {});
     }
@@ -1111,7 +1111,7 @@ namespace mem
         }
     }
 
-    inline std::vector<pointer> pattern::scan_all(const region& region) const
+    MEM_STRONG_INLINE std::vector<pointer> pattern::scan_all(const region& region) const
     {
         std::vector<pointer> results;
 
@@ -1125,23 +1125,23 @@ namespace mem
         return results;
     }
 
-    inline const std::vector<uint8_t>& pattern::bytes() const noexcept
+    MEM_STRONG_INLINE const std::vector<uint8_t>& pattern::bytes() const noexcept
     {
         return bytes_;
     }
 
-    inline const std::vector<uint8_t>& pattern::masks() const noexcept
+    MEM_STRONG_INLINE const std::vector<uint8_t>& pattern::masks() const noexcept
     {
         return masks_;
     }
 
-    inline size_t pattern::size() const noexcept
+    MEM_STRONG_INLINE size_t pattern::size() const noexcept
     {
         return original_size_;
     }
 
 #if defined(MEM_PLATFORM_WINDOWS)
-    inline protect::protect(const region& region, DWORD new_protect)
+    MEM_STRONG_INLINE protect::protect(const region& region, DWORD new_protect)
         : region(region)
         , old_protect_(0)
         , success_(false)
@@ -1149,7 +1149,7 @@ namespace mem
         success_ = VirtualProtect(base.as<void*>(), size, new_protect, &old_protect_);
     }
 
-    inline protect::~protect()
+    MEM_STRONG_INLINE protect::~protect()
     {
         if (success_)
         {
@@ -1157,7 +1157,7 @@ namespace mem
         }
     }
 
-    inline protect::protect(protect&& rhs) noexcept
+    MEM_STRONG_INLINE protect::protect(protect&& rhs) noexcept
         : region(rhs)
         , old_protect_(rhs.old_protect_)
         , success_(rhs.success_)
@@ -1171,7 +1171,7 @@ namespace mem
         IMAGE_DOS_HEADER __ImageBase;
     }
 
-    inline module module::get_nt_module(const pointer& address)
+    MEM_STRONG_INLINE module module::get_nt_module(const pointer& address)
     {
         const IMAGE_DOS_HEADER* dos = address.as<const IMAGE_DOS_HEADER*>();
         const IMAGE_NT_HEADERS* nt = address.add(dos->e_lfanew).as<const IMAGE_NT_HEADERS*>();
@@ -1179,22 +1179,22 @@ namespace mem
         return module(address, nt->OptionalHeader.SizeOfImage);
     }
 
-    inline module module::named(const char* name)
+    MEM_STRONG_INLINE module module::named(const char* name)
     {
         return get_nt_module(GetModuleHandleA(name));
     }
 
-    inline module module::named(const wchar_t* name)
+    MEM_STRONG_INLINE module module::named(const wchar_t* name)
     {
         return get_nt_module(GetModuleHandleW(name));
     }
 
-    inline module module::main()
+    MEM_STRONG_INLINE module module::main()
     {
         return module::named(static_cast<const char*>(nullptr));
     }
 
-    inline module module::self()
+    MEM_STRONG_INLINE module module::self()
     {
         return get_nt_module(&detail::__ImageBase);
     }

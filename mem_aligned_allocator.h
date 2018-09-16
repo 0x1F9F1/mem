@@ -36,12 +36,12 @@ namespace mem
         : public std::allocator<T>
     {
     public:
-        T* allocate(size_t n)
+        inline T* allocate(size_t n)
         {
             return _aligned_malloc(n * sizeof(T), Alignment);
         }
 
-        void deallocate(T* p, size_t n)
+        inline void deallocate(T* p, size_t n)
         {
             (void) n;
 

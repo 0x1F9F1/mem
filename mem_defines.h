@@ -56,4 +56,12 @@
 # define MEM_UNLIKELY(x) static_cast<bool>(x)
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+# define MEM_STRONG_INLINE __attribute__((always_inline)) inline
+#elif defined(_MSC_VER)
+# define MEM_STRONG_INLINE __forceinline
+#else
+# define MEM_STRONG_INLINE inline
+#endif
+
 #endif // MEM_DEFINES_BRICK_H
