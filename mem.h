@@ -449,7 +449,7 @@ namespace mem
     template <typename T>
     inline typename std::enable_if<std::is_member_pointer<T>::value, T>::type pointer::as() const noexcept
     {
-        static_assert(sizeof(value) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
+        static_assert(sizeof(T) == sizeof(value_), "That's no pointer. It's a space station.");
 
         return reinterpret_cast<const T&>(value_);
     }
