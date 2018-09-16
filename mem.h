@@ -874,7 +874,7 @@ namespace mem
     }
 
     template <typename UnaryPredicate>
-    MEM_HOT inline pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
+    inline pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
     {
         if (bytes_.empty())
         {
