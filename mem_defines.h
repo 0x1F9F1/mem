@@ -33,7 +33,7 @@
 #endif // MEM_AUTO_PLATFORM
 
 #if !defined(MEM_CONSTEXPR)
-# if __cpp_constexpr >= 200704
+# if (defined(__cpp_constexpr) && (__cpp_constexpr >= 200704)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190024210))
 #  define MEM_CONSTEXPR constexpr
 # else
 #  define MEM_CONSTEXPR
@@ -41,7 +41,7 @@
 #endif
 
 #if !defined(MEM_CONSTEXPR_14)
-# if __cpp_constexpr >= 201304
+# if (defined(__cpp_constexpr) && (__cpp_constexpr >= 201304)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 191426433))
 #  define MEM_CONSTEXPR_14 constexpr
 # else
 #  define MEM_CONSTEXPR_14
