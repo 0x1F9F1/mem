@@ -59,7 +59,7 @@
 #if defined(__GNUC__) || defined(__clang__)
 # define MEM_STRONG_INLINE __attribute__((always_inline)) inline
 #elif defined(_MSC_VER)
-# define MEM_STRONG_INLINE __forceinline
+# define MEM_STRONG_INLINE __pragma(warning(push)) __pragma(warning(disable:4714)) inline __forceinline __pragma(warning(pop))
 #else
 # define MEM_STRONG_INLINE inline
 #endif

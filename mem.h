@@ -519,17 +519,17 @@ namespace mem
     }
 #endif // MEM_PLATFORM_WINDOWS
 
-    MEM_STRONG_INLINE pointer region::scan(const pattern& pattern) const noexcept
+    inline pointer region::scan(const pattern& pattern) const noexcept
     {
         return pattern.scan(*this);
     }
 
-    MEM_STRONG_INLINE std::vector<pointer> region::scan_all(const pattern& pattern) const
+    inline std::vector<pointer> region::scan_all(const pattern& pattern) const
     {
         return pattern.scan_all(*this);
     }
 
-    MEM_STRONG_INLINE bool region::is_ascii() const noexcept
+    inline bool region::is_ascii() const noexcept
     {
         for (size_t i = 0; i < size; ++i)
         {
@@ -542,7 +542,7 @@ namespace mem
         return true;
     }
 
-    MEM_STRONG_INLINE std::string region::str() const
+    inline std::string region::str() const
     {
         return std::string(base.as<const char*>(), size);
     }
@@ -1111,7 +1111,7 @@ namespace mem
         }
     }
 
-    MEM_STRONG_INLINE std::vector<pointer> pattern::scan_all(const region& region) const
+    inline std::vector<pointer> pattern::scan_all(const region& region) const
     {
         std::vector<pointer> results;
 
