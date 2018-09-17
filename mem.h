@@ -136,6 +136,9 @@ namespace mem
         template <typename T>
         MEM_CONSTEXPR bool contains(const pointer& value) const noexcept;
 
+        MEM_CONSTEXPR bool operator==(const region& other) const noexcept;
+        MEM_CONSTEXPR bool operator!=(const region& other) const noexcept;
+
         void copy(const pointer& source) const noexcept;
         void fill(const uint8_t value) const noexcept;
 
@@ -492,6 +495,16 @@ namespace mem
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
         return (value >= base) && ((value + sizeof(T)) <= (base + size));
+    }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool region::operator==(const region& other) const noexcept
+    {
+        return (base == other.base) && (size == other.size);
+    }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool region::operator!=(const region& other) const noexcept
+    {
+        return (base != other.base) || (size != other.size);
     }
 
     MEM_STRONG_INLINE void region::copy(const pointer& source) const noexcept
