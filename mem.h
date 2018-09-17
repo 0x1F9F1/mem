@@ -1059,7 +1059,7 @@ namespace mem
         struct always_true
         {
             template <typename... Args>
-            MEM_STRONG_INLINE MEM_CONSTEXPR bool operator()(Args&&...) const noexcept
+            MEM_CONSTEXPR MEM_STRONG_INLINE bool operator()(Args&&...) const noexcept
             {
                 return true;
             }
