@@ -181,26 +181,23 @@ namespace mem
         This is of course assuming the compiler is smart enough to use all of the registers efficiently. Lots of them aren't.
     */
 
-    class pattern_settings
+    struct pattern_settings
     {
-    public:
         // 0 = Disabled
-        size_t min_bad_char_skip {0};
-        size_t min_good_suffix_skip {0};
+        size_t min_bad_char_skip
+        {
+#if defined(MEM_ARCH_X86)
+            10
+#elif defined(MEM_ARCH_X64)
+            4
+#else
+            8
+#endif
+        };
+
+        size_t min_good_suffix_skip {min_bad_char_skip};
 
         char wildcard {'?'};
-    };
-
-    static MEM_CONSTEXPR const pattern_settings default_pattern_settings
-    {
-#if defined(MEM_ARCH_X86)
-        10, 10,
-#elif defined(MEM_ARCH_X64)
-        4, 4,
-#else
-        8, 8,
-#endif
-        '?',
     };
 
     class pattern
@@ -226,9 +223,9 @@ namespace mem
     public:
         pattern() = default;
 
-        pattern(const char* pattern, const pattern_settings& settings = default_pattern_settings);
-        pattern(const char* pattern, const char* mask, const pattern_settings& settings = default_pattern_settings);
-        pattern(const void* pattern, const void* mask, const size_t length, const pattern_settings& settings = default_pattern_settings);
+        pattern(const char* pattern, const pattern_settings& settings = {});
+        pattern(const char* pattern, const char* mask, const pattern_settings& settings = {});
+        pattern(const void* pattern, const void* mask, const size_t length, const pattern_settings& settings = {});
 
         template <typename UnaryPredicate>
         pointer scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))));
@@ -612,7 +609,7 @@ namespace mem
                 const int8_t value = detail::hex_char_table[c];
                 const bool is_wildcard = c == settings.wildcard;
 
-                if ((value >= 0) && (value <= 0xF) || is_wildcard)
+                if (((value >= 0) && (value <= 0xF)) || is_wildcard)
                 {
                     b <<= 4;
                     m <<= 4;
