@@ -1154,7 +1154,14 @@ namespace mem
     {
         if (success_)
         {
+            bool flush = old_protect_ & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
+
             VirtualProtect(base.as<void*>(), size, old_protect_, &old_protect_);
+
+            if (flush)
+            {
+                FlushInstructionCache(GetCurrentProcess(), base.as<void*>(), size);
+            }
         }
     }
 
