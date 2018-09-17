@@ -57,7 +57,7 @@ namespace mem
         pointer(T* const value) noexcept;
 
         template <typename T, typename C>
-        pointer(T(C::* const value)) noexcept;
+        pointer(T C::* const value) noexcept;
 
         MEM_CONSTEXPR bool null() const noexcept;
 
@@ -203,12 +203,12 @@ namespace mem
     class pattern
     {
     protected:
-        std::vector<uint8_t> bytes_;
-        std::vector<uint8_t> masks_;
+        std::vector<uint8_t> bytes_ {};
+        std::vector<uint8_t> masks_ {};
 
         // Boyer–Moore + Boyer–Moore–Horspool Implementation
-        std::vector<size_t> bad_char_skips_;
-        std::vector<size_t> good_suffix_skips_;
+        std::vector<size_t> bad_char_skips_ {};
+        std::vector<size_t> good_suffix_skips_ {};
 
         size_t skip_pos_ {0};
         size_t original_size_ {0};
@@ -289,7 +289,7 @@ namespace mem
     { }
 
     template <typename T, typename C>
-    MEM_STRONG_INLINE pointer::pointer(T(C::* const value)) noexcept
+    MEM_STRONG_INLINE pointer::pointer(T C::* const value) noexcept
         : value_(reinterpret_cast<const uintptr_t&>(value))
     {
         static_assert(sizeof(value) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
@@ -463,9 +463,9 @@ namespace mem
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE region::region(const pointer& base, const size_t size) noexcept
-        : base(base)
-        , size(size)
+    MEM_CONSTEXPR MEM_STRONG_INLINE region::region(const pointer& base_, const size_t size_) noexcept
+        : base(base_)
+        , size(size_)
     { }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer region::at(const size_t offset) const noexcept
@@ -606,7 +606,7 @@ namespace mem
 
             while ((c = *pattern++) != '\0')
             {
-                const int8_t value = detail::hex_char_table[c];
+                const int8_t value = detail::hex_char_table[static_cast<uint8_t>(c)];
                 const bool is_wildcard = c == settings.wildcard;
 
                 if (((value >= 0) && (value <= 0xF)) || is_wildcard)
@@ -913,7 +913,7 @@ namespace mem
                         {
                             if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                             {
-                                goto $mask_skip_next;
+                                goto mask_skip_next;
                             }
                         }
 
@@ -923,7 +923,7 @@ namespace mem
                         }
                     }
 
-                $mask_skip_next:;
+                mask_skip_next:;
                 }
 
                 return nullptr;
@@ -938,7 +938,7 @@ namespace mem
                         {
                             if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                             {
-                                goto $mask_noskip_next;
+                                goto mask_noskip_next;
                             }
                         }
 
@@ -948,7 +948,7 @@ namespace mem
                         }
                     }
 
-                $mask_noskip_next:;
+                mask_noskip_next:;
                 }
 
                 return nullptr;
@@ -971,7 +971,7 @@ namespace mem
                     {
                         if (MEM_LIKELY(*current != bytes[i]))
                         {
-                            goto $suffix_skip_next;
+                            goto suffix_skip_next;
                         }
                         else if (MEM_LIKELY(i))
                         {
@@ -989,7 +989,7 @@ namespace mem
                         return current;
                     }
 
-                $suffix_skip_next:
+                suffix_skip_next:
                     const size_t bc_skip = skips[*current];
                     const size_t gs_skip = suffixes[i];
 
@@ -1008,7 +1008,7 @@ namespace mem
                         {
                             if (MEM_LIKELY(current[i] != bytes[i]))
                             {
-                                goto $nomask_skip_next;
+                                goto nomask_skip_next;
                             }
                         }
 
@@ -1018,7 +1018,7 @@ namespace mem
                         }
                     }
 
-                $nomask_skip_next:;
+                nomask_skip_next:;
                 }
 
                 return nullptr;
@@ -1033,7 +1033,7 @@ namespace mem
                         {
                             if (MEM_LIKELY(current[i] != bytes[i]))
                             {
-                                goto $nomask_noskip_next;
+                                goto nomask_noskip_next;
                             }
                         }
 
@@ -1043,7 +1043,7 @@ namespace mem
                         }
                     }
 
-                $nomask_noskip_next:;
+                nomask_noskip_next:;
                 }
 
                 return nullptr;
