@@ -66,7 +66,7 @@ void check_pattern_results(const mem::region& whole_region, const char* pattern,
 
     for (auto result : scan_results)
     {
-        scan_results_set.emplace( (size_t) scan_region.base.dist(result) );
+        scan_results_set.emplace(result - scan_region.base);
     }
 
     Assert(scan_results_set.size() == offsets.size(), "Invalid Result Count");

@@ -64,8 +64,6 @@ namespace mem
         MEM_CONSTEXPR pointer add(const ptrdiff_t value) const noexcept;
         MEM_CONSTEXPR pointer sub(const ptrdiff_t value) const noexcept;
 
-        MEM_CONSTEXPR ptrdiff_t dist(const pointer& value) const noexcept;
-
         MEM_CONSTEXPR pointer shift(const pointer& from, const pointer& to) const noexcept;
 
 #if defined(MEM_ARCH_X64)
@@ -311,11 +309,6 @@ namespace mem
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::sub(const ptrdiff_t value) const noexcept
     {
         return value_ - value;
-    }
-
-    MEM_CONSTEXPR MEM_STRONG_INLINE ptrdiff_t pointer::dist(const pointer& value) const noexcept
-    {
-        return static_cast<ptrdiff_t>(value.value_ - value_);
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::shift(const pointer& from, const pointer& to) const noexcept
