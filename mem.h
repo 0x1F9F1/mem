@@ -470,28 +470,28 @@ namespace mem
 
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer region::at(const size_t offset) const noexcept
     {
-        return (offset < size) ? base.add(offset) : nullptr;
+        return (offset < size) ? (base + offset) : nullptr;
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const region& value) const noexcept
     {
-        return (base.dist(value.base) + value.size) <= size;
+        return (value.base >= base) && ((value.base + value.size) <= (base + size));
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
-        return contains(region(value, 1));
+        return (value >= base) && (value < (base + size));
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value, const size_t length) const noexcept
     {
-        return contains(region(value, length));
+        return (value >= base) && ((value + length) <= (base + size));
     }
 
     template <typename T>
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
-        return contains(value, sizeof(T));
+        return (value >= base) && ((value + sizeof(T)) <= (base + size));
     }
 
     MEM_STRONG_INLINE void region::copy(const pointer& source) const noexcept
@@ -506,7 +506,7 @@ namespace mem
 
     MEM_CONSTEXPR MEM_STRONG_INLINE region region::sub_region(const pointer& address) const noexcept
     {
-        return region(address, size - base.dist(address));
+        return region(address, size - (address - base));
     }
 
 #if defined(MEM_PLATFORM_WINDOWS)

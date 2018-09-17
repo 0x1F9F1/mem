@@ -163,11 +163,43 @@ void check_pattern_parsing()
     check_ida_pattern("? 01 02 03 04 ? ? ?", "\x00\x01\x02\x03\x04", "\x00\xFF\xFF\xFF\xFF", 8, 5);
 }
 
+void check_bounds()
+{
+    /*
+        MEM_CONSTEXPR bool contains(const region& value) const noexcept;
+
+        MEM_CONSTEXPR bool contains(const pointer& value) const noexcept;
+        MEM_CONSTEXPR bool contains(const pointer& value, const size_t size) const noexcept;
+    */
+
+    static_assert(mem::region(0x1234, 0x10).contains(mem::region(0x1234, 0x10)), "Region Checking Failed");
+    static_assert(!mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x10)), "Region Checking Failed");
+    static_assert(mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x09)), "Region Checking Failed");
+
+    static_assert(mem::region(0x1234, 0x10).contains(0x1234, 0x10), "Region Checking Failed");
+    static_assert(!mem::region(0x1234, 0x10).contains(0x1235, 0x10), "Region Checking Failed");
+    static_assert(mem::region(0x1234, 0x10).contains(0x1235, 0x09), "Region Checking Failed");
+
+    static_assert(mem::region(0x1234, 0x10).contains(0x1234), "Region Checking Failed");
+    static_assert(!mem::region(0x1234, 0x10).contains(0x1233), "Region Checking Failed");
+    static_assert(mem::region(0x1234, 0x10).contains(0x1234 + 0x9), "Region Checking Failed");
+    static_assert(!mem::region(0x1234, 0x10).contains(0x1234 + 0x10), "Region Checking Failed");
+    static_assert(!mem::region(0x1234, 0).contains(0x1234), "Region Checking Failed");
+    static_assert(mem::region(0x1234, 1).contains(0x1234), "Region Checking Failed");
+
+    static_assert(mem::region(0x1234, 4).contains<int>(0x1234), "Region Checking Failed");
+    static_assert(!mem::region(0x1234, 3).contains<int>(0x1234), "Region Checking Failed");
+    static_assert(!mem::region(0x1235, 3).contains<int>(0x1234), "Region Checking Failed");
+    static_assert(mem::region(0x1234, 4).contains<int>(0x1234), "Region Checking Failed");
+}
+
 int main()
 {
     check_pattern_parsing();
 
     check_patterns();
+
+    check_bounds();
 
     printf("Done\n");
 
