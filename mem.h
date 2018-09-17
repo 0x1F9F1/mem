@@ -910,19 +910,20 @@ namespace mem
 
                 for (; MEM_LIKELY(current <= end); current += skips[current[skip_pos]])
                 {
-                    size_t i = last;
-
-                    do
+                    if (MEM_UNLIKELY((current[last] & masks[last]) == bytes[last]))
                     {
-                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                        for (size_t i = last; MEM_LIKELY(i--);)
                         {
-                            goto $mask_skip_next;
+                            if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                            {
+                                goto $mask_skip_next;
+                            }
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
+                        if (pred(current))
+                        {
+                            return current;
+                        }
                     }
 
                 $mask_skip_next:;
@@ -934,19 +935,20 @@ namespace mem
             {
                 for (; MEM_LIKELY(current <= end); ++current)
                 {
-                    size_t i = last;
-
-                    do
+                    if (MEM_UNLIKELY((current[last] & masks[last]) == bytes[last]))
                     {
-                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                        for (size_t i = last; MEM_LIKELY(i--);)
                         {
-                            goto $mask_noskip_next;
+                            if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                            {
+                                goto $mask_noskip_next;
+                            }
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
+                        if (pred(current))
+                        {
+                            return current;
+                        }
                     }
 
                 $mask_noskip_next:;
@@ -1003,19 +1005,20 @@ namespace mem
             {
                 for (; MEM_LIKELY(current <= end); current += skips[current[last]])
                 {
-                    size_t i = last;
-
-                    do
+                    if (MEM_UNLIKELY(current[last] == bytes[last]))
                     {
-                        if (MEM_LIKELY(current[i] != bytes[i]))
+                        for (size_t i = last; MEM_LIKELY(i--);)
                         {
-                            goto $nomask_skip_next;
+                            if (MEM_LIKELY(current[i] != bytes[i]))
+                            {
+                                goto $nomask_skip_next;
+                            }
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
+                        if (pred(current))
+                        {
+                            return current;
+                        }
                     }
 
                 $nomask_skip_next:;
@@ -1027,19 +1030,20 @@ namespace mem
             {
                 for (; MEM_LIKELY(current <= end); ++current)
                 {
-                    size_t i = last;
-
-                    do
+                    if (MEM_UNLIKELY(current[last] == bytes[last]))
                     {
-                        if (MEM_LIKELY(current[i] != bytes[i]))
+                        for (size_t i = last; MEM_LIKELY(i--);)
                         {
-                            goto $nomask_noskip_next;
+                            if (MEM_LIKELY(current[i] != bytes[i]))
+                            {
+                                goto $nomask_noskip_next;
+                            }
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
+                        if (pred(current))
+                        {
+                            return current;
+                        }
                     }
 
                 $nomask_noskip_next:;
@@ -1062,7 +1066,7 @@ namespace mem
         };
     }
 
-    MEM_STRONG_INLINE pointer pattern::scan(const region& region) const noexcept
+    inline pointer pattern::scan(const region& region) const noexcept
     {
         return scan_predicate(region, detail::always_true {});
     }
