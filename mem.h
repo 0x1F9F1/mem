@@ -95,11 +95,11 @@ namespace mem
         MEM_CONSTEXPR bool operator<=(const pointer& value) const noexcept;
         MEM_CONSTEXPR bool operator>=(const pointer& value) const noexcept;
 
+        template <typename T>
+        MEM_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
+
         template <typename T = pointer>
         typename std::add_lvalue_reference<T>::type at(const ptrdiff_t offset) const noexcept;
-
-        template <typename T>
-        typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
 
         template <typename T>
         typename std::enable_if<std::is_pointer<T>::value, T>::type as() const noexcept;
@@ -419,17 +419,17 @@ namespace mem
     }
 
     template <typename T>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type pointer::at(const ptrdiff_t offset) const noexcept
-    {
-        return add(offset).as<typename std::add_lvalue_reference<T>::type>();
-    }
-
-    template <typename T>
-    MEM_STRONG_INLINE typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const noexcept
     {
         static_assert(std::is_same<typename std::make_unsigned<T>::type, uintptr_t>::value, "Invalid Integer Type");
 
         return static_cast<T>(value_);
+    }
+
+    template <typename T>
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type pointer::at(const ptrdiff_t offset) const noexcept
+    {
+        return add(offset).as<typename std::add_lvalue_reference<T>::type>();
     }
 
     template <typename T>
