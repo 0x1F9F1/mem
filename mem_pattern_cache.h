@@ -20,8 +20,10 @@
 #if !defined(MEM_PATTERN_CACHE_BRICK_H)
 #define MEM_PATTERN_CACHE_BRICK_H
 
-#include "mem.h"
+#include "mem_pattern.h"
 #include "mem_hasher.h"
+
+#include <unordered_map>
 
 namespace mem
 {
