@@ -124,8 +124,6 @@ namespace mem
 
         MEM_CONSTEXPR region(const pointer& base, const size_t size) noexcept;
 
-        MEM_CONSTEXPR pointer at(const size_t offset) const noexcept;
-
         MEM_CONSTEXPR bool contains(const region& value) const noexcept;
 
         MEM_CONSTEXPR bool contains(const pointer& value) const noexcept;
@@ -464,11 +462,6 @@ namespace mem
         : base(base_)
         , size(size_)
     { }
-
-    MEM_CONSTEXPR MEM_STRONG_INLINE pointer region::at(const size_t offset) const noexcept
-    {
-        return (offset < size) ? (base + offset) : nullptr;
-    }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const region& value) const noexcept
     {
