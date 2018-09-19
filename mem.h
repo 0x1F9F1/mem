@@ -117,12 +117,12 @@ namespace mem
     class region
     {
     public:
-        pointer base {nullptr};
+        pointer start {nullptr};
         size_t size {0};
 
         MEM_CONSTEXPR region() noexcept = default;
 
-        MEM_CONSTEXPR region(const pointer& base, const size_t size) noexcept;
+        MEM_CONSTEXPR region(const pointer& start, const size_t size) noexcept;
 
         MEM_CONSTEXPR bool contains(const region& value) const noexcept;
 
@@ -458,55 +458,55 @@ namespace mem
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE region::region(const pointer& base_, const size_t size_) noexcept
-        : base(base_)
+    MEM_CONSTEXPR MEM_STRONG_INLINE region::region(const pointer& start_, const size_t size_) noexcept
+        : start(start_)
         , size(size_)
     { }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const region& value) const noexcept
     {
-        return (value.base >= base) && ((value.base + value.size) <= (base + size));
+        return (value.start >= start) && ((value.start + value.size) <= (start + size));
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
-        return (value >= base) && (value < (base + size));
+        return (value >= start) && (value < (start + size));
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value, const size_t length) const noexcept
     {
-        return (value >= base) && ((value + length) <= (base + size));
+        return (value >= start) && ((value + length) <= (start + size));
     }
 
     template <typename T>
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::contains(const pointer& value) const noexcept
     {
-        return (value >= base) && ((value + sizeof(T)) <= (base + size));
+        return (value >= start) && ((value + sizeof(T)) <= (start + size));
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::operator==(const region& other) const noexcept
     {
-        return (base == other.base) && (size == other.size);
+        return (start == other.start) && (size == other.size);
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE bool region::operator!=(const region& other) const noexcept
     {
-        return (base != other.base) || (size != other.size);
+        return (start != other.start) || (size != other.size);
     }
 
     MEM_STRONG_INLINE void region::copy(const pointer& source) const noexcept
     {
-        std::memcpy(base.as<void*>(), source.as<const void*>(), size);
+        std::memcpy(start.as<void*>(), source.as<const void*>(), size);
     }
 
     MEM_STRONG_INLINE void region::fill(const uint8_t value) const noexcept
     {
-        std::memset(base.as<void*>(), value, size);
+        std::memset(start.as<void*>(), value, size);
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE region region::sub_region(const pointer& address) const noexcept
     {
-        return region(address, size - (address - base));
+        return region(address, size - (address - start));
     }
 
 #if defined(MEM_PLATFORM_WINDOWS)
@@ -553,7 +553,7 @@ namespace mem
     {
         for (size_t i = 0; i < size;)
         {
-            const size_t length = detail::utf8_length_table[base.at<uint8_t>(i)];
+            const size_t length = detail::utf8_length_table[start.at<uint8_t>(i)];
 
             if (length != 1)
             {
@@ -570,7 +570,7 @@ namespace mem
     {
         for (size_t i = 0; i < size;)
         {
-            const size_t length = detail::utf8_length_table[base.at<uint8_t>(i)];
+            const size_t length = detail::utf8_length_table[start.at<uint8_t>(i)];
 
             if (length == 0)
             {
@@ -584,7 +584,7 @@ namespace mem
 
             for (size_t j = 1; j < length; ++j)
             {
-                if ((base.at<uint8_t>(i + j) & 0xC0) != 0x80)
+                if ((start.at<uint8_t>(i + j) & 0xC0) != 0x80)
                 {
                     return false;
                 }
@@ -598,7 +598,7 @@ namespace mem
 
     inline std::string region::str() const
     {
-        return std::string(base.as<const char*>(), size);
+        return std::string(start.as<const char*>(), size);
     }
 
     inline std::string region::hex(bool upper_case, bool padded) const
@@ -611,7 +611,7 @@ namespace mem
 
         for (size_t i = 0; i < size; ++i)
         {
-            const uint8_t v = base.add(i).as<const uint8_t&>();
+            const uint8_t v = start.add(i).as<const uint8_t&>();
 
             if (i && padded)
             {
@@ -943,7 +943,7 @@ namespace mem
             return nullptr;
         }
 
-        const uint8_t* const region_base = region.base.as<const uint8_t*>();
+        const uint8_t* const region_base = region.start.as<const uint8_t*>();
         const uint8_t* const region_end = region_base + region_size;
 
         const uint8_t* current = region_base;
@@ -1204,7 +1204,7 @@ namespace mem
         , old_protect_(0)
         , success_(false)
     {
-        success_ = VirtualProtect(base.as<void*>(), size, new_protect, &old_protect_);
+        success_ = VirtualProtect(start.as<void*>(), size, new_protect, &old_protect_);
     }
 
     MEM_STRONG_INLINE protect::~protect()
@@ -1213,11 +1213,11 @@ namespace mem
         {
             bool flush = old_protect_ & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
 
-            VirtualProtect(base.as<void*>(), size, old_protect_, &old_protect_);
+            VirtualProtect(start.as<void*>(), size, old_protect_, &old_protect_);
 
             if (flush)
             {
-                FlushInstructionCache(GetCurrentProcess(), base.as<void*>(), size);
+                FlushInstructionCache(GetCurrentProcess(), start.as<void*>(), size);
             }
         }
     }
