@@ -151,6 +151,7 @@ namespace mem
         std::vector<pointer> scan_all(const pattern& pattern) const;
 
         bool is_ascii() const noexcept;
+        bool is_utf8() const noexcept;
 
         std::string str() const;
         std::string hex(bool upper_case = true, bool padded = false) const;
@@ -532,14 +533,71 @@ namespace mem
         return pattern.scan_all(*this);
     }
 
+    namespace detail
+    {
+        static MEM_CONSTEXPR const int8_t utf8_length_table[256]
+        {
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+            2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+            3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+            4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,
+        };
+    }
+
     inline bool region::is_ascii() const noexcept
     {
-        for (size_t i = 0; i < size; ++i)
+        for (size_t i = 0; i < size;)
         {
-            if ((at(i).as<uint8_t&>() - 0x20) <= 0x5F)
+            const size_t length = detail::utf8_length_table[base.at<uint8_t>(i)];
+
+            if (length != 1)
             {
                 return false;
             }
+
+            i += length;
+        }
+
+        return true;
+    }
+
+    inline bool region::is_utf8() const noexcept
+    {
+        for (size_t i = 0; i < size;)
+        {
+            const size_t length = detail::utf8_length_table[base.at<uint8_t>(i)];
+
+            if (length == 0)
+            {
+                return false;
+            }
+
+            if ((i + length) > size)
+            {
+                return false;
+            }
+
+            for (size_t j = 1; j < length; ++j)
+            {
+                if ((base.at<uint8_t>(i + j) & 0xC0) != 0x80)
+                {
+                    return false;
+                }
+            }
+
+            i += length;
         }
 
         return true;
