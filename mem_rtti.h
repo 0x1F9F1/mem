@@ -22,7 +22,7 @@
 
 #include "mem.h"
 
-#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
 # if !defined(MEM_PLATFORM_WINDOWS)
 #  error mem::rtti only supports windows
 # endif // !MEM_PLATFORM_WINDOWS
@@ -67,17 +67,17 @@ namespace mem
             uint32_t pTypeDescriptor;  // TypeDescriptor of the complete class
             uint32_t pClassDescriptor; // describes inheritance hierarchy
 
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
             uint32_t pSelf;
-#endif // MEM_ARCH_X64
+#endif // MEM_ARCH_X86_64
 
             bool check_signature() const;
             RTTITypeDescriptor* get_type(const region& region) const;
             RTTIClassHierarchyDescriptor* get_class(const region& region) const;
 
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
             RTTICompleteObjectLocator* get_self(const region& region) const;
-#endif // MEM_ARCH_X64
+#endif // MEM_ARCH_X86_64
         };
 
         struct RTTIClassHierarchyDescriptor
@@ -116,7 +116,7 @@ namespace mem
 
         constexpr inline bool check_rtti_signature(const uint32_t signature) noexcept
         {
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
             return signature == 1;
 #elif defined(MEM_ARCH_X32)
             return signature == 0;
@@ -128,7 +128,7 @@ namespace mem
         template <typename T>
         inline T* get_rtti_pointer(const region& region, const uint32_t address) noexcept
         {
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
             return region.at(address).as<T*>();
 #elif defined(MEM_ARCH_X32)
             const pointer result = address;
@@ -168,12 +168,12 @@ namespace mem
             return get_rtti_pointer<RTTIClassHierarchyDescriptor>(region, pClassDescriptor);
         }
 
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
         inline RTTICompleteObjectLocator* RTTICompleteObjectLocator::get_self(const region& region) const
         {
             return get_rtti_pointer<RTTICompleteObjectLocator>(region, pSelf);
         }
-#endif // MEM_ARCH_X64
+#endif // MEM_ARCH_X86_64
 
         inline bool RTTIClassHierarchyDescriptor::check_signature() const
         {
@@ -234,12 +234,12 @@ namespace mem
                     continue;
                 }
 
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
                 if (locator->get_self(region) != locator)
                 {
                     continue;
                 }
-#endif // MEM_ARCH_X64
+#endif // MEM_ARCH_X86_64
 
                 const RTTITypeDescriptor* type = locator->get_type(region);
 

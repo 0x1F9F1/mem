@@ -22,7 +22,7 @@
 
 #include "mem_defines.h"
 
-#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
 # if !defined(MEM_PLATFORM_WINDOWS)
 #  error mem::scoped_seh only supports windows
 # endif // !MEM_PLATFORM_WINDOWS
@@ -89,7 +89,7 @@ namespace mem
             { 0xC0000420, "STATUS_ASSERTION_FAILURE" },
             { 0xC00004A2, "STATUS_ENCLAVE_VIOLATION" },
         };
-        
+
         inline const char* get_exception_code_name(unsigned int code)
         {
             const named_exception_code* find = std::lower_bound(std::begin(exception_codes), std::end(exception_codes), code, [ ] (const named_exception_code& value, unsigned int code)
@@ -116,7 +116,7 @@ namespace mem
             char buffer[2048];
 
             std::snprintf(buffer, sizeof(buffer),
-    #if defined(MEM_ARCH_X64)
+    #if defined(MEM_ARCH_X86_64)
                 "%s (0x%08X) at 0x%016llX\n"
                 "RAX = 0x%016llX RBX = 0x%016llX RCX = 0x%016llX RDX = 0x%016llX\n"
                 "RSP = 0x%016llX RBP = 0x%016llX RSI = 0x%016llX RDI = 0x%016llX\n"

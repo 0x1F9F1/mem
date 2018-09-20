@@ -21,7 +21,7 @@
 #define MEM_DEFINES_BRICK_H
 
 #if defined(__x86_64__) || defined(_M_X64)
-# define MEM_ARCH_X64
+# define MEM_ARCH_X86_64
 #elif defined(__i386) || defined(_M_IX86)
 # define MEM_ARCH_X86
 #endif

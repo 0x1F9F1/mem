@@ -64,9 +64,9 @@ namespace mem
 
         MEM_CONSTEXPR pointer shift(const pointer& from, const pointer& to) const noexcept;
 
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
         pointer rip(const uint8_t offset) const noexcept;
-#endif // MEM_ARCH_X64
+#endif // MEM_ARCH_X86_64
 
         pointer& deref() const noexcept;
 
@@ -222,12 +222,12 @@ namespace mem
         return (value_ - from.value_) + to.value_;
     }
 
-#if defined(MEM_ARCH_X64)
+#if defined(MEM_ARCH_X86_64)
     MEM_STRONG_INLINE pointer pointer::rip(const uint8_t offset) const noexcept
     {
         return value_ + offset + as<int32_t&>();
     }
-#endif // MEM_ARCH_X64
+#endif // MEM_ARCH_X86_64
 
     MEM_STRONG_INLINE pointer& pointer::deref() const noexcept
     {

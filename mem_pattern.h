@@ -59,7 +59,7 @@ namespace mem
         {
 #if defined(MEM_ARCH_X86)
             10
-#elif defined(MEM_ARCH_X64)
+#elif defined(MEM_ARCH_X86_64)
             4
 #else
             8
