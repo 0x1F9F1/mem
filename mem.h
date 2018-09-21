@@ -163,6 +163,8 @@ namespace mem
 
         protect(protect&&) noexcept;
         protect(const protect&) = delete;
+
+        operator bool() const noexcept;
     };
 
     class module
@@ -553,6 +555,11 @@ namespace mem
     {
         rhs.old_protect_ = 0;
         rhs.success_ = false;
+    }
+
+    MEM_STRONG_INLINE protect::operator bool() const noexcept
+    {
+        return success_;
     }
 
     extern "C" namespace detail
