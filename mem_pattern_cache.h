@@ -25,13 +25,45 @@
 
 #include <unordered_map>
 
+#include <ostream>
+#include <istream>
+
 namespace mem
 {
+    namespace stream
+    {
+        template <typename T>
+        static inline void write(std::ostream& output, const T& value)
+        {
+            static_assert(std::is_trivial<T>::value, "Invalid Value");
+
+            output.write(reinterpret_cast<const char*>(&value), sizeof(value));
+        }
+
+        template <typename T>
+        static inline T read(std::istream& input)
+        {
+            static_assert(std::is_trivial<T>::value, "Invalid Value");
+
+            T result;
+
+            input.read(reinterpret_cast<char*>(&result), sizeof(result));
+
+            return result;
+        }
+    }
+
     class pattern_cache
     {
     protected:
+        struct pattern_results
+        {
+            bool checked {false};
+            std::vector<pointer> results {};
+        };
+
         region region_;
-        std::unordered_map<uint32_t, std::vector<pointer>> results_;
+        std::unordered_map<uint32_t, pattern_results> results_;
 
         static uint32_t hash_pattern(const pattern& pattern)
         {
@@ -63,11 +95,21 @@ namespace mem
             : region_(region)
         { }
 
-        pointer scan(const pattern& pattern)
+        pointer scan(const pattern& pattern, const size_t index = 0, const size_t expected = 1)
         {
             const auto& results = scan_all(pattern);
 
-            return !results.empty() ? results[0] : nullptr;
+            if (results.size() != expected)
+            {
+                return nullptr;
+            }
+
+            if (index >= results.size())
+            {
+                return nullptr;
+            }
+
+            return results[index];
         }
 
         const std::vector<pointer>& scan_all(const pattern& pattern)
@@ -78,29 +120,94 @@ namespace mem
 
             if (find != results_.end())
             {
-                bool changed = false;
-
-                for (mem::pointer result : find->second)
+                if (!find->second.checked)
                 {
-                    if (!pattern.match(result))
+                    bool changed = false;
+
+                    for (mem::pointer result : find->second.results)
                     {
-                        changed = true;
+                        if (!pattern.match(result))
+                        {
+                            changed = true;
 
-                        break;
+                            break;
+                        }
                     }
-                }
 
-                if (changed)
-                {
-                    find->second = pattern.scan_all(region_);
+                    if (changed)
+                    {
+                        find->second.results = pattern.scan_all(region_);
+                        find->second.checked = true;
+                    }
                 }
             }
             else
             {
-                find = results_.emplace(hash, pattern.scan_all(region_)).first;
+                find = results_.emplace(hash, pattern_results { true, pattern.scan_all(region_) }).first;
             }
 
-            return find->second;
+            return find->second.results;
+        }
+
+        void save(std::ostream& output) const
+        {
+            stream::write<uint32_t>(output, 0x50415443); // PATC
+            stream::write<uint32_t>(output, sizeof(size_t));
+            stream::write<size_t>(output, region_.size);
+            stream::write<size_t>(output, results_.size());
+
+            for (const auto& pattern : results_)
+            {
+                stream::write<uint32_t>(output, pattern.first);
+                stream::write<size_t>(output, pattern.second.results.size());
+
+                for (const auto& result : pattern.second.results)
+                {
+                    stream::write<size_t>(output, result - region_.start);
+                }
+            }
+        }
+
+        bool load(std::istream& input)
+        {
+            try
+            {
+                if (stream::read<uint32_t>(input) == 0x50415443)
+                    return false;
+
+                if (stream::read<uint32_t>(input) != sizeof(size_t))
+                    return false;
+
+                if (stream::read<size_t>(input) != region_.size)
+                    return false;
+
+                const size_t pattern_count = stream::read<size_t>(input);
+
+                results_.clear();
+
+                for (size_t i = 0; i < pattern_count; ++i)
+                {
+                    const uint32_t hash = stream::read<uint32_t>(input);
+                    const size_t result_count = stream::read<size_t>(input);
+
+                    pattern_results results;
+                    results.checked = false;
+                    results.results.reserve(result_count);
+
+                    for (size_t j = 0; j < result_count; ++j)
+                    {
+                        results.results.push_back(region_.start + stream::read<size_t>(input));
+                    }
+
+                    results_.emplace(hash, std::move(results));
+                }
+
+                return true;
+            }
+            catch (...)
+            {
+                return false;
+            }
         }
     };
 }
