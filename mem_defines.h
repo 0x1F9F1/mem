@@ -64,4 +64,12 @@
 # define MEM_STRONG_INLINE inline
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+# define MEM_NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+# define MEM_NOINLINE __declspec(noinline)
+#else
+# define MEM_NOINLINE
+#endif
+
 #endif // MEM_DEFINES_BRICK_H
