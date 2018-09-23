@@ -416,7 +416,7 @@ namespace mem
     }
 
     template <typename UnaryPredicate>
-    inline pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
+    MEM_NOINLINE pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
     {
         if (bytes_.empty())
         {
@@ -452,20 +452,19 @@ namespace mem
 
                 for (; MEM_LIKELY(current <= end); current += skips[current[skip_pos]])
                 {
-                    if (MEM_UNLIKELY((current[last] & masks[last]) == bytes[last]))
-                    {
-                        for (size_t i = last; MEM_LIKELY(i--);)
-                        {
-                            if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
-                            {
-                                goto mask_skip_next;
-                            }
-                        }
+                    size_t i = last;
 
-                        if (pred(current))
+                    do
+                    {
+                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                         {
-                            return current;
+                            goto mask_skip_next;
                         }
+                    } while (MEM_LIKELY(i--));
+
+                    if (pred(current))
+                    {
+                        return current;
                     }
 
                 mask_skip_next:;
@@ -477,20 +476,19 @@ namespace mem
             {
                 for (; MEM_LIKELY(current <= end); ++current)
                 {
-                    if (MEM_UNLIKELY((current[last] & masks[last]) == bytes[last]))
-                    {
-                        for (size_t i = last; MEM_LIKELY(i--);)
-                        {
-                            if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
-                            {
-                                goto mask_noskip_next;
-                            }
-                        }
+                    size_t i = last;
 
-                        if (pred(current))
+                    do
+                    {
+                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
                         {
-                            return current;
+                            goto mask_noskip_next;
                         }
+                    } while (MEM_LIKELY(i--));
+
+                    if (pred(current))
+                    {
+                        return current;
                     }
 
                 mask_noskip_next:;
@@ -547,20 +545,19 @@ namespace mem
             {
                 for (; MEM_LIKELY(current <= end); current += skips[current[last]])
                 {
-                    if (MEM_UNLIKELY(current[last] == bytes[last]))
-                    {
-                        for (size_t i = last; MEM_LIKELY(i--);)
-                        {
-                            if (MEM_LIKELY(current[i] != bytes[i]))
-                            {
-                                goto nomask_skip_next;
-                            }
-                        }
+                    size_t i = last;
 
-                        if (pred(current))
+                    do
+                    {
+                        if (MEM_LIKELY(current[i] != bytes[i]))
                         {
-                            return current;
+                            goto nomask_skip_next;
                         }
+                    } while (MEM_LIKELY(i--));
+
+                    if (pred(current))
+                    {
+                        return current;
                     }
 
                 nomask_skip_next:;
@@ -572,20 +569,19 @@ namespace mem
             {
                 for (; MEM_LIKELY(current <= end); ++current)
                 {
-                    if (MEM_UNLIKELY(current[last] == bytes[last]))
-                    {
-                        for (size_t i = last; MEM_LIKELY(i--);)
-                        {
-                            if (MEM_LIKELY(current[i] != bytes[i]))
-                            {
-                                goto nomask_noskip_next;
-                            }
-                        }
+                    size_t i = last;
 
-                        if (pred(current))
+                    do
+                    {
+                        if (MEM_LIKELY(current[i] != bytes[i]))
                         {
-                            return current;
+                            goto nomask_noskip_next;
                         }
+                    } while (MEM_LIKELY(i--));
+
+                    if (pred(current))
+                    {
+                        return current;
                     }
 
                 nomask_noskip_next:;
