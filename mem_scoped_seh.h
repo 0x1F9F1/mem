@@ -90,7 +90,7 @@ namespace mem
             { 0xC00004A2, "STATUS_ENCLAVE_VIOLATION" },
         };
 
-        inline const char* get_exception_code_name(unsigned int code)
+        static inline const char* get_exception_code_name(unsigned int code)
         {
             const named_exception_code* find = std::lower_bound(std::begin(exception_codes), std::end(exception_codes), code, [ ] (const named_exception_code& value, unsigned int code)
             {
