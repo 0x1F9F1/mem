@@ -25,7 +25,7 @@
 namespace mem
 {
     template <typename T>
-    typename std::add_lvalue_reference<T>::type field(const mem::pointer& base, const ptrdiff_t offset) noexcept;
+    typename std::add_lvalue_reference<T>::type field(const mem::pointer& base, const ptrdiff_t offset = 0) noexcept;
 
     template <typename T>
     MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(const mem::pointer& base, const ptrdiff_t offset) noexcept
