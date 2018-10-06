@@ -233,7 +233,7 @@ namespace mem
 
     MEM_STRONG_INLINE pointer& pointer::deref() const noexcept
     {
-        return as<pointer&>();
+        return *reinterpret_cast<pointer*>(value_);
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::operator+(const ptrdiff_t value) const noexcept
@@ -338,7 +338,7 @@ namespace mem
     template <typename T>
     MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type pointer::at(const ptrdiff_t offset) const noexcept
     {
-        return add(offset).as<typename std::add_lvalue_reference<T>::type>();
+        return *reinterpret_cast<typename std::add_pointer<T>::type>(value_ + offset);
     }
 
     template <typename T>
@@ -452,7 +452,7 @@ namespace mem
     {
         for (size_t i = 0; i < size;)
         {
-            const size_t length = detail::utf8_length_table[start.at<uint8_t>(i)];
+            const size_t length = detail::utf8_length_table[start.at<const uint8_t>(i)];
 
             if (length != 1)
             {
@@ -469,7 +469,7 @@ namespace mem
     {
         for (size_t i = 0; i < size;)
         {
-            const size_t length = detail::utf8_length_table[start.at<uint8_t>(i)];
+            const size_t length = detail::utf8_length_table[start.at<const uint8_t>(i)];
 
             if (length == 0)
             {
@@ -483,7 +483,7 @@ namespace mem
 
             for (size_t j = 1; j < length; ++j)
             {
-                if ((start.at<uint8_t>(i + j) & 0xC0) != 0x80)
+                if ((start.at<const uint8_t>(i + j) & 0xC0) != 0x80)
                 {
                     return false;
                 }
@@ -510,7 +510,7 @@ namespace mem
 
         for (size_t i = 0; i < size; ++i)
         {
-            const uint8_t v = start.add(i).as<const uint8_t&>();
+            const uint8_t v = start.at<const uint8_t>(i);
 
             if (i && padded)
             {
@@ -569,10 +569,10 @@ namespace mem
 
     MEM_STRONG_INLINE module module::get_nt_module(const pointer& address)
     {
-        const IMAGE_DOS_HEADER* dos = address.as<const IMAGE_DOS_HEADER*>();
-        const IMAGE_NT_HEADERS* nt = address.add(dos->e_lfanew).as<const IMAGE_NT_HEADERS*>();
+        const IMAGE_DOS_HEADER& dos = address.at<const IMAGE_DOS_HEADER>(0);
+        const IMAGE_NT_HEADERS& nt = address.at<const IMAGE_NT_HEADERS>(dos.e_lfanew);
 
-        return module(address, nt->OptionalHeader.SizeOfImage);
+        return module(address, nt.OptionalHeader.SizeOfImage);
     }
 
     MEM_STRONG_INLINE module module::named(const char* name)
