@@ -28,8 +28,6 @@
 #include <cstddef>
 #include <cstring>
 
-#include <string>
-
 namespace mem
 {
     class pointer;
@@ -141,12 +139,6 @@ namespace mem
 #if defined(MEM_PLATFORM_WINDOWS)
         protect unprotect() const noexcept;
 #endif // MEM_PLATFORM_WINDOWS
-
-        bool is_ascii() const noexcept;
-        bool is_utf8() const noexcept;
-
-        std::string str() const;
-        std::string hex(bool upper_case = true, bool padded = false) const;
     };
 
 #if defined(MEM_PLATFORM_WINDOWS)
@@ -424,105 +416,6 @@ namespace mem
         return protect(*this, PAGE_EXECUTE_READWRITE);
     }
 #endif // MEM_PLATFORM_WINDOWS
-
-    namespace detail
-    {
-        static MEM_CONSTEXPR const int8_t utf8_length_table[256]
-        {
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-            2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-            2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-            3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
-            4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,
-        };
-    }
-
-    inline bool region::is_ascii() const noexcept
-    {
-        for (size_t i = 0; i < size;)
-        {
-            const size_t length = detail::utf8_length_table[start.at<const uint8_t>(i)];
-
-            if (length != 1)
-            {
-                return false;
-            }
-
-            i += length;
-        }
-
-        return true;
-    }
-
-    inline bool region::is_utf8() const noexcept
-    {
-        for (size_t i = 0; i < size;)
-        {
-            const size_t length = detail::utf8_length_table[start.at<const uint8_t>(i)];
-
-            if (length == 0)
-            {
-                return false;
-            }
-
-            if ((i + length) > size)
-            {
-                return false;
-            }
-
-            for (size_t j = 1; j < length; ++j)
-            {
-                if ((start.at<const uint8_t>(i + j) & 0xC0) != 0x80)
-                {
-                    return false;
-                }
-            }
-
-            i += length;
-        }
-
-        return true;
-    }
-
-    inline std::string region::str() const
-    {
-        return std::string(start.as<const char*>(), size);
-    }
-
-    inline std::string region::hex(bool upper_case, bool padded) const
-    {
-        const char* const char_hex_table = upper_case ? "0123456789ABCDEF" : "0123456789abcdef";
-
-        std::string result;
-
-        result.reserve(size * (padded ? 3 : 2));
-
-        for (size_t i = 0; i < size; ++i)
-        {
-            const uint8_t v = start.at<const uint8_t>(i);
-
-            if (i && padded)
-            {
-                result.push_back(' ');
-            }
-
-            result.push_back(char_hex_table[(v >> 4) & 0xF]);
-            result.push_back(char_hex_table[(v >> 0) & 0xF]);
-        }
-
-        return result;
-    }
 
 #if defined(MEM_PLATFORM_WINDOWS)
     MEM_STRONG_INLINE protect::protect(const region& region, DWORD new_protect)
