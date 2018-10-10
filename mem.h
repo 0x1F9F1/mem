@@ -55,8 +55,6 @@ namespace mem
         template <typename T, typename C>
         pointer(T C::* const value) noexcept;
 
-        MEM_CONSTEXPR bool null() const noexcept;
-
         MEM_CONSTEXPR pointer add(const ptrdiff_t value) const noexcept;
         MEM_CONSTEXPR pointer sub(const ptrdiff_t value) const noexcept;
 
@@ -90,6 +88,8 @@ namespace mem
 
         MEM_CONSTEXPR bool operator<=(const pointer& value) const noexcept;
         MEM_CONSTEXPR bool operator>=(const pointer& value) const noexcept;
+
+        MEM_CONSTEXPR bool operator!() const noexcept;
 
         template <typename T>
         MEM_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
@@ -194,11 +194,6 @@ namespace mem
         : value_(reinterpret_cast<const uintptr_t&>(value))
     {
         static_assert(sizeof(value) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
-    }
-
-    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::null() const noexcept
-    {
-        return !value_;
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer pointer::add(const ptrdiff_t value) const noexcept
@@ -317,6 +312,11 @@ namespace mem
     MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator>=(const pointer& value) const noexcept
     {
         return value_ >= value.value_;
+    }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator!() const noexcept
+    {
+        return !value_;
     }
 
     template <typename T>
