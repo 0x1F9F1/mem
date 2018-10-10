@@ -158,7 +158,7 @@ namespace mem
         protect(protect&&) noexcept;
         protect(const protect&) = delete;
 
-        operator bool() const noexcept;
+        explicit operator bool() const noexcept;
     };
 
     class module
