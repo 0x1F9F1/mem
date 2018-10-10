@@ -4,6 +4,7 @@
 #define MEM_AUTO_PLATFORM
 #include "..\mem.h"
 #include "..\mem_scoped_seh.h"
+#include "..\mem_pattern.h"
 
 #include <string>
 
@@ -51,9 +52,9 @@ void check_pattern_results(const mem::region& whole_region, const char* pattern,
 
     mem::pattern pat(pattern);
 
-    mem::region scan_region = whole_region.sub_region(whole_region.base.add(whole_region.size - scan_data.size()));
+    mem::region scan_region = whole_region.sub_region(whole_region.start.add(whole_region.size - scan_data.size()));
 
-    Assert(scan_region.base == whole_region.base.add(whole_region.size - scan_data.size()), "Invalid Scan Region Address");
+    Assert(scan_region.start == whole_region.start.add(whole_region.size - scan_data.size()), "Invalid Scan Region Address");
     Assert(scan_region.size == scan_data.size(), "Invalid Scan Region Size");
 
     scan_region.copy(scan_data.data());
@@ -66,7 +67,7 @@ void check_pattern_results(const mem::region& whole_region, const char* pattern,
 
     for (auto result : scan_results)
     {
-        scan_results_set.emplace(result - scan_region.base);
+        scan_results_set.emplace(result - scan_region.start);
     }
 
     Assert(scan_results_set.size() == offsets.size(), "Invalid Result Count");
