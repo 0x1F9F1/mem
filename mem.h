@@ -91,6 +91,8 @@ namespace mem
 
         MEM_CONSTEXPR bool operator!() const noexcept;
 
+        MEM_CONSTEXPR explicit operator bool() const noexcept;
+
         template <typename T>
         MEM_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
 
@@ -317,6 +319,11 @@ namespace mem
     MEM_CONSTEXPR MEM_STRONG_INLINE bool pointer::operator!() const noexcept
     {
         return !value_;
+    }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer::operator bool() const noexcept
+    {
+        return value_;
     }
 
     template <typename T>
