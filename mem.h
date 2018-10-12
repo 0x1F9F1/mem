@@ -60,8 +60,8 @@ namespace mem
 
         MEM_CONSTEXPR pointer shift(const pointer& from, const pointer& to) const noexcept;
 
-        MEM_CONSTEXPR pointer aligned_up(const size_t alignment) const noexcept;
-        MEM_CONSTEXPR pointer aligned_down(const size_t alignment) const noexcept;
+        MEM_CONSTEXPR pointer align_up(const size_t alignment) const noexcept;
+        MEM_CONSTEXPR pointer align_down(const size_t alignment) const noexcept;
 
 #if defined(MEM_ARCH_X86_64)
         pointer rip(const uint8_t offset) const noexcept;
@@ -216,19 +216,12 @@ namespace mem
         return (value_ - from.value_) + to.value_;
     }
 
-    MEM_CONSTEXPR pointer pointer::aligned_up(const size_t alignment) const noexcept
+    MEM_CONSTEXPR pointer pointer::align_up(const size_t alignment) const noexcept
     {
-        const size_t remainder = value_ % alignment;
-
-        if (remainder)
-        {
-            return value_ + (alignment - remainder);
-        }
-
-        return *this;
+        return (value_ + alignment - 1) / alignment * alignment;
     }
 
-    MEM_CONSTEXPR pointer pointer::aligned_down(const size_t alignment) const noexcept
+    MEM_CONSTEXPR pointer pointer::align_down(const size_t alignment) const noexcept
     {
         return value_ - (value_ % alignment);
     }

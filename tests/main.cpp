@@ -194,6 +194,18 @@ void check_bounds()
     static_assert(mem::region(0x1234, 4).contains<int>(0x1234), "Region Checking Failed");
 }
 
+void check_aligning()
+{
+    static_assert(mem::pointer(13).align_down(1) == 13, "Bad Alignment");
+    static_assert(mem::pointer(13).align_up(1)   == 13, "Bad Alignment");
+
+    static_assert(mem::pointer(13).align_down(2) == 12, "Bad Alignment");
+    static_assert(mem::pointer(13).align_up(2)   == 14, "Bad Alignment");
+
+    static_assert(mem::pointer(13).align_down(5) == 10, "Bad Alignment");
+    static_assert(mem::pointer(13).align_up(5)   == 15, "Bad Alignment");
+}
+
 int main()
 {
     check_pattern_parsing();
@@ -201,6 +213,8 @@ int main()
     check_patterns();
 
     check_bounds();
+
+    check_aligning();
 
     printf("Done\n");
 
