@@ -38,6 +38,8 @@ namespace mem
     class module;
 #endif // MEM_PLATFORM_WINDOWS
 
+    using byte = unsigned char;
+
     class pointer
     {
     protected:
