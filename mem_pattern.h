@@ -74,8 +74,8 @@ namespace mem
     class pattern
     {
     protected:
-        std::vector<uint8_t> bytes_ {};
-        std::vector<uint8_t> masks_ {};
+        std::vector<byte> bytes_ {};
+        std::vector<byte> masks_ {};
 
         // Boyer–Moore + Boyer–Moore–Horspool Implementation
         std::vector<size_t> bad_char_skips_ {};
@@ -99,7 +99,7 @@ namespace mem
         pattern(const void* pattern, const void* mask, size_t length, const pattern_settings& settings = {});
 
         template <typename UnaryPredicate>
-        pointer scan_predicate(region range, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))));
+        pointer scan_predicate(region range, UnaryPredicate pred) const;
 
         pointer scan(region range) const noexcept;
 
@@ -107,8 +107,8 @@ namespace mem
 
         std::vector<pointer> scan_all(region range) const;
 
-        const std::vector<uint8_t>& bytes() const noexcept;
-        const std::vector<uint8_t>& masks() const noexcept;
+        const std::vector<byte>& bytes() const noexcept;
+        const std::vector<byte>& masks() const noexcept;
 
         size_t size() const noexcept;
     };
@@ -216,8 +216,8 @@ namespace mem
                 {
                     const char c = pattern[i];
 
-                    bytes_[i] = static_cast<uint8_t>(c);
-                    masks_[i] = 0xFF;
+                    bytes_[i] = static_cast<byte>(c);
+                    masks_[i] = byte(~0);
                 }
             }
         }
@@ -232,8 +232,8 @@ namespace mem
             {
                 const char c = pattern[i];
 
-                bytes_[i] = static_cast<uint8_t>(c);
-                masks_[i] = 0xFF;
+                bytes_[i] = static_cast<byte>(c);
+                masks_[i] = byte(~0);
             }
         }
 
@@ -249,8 +249,8 @@ namespace mem
 
             for (size_t i = 0; i < length; ++i)
             {
-                const uint8_t v = static_cast<const uint8_t*>(pattern)[i];
-                const uint8_t m = static_cast<const uint8_t*>(mask)[i];
+                const byte v = static_cast<const byte*>(pattern)[i];
+                const byte m = static_cast<const byte*>(mask)[i];
 
                 bytes_[i] = v & m;
                 masks_[i] = m;
@@ -263,8 +263,8 @@ namespace mem
 
             for (size_t i = 0; i < length; ++i)
             {
-                bytes_[i] = static_cast<const uint8_t*>(pattern)[i];
-                masks_[i] = 0xFF;
+                bytes_[i] = static_cast<const byte*>(pattern)[i];
+                masks_[i] = byte(~0);
             }
         }
 
@@ -416,7 +416,7 @@ namespace mem
     }
 
     template <typename UnaryPredicate>
-    MEM_NOINLINE pointer pattern::scan_predicate(region range, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
+    MEM_NOINLINE pointer pattern::scan_predicate(region range, UnaryPredicate pred) const
     {
         if (bytes_.empty())
         {
@@ -431,16 +431,16 @@ namespace mem
             return nullptr;
         }
 
-        const uint8_t* const region_base = range.start.as<const uint8_t*>();
-        const uint8_t* const region_end = region_base + region_size;
+        const byte* const region_base = range.start.as<const byte*>();
+        const byte* const region_end = region_base + region_size;
 
-        const uint8_t* current = region_base;
-        const uint8_t* const end = region_end - original_size;
+        const byte* current = region_base;
+        const byte* const end = region_end - original_size;
 
         const size_t last = bytes_.size() - 1;
 
-        const uint8_t* const bytes = bytes_.data();
-        const uint8_t* const masks = !masks_.empty() ? masks_.data() : nullptr;
+        const byte* const bytes = bytes_.data();
+        const byte* const masks = !masks_.empty() ? masks_.data() : nullptr;
 
         const size_t* const skips = !bad_char_skips_.empty() ? bad_char_skips_.data() : nullptr;
 
@@ -504,7 +504,7 @@ namespace mem
             if (suffixes)
             {
                 current += last;
-                const uint8_t* const end_plus_last = end + last;
+                const byte* const end_plus_last = end + last;
 
                 for (; MEM_LIKELY(current <= end_plus_last);)
                 {
@@ -616,12 +616,12 @@ namespace mem
             return false;
         }
 
-        const uint8_t* current = address.as<const uint8_t*>();
+        const byte* current = address.as<const byte*>();
 
         const size_t last = bytes_.size() - 1;
 
-        const uint8_t* const bytes = bytes_.data();
-        const uint8_t* const masks = !masks_.empty() ? masks_.data() : nullptr;
+        const byte* const bytes = bytes_.data();
+        const byte* const masks = !masks_.empty() ? masks_.data() : nullptr;
 
         if (masks)
         {
@@ -657,7 +657,7 @@ namespace mem
     {
         std::vector<pointer> results;
 
-        scan_predicate(range, [&results] (const uint8_t* result)
+        scan_predicate(range, [&results] (pointer result)
         {
             results.emplace_back(result);
 
@@ -667,12 +667,12 @@ namespace mem
         return results;
     }
 
-    MEM_STRONG_INLINE const std::vector<uint8_t>& pattern::bytes() const noexcept
+    MEM_STRONG_INLINE const std::vector<byte>& pattern::bytes() const noexcept
     {
         return bytes_;
     }
 
-    MEM_STRONG_INLINE const std::vector<uint8_t>& pattern::masks() const noexcept
+    MEM_STRONG_INLINE const std::vector<byte>& pattern::masks() const noexcept
     {
         return masks_;
     }
