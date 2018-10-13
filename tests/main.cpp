@@ -5,6 +5,7 @@
 #include "..\mem.h"
 #include "..\mem_scoped_seh.h"
 #include "..\mem_pattern.h"
+#include "..\mem_utils.h"
 
 #include <string>
 
@@ -166,13 +167,6 @@ void check_pattern_parsing()
 
 void check_bounds()
 {
-    /*
-        MEM_CONSTEXPR bool contains(const region& value) const noexcept;
-
-        MEM_CONSTEXPR bool contains(const pointer& value) const noexcept;
-        MEM_CONSTEXPR bool contains(const pointer& value, const size_t size) const noexcept;
-    */
-
     static_assert(mem::region(0x1234, 0x10).contains(mem::region(0x1234, 0x10)), "Region Checking Failed");
     static_assert(!mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x10)), "Region Checking Failed");
     static_assert(mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x09)), "Region Checking Failed");
@@ -204,6 +198,12 @@ void check_aligning()
 
     static_assert(mem::pointer(13).align_down(5) == 10, "Bad Alignment");
     static_assert(mem::pointer(13).align_up(5)   == 15, "Bad Alignment");
+
+    static_assert(mem::pointer(16).align_down(5) == 15, "Bad Alignment");
+    static_assert(mem::pointer(14).align_up(5)   == 15, "Bad Alignment");
+
+    static_assert(mem::pointer(15).align_down(15) == 15, "Bad Alignment");
+    static_assert(mem::pointer(15).align_up(15)   == 15, "Bad Alignment");
 }
 
 int main()
