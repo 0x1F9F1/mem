@@ -27,16 +27,16 @@
 namespace mem
 {
     template <typename T>
-    typename std::add_lvalue_reference<T>::type field(const pointer& base, const ptrdiff_t offset = 0) noexcept;
+    typename std::add_lvalue_reference<T>::type field(pointer base, const ptrdiff_t offset = 0) noexcept;
 
-    bool is_ascii(const region& region) noexcept;
-    bool is_utf8(const region& region) noexcept;
+    bool is_ascii(region range) noexcept;
+    bool is_utf8(region range) noexcept;
 
-    std::string as_string(const region& region);
-    std::string as_hex(const region& region, bool upper_case = true, bool padded = true);
+    std::string as_string(region range);
+    std::string as_hex(region range, bool upper_case = true, bool padded = true);
 
     template <typename T>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(const pointer& base, const ptrdiff_t offset) noexcept
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(pointer base, const ptrdiff_t offset) noexcept
     {
         return base.at<T>(offset);
     }
@@ -64,11 +64,11 @@ namespace mem
         };
     }
 
-    inline bool is_ascii(const region& region) noexcept
+    inline bool is_ascii(region range) noexcept
     {
-        for (size_t i = 0; i < region.size;)
+        for (size_t i = 0; i < range.size;)
         {
-            const size_t length = detail::utf8_length_table[region.start.at<const uint8_t>(i)];
+            const size_t length = detail::utf8_length_table[range.start.at<const uint8_t>(i)];
 
             if (length != 1)
             {
@@ -81,25 +81,25 @@ namespace mem
         return true;
     }
 
-    inline bool is_utf8(const region& region) noexcept
+    inline bool is_utf8(region range) noexcept
     {
-        for (size_t i = 0; i < region.size;)
+        for (size_t i = 0; i < range.size;)
         {
-            const size_t length = detail::utf8_length_table[region.start.at<const uint8_t>(i)];
+            const size_t length = detail::utf8_length_table[range.start.at<const uint8_t>(i)];
 
             if (length == 0)
             {
                 return false;
             }
 
-            if ((i + length) > region.size)
+            if ((i + length) > range.size)
             {
                 return false;
             }
 
             for (size_t j = 1; j < length; ++j)
             {
-                if ((region.start.at<const uint8_t>(i + j) & 0xC0) != 0x80)
+                if ((range.start.at<const uint8_t>(i + j) & 0xC0) != 0x80)
                 {
                     return false;
                 }
@@ -111,27 +111,27 @@ namespace mem
         return true;
     }
 
-    inline std::string as_string(const region& region)
+    inline std::string as_string(region range)
     {
-        return std::string(region.start.as<const char*>(), region.size);
+        return std::string(range.start.as<const char*>(), range.size);
     }
 
-    inline std::string as_hex(const region& region, bool upper_case, bool padded)
+    inline std::string as_hex(region range, bool upper_case, bool padded)
     {
         const char* const char_hex_table = upper_case ? "0123456789ABCDEF" : "0123456789abcdef";
 
         std::string result;
 
-        result.reserve(region.size * (padded ? 3 : 2));
+        result.reserve(range.size * (padded ? 3 : 2));
 
-        for (size_t i = 0; i < region.size; ++i)
+        for (size_t i = 0; i < range.size; ++i)
         {
             if (i && padded)
             {
                 result.push_back(' ');
             }
 
-            const uint8_t value = region.start.at<const uint8_t>(i);
+            const uint8_t value = range.start.at<const uint8_t>(i);
 
             result.push_back(char_hex_table[(value >> 4) & 0xF]);
             result.push_back(char_hex_table[(value >> 0) & 0xF]);

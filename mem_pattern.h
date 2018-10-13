@@ -86,8 +86,8 @@ namespace mem
 
         size_t get_longest_run(size_t& length) const;
 
-        bool is_prefix(const size_t pos) const;
-        size_t get_suffix_length(const size_t pos) const;
+        bool is_prefix(size_t pos) const;
+        size_t get_suffix_length(size_t pos) const;
 
         void finalize(const pattern_settings& settings);
 
@@ -96,16 +96,16 @@ namespace mem
 
         pattern(const char* pattern, const pattern_settings& settings = {});
         pattern(const char* pattern, const char* mask, const pattern_settings& settings = {});
-        pattern(const void* pattern, const void* mask, const size_t length, const pattern_settings& settings = {});
+        pattern(const void* pattern, const void* mask, size_t length, const pattern_settings& settings = {});
 
         template <typename UnaryPredicate>
-        pointer scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))));
+        pointer scan_predicate(region range, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))));
 
-        pointer scan(const region& region) const noexcept;
+        pointer scan(region range) const noexcept;
 
-        bool match(const pointer& address) const noexcept;
+        bool match(pointer address) const noexcept;
 
-        std::vector<pointer> scan_all(const region& region) const;
+        std::vector<pointer> scan_all(region range) const;
 
         const std::vector<uint8_t>& bytes() const noexcept;
         const std::vector<uint8_t>& masks() const noexcept;
@@ -240,7 +240,7 @@ namespace mem
         finalize(settings);
     }
 
-    inline pattern::pattern(const void* pattern, const void* mask, const size_t length, const pattern_settings& settings)
+    inline pattern::pattern(const void* pattern, const void* mask, size_t length, const pattern_settings& settings)
     {
         if (mask)
         {
@@ -309,7 +309,7 @@ namespace mem
         return skip_pos;
     }
 
-    inline bool pattern::is_prefix(const size_t pos) const
+    inline bool pattern::is_prefix(size_t pos) const
     {
         const size_t suffix_length = bytes_.size() - pos;
 
@@ -324,7 +324,7 @@ namespace mem
         return true;
     }
 
-    inline size_t pattern::get_suffix_length(const size_t pos) const
+    inline size_t pattern::get_suffix_length(size_t pos) const
     {
         const size_t last = bytes_.size() - 1;
 
@@ -416,7 +416,7 @@ namespace mem
     }
 
     template <typename UnaryPredicate>
-    MEM_NOINLINE pointer pattern::scan_predicate(const region& region, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
+    MEM_NOINLINE pointer pattern::scan_predicate(region range, UnaryPredicate pred) const noexcept(noexcept(pred(static_cast<const uint8_t*>(nullptr))))
     {
         if (bytes_.empty())
         {
@@ -424,14 +424,14 @@ namespace mem
         }
 
         const size_t original_size = original_size_;
-        const size_t region_size = region.size;
+        const size_t region_size = range.size;
 
         if (original_size > region_size)
         {
             return nullptr;
         }
 
-        const uint8_t* const region_base = region.start.as<const uint8_t*>();
+        const uint8_t* const region_base = range.start.as<const uint8_t*>();
         const uint8_t* const region_end = region_base + region_size;
 
         const uint8_t* current = region_base;
@@ -604,12 +604,12 @@ namespace mem
         };
     }
 
-    inline pointer pattern::scan(const region& region) const noexcept
+    inline pointer pattern::scan(region range) const noexcept
     {
-        return scan_predicate(region, detail::always_true {});
+        return scan_predicate(range, detail::always_true {});
     }
 
-    inline bool pattern::match(const pointer& address) const noexcept
+    inline bool pattern::match(pointer address) const noexcept
     {
         if (bytes_.empty())
         {
@@ -653,11 +653,11 @@ namespace mem
         }
     }
 
-    inline std::vector<pointer> pattern::scan_all(const region& region) const
+    inline std::vector<pointer> pattern::scan_all(region range) const
     {
         std::vector<pointer> results;
 
-        scan_predicate(region, [&results] (const uint8_t* result)
+        scan_predicate(range, [&results] (const uint8_t* result)
         {
             results.emplace_back(result);
 
