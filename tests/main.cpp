@@ -33,17 +33,15 @@ void check_ida_pattern(const char* pattern, const void* bytes, const void* masks
 
     Assert(pat.size() == original_length, "Orignal Length: Expected %zu, Got %zu", original_length, pat.size());
 
-    Assert(pat.bytes().size() == actual_length, "Actual Bytes Length: Expected %zu, Got %zu", actual_length, pat.bytes().size());
+    Assert(pat.trimmed_size() == actual_length, "Actual Bytes Length: Expected %zu, Got %zu", actual_length, pat.trimmed_size());
 
-    Assert(!memcmp(bytes, pat.bytes().data(), pat.bytes().size()), "Invalid Pattern Bytes");
+    Assert(!memcmp(bytes, pat.bytes(), pat.trimmed_size()), "Invalid Pattern Bytes");
 
-    Assert(pat.masks().empty() == (masks == nullptr), "Invalid Masks");
+    Assert(pat.needs_masks() == (masks != nullptr), "Invalid Masks");
 
-    if (!pat.masks().empty())
+    if (masks)
     {
-        Assert(pat.masks().size() == actual_length, "Actual Masks Length: Expected %zu, Got %zu", actual_length, pat.masks().size());
-
-        Assert(!memcmp(masks, pat.masks().data(), pat.masks().size()), "Invalid Pattern Masks");
+        Assert(!memcmp(masks, pat.masks(), pat.trimmed_size()), "Invalid Pattern Masks");
     }
 }
 

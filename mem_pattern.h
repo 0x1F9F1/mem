@@ -82,7 +82,9 @@ namespace mem
         std::vector<size_t> good_suffix_skips_ {};
 
         size_t skip_pos_ {0};
-        size_t original_size_ {0};
+        size_t trimmed_size_ {0};
+
+        bool needs_masks_ {true};
 
         size_t get_longest_run(size_t& length) const;
 
@@ -107,10 +109,18 @@ namespace mem
 
         std::vector<pointer> scan_all(region range) const;
 
-        const std::vector<byte>& bytes() const noexcept;
-        const std::vector<byte>& masks() const noexcept;
+        const byte* bytes() const noexcept;
+        const byte* masks() const noexcept;
+
+        const size_t* bad_char_skips() const noexcept;
+        const size_t* good_suffix_skips() const noexcept;
 
         size_t size() const noexcept;
+        size_t trimmed_size() const noexcept;
+
+        size_t skip_pos() const noexcept;
+
+        bool needs_masks() const noexcept;
     };
 
     namespace detail
@@ -279,7 +289,7 @@ namespace mem
         {
             size_t current_skip = 0;
 
-            for (size_t i = 0; i < bytes_.size(); ++i)
+            for (size_t i = 0; i < trimmed_size(); ++i)
             {
                 if (masks_[i] != 0xFF)
                 {
@@ -300,7 +310,7 @@ namespace mem
             if (current_skip > max_skip)
             {
                 max_skip = current_skip;
-                skip_pos = bytes_.size() - current_skip;
+                skip_pos = trimmed_size() - current_skip;
             }
         }
 
@@ -311,7 +321,7 @@ namespace mem
 
     inline bool pattern::is_prefix(size_t pos) const
     {
-        const size_t suffix_length = bytes_.size() - pos;
+        const size_t suffix_length = trimmed_size() - pos;
 
         for (size_t i = 0; i < suffix_length; ++i)
         {
@@ -326,7 +336,7 @@ namespace mem
 
     inline size_t pattern::get_suffix_length(size_t pos) const
     {
-        const size_t last = bytes_.size() - 1;
+        const size_t last = trimmed_size() - 1;
 
         size_t i = 0;
 
@@ -348,22 +358,21 @@ namespace mem
             good_suffix_skips_.clear();
 
             skip_pos_ = 0;
-            original_size_ = 0;
+            trimmed_size_ = 0;
 
             return;
         }
 
-        original_size_ = bytes_.size();
-
-        size_t last_mask = masks_.size();
-
-        while (last_mask && (masks_[last_mask - 1] == 0x00))
         {
-            --last_mask;
-        }
+            size_t trimmed_size = bytes_.size();
 
-        bytes_.resize(last_mask);
-        masks_.resize(last_mask);
+            while (trimmed_size && (masks_[trimmed_size - 1] == 0x00))
+            {
+                --trimmed_size;
+            }
+
+            trimmed_size_ = trimmed_size;
+        }
 
         size_t max_skip = 0;
         size_t skip_pos = get_longest_run(max_skip);
@@ -379,19 +388,19 @@ namespace mem
             }
         }
 
-        if ((skip_pos == 0) && (max_skip == masks_.size()))
+        if ((skip_pos == 0) && (max_skip == trimmed_size()))
         {
-            masks_.clear();
+            needs_masks_ = false;
 
             if (!bad_char_skips_.empty() && (settings.min_good_suffix_skip > 0) && (max_skip > settings.min_good_suffix_skip))
             {
-                good_suffix_skips_.resize(bytes_.size());
+                good_suffix_skips_.resize(trimmed_size());
 
-                const size_t last = bytes_.size() - 1;
+                const size_t last = trimmed_size() - 1;
 
                 size_t last_prefix = last;
 
-                for (size_t i = bytes_.size(); i--;)
+                for (size_t i = trimmed_size(); i--;)
                 {
                     if (is_prefix(i + 1))
                     {
@@ -418,12 +427,12 @@ namespace mem
     template <typename UnaryPredicate>
     MEM_NOINLINE pointer pattern::scan_predicate(region range, UnaryPredicate pred) const
     {
-        if (bytes_.empty())
+        if (!trimmed_size())
         {
             return nullptr;
         }
 
-        const size_t original_size = original_size_;
+        const size_t original_size = size();
         const size_t region_size = range.size;
 
         if (original_size > region_size)
@@ -437,26 +446,26 @@ namespace mem
         const byte* current = region_base;
         const byte* const end = region_end - original_size;
 
-        const size_t last = bytes_.size() - 1;
+        const size_t last = trimmed_size() - 1;
 
-        const byte* const bytes = bytes_.data();
-        const byte* const masks = !masks_.empty() ? masks_.data() : nullptr;
+        const byte* const pat_bytes = bytes();
+        const size_t* const pat_skips = bad_char_skips();
 
-        const size_t* const skips = !bad_char_skips_.empty() ? bad_char_skips_.data() : nullptr;
-
-        if (masks)
+        if (needs_masks())
         {
-            if (skips)
-            {
-                const size_t skip_pos = skip_pos_;
+            const byte* const pat_masks = masks();
 
-                for (; MEM_LIKELY(current <= end); current += skips[current[skip_pos]])
+            if (pat_skips)
+            {
+                const size_t pad_skip_pos = skip_pos();
+
+                for (; MEM_LIKELY(current <= end); current += pat_skips[current[pad_skip_pos]])
                 {
                     size_t i = last;
 
                     do
                     {
-                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                        if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                         {
                             goto mask_skip_next;
                         }
@@ -480,7 +489,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                        if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                         {
                             goto mask_noskip_next;
                         }
@@ -499,9 +508,9 @@ namespace mem
         }
         else
         {
-            const size_t* const suffixes = !good_suffix_skips_.empty() ? good_suffix_skips_.data() : nullptr;
+            const size_t* const pat_suffixes = good_suffix_skips();
 
-            if (suffixes)
+            if (pat_suffixes)
             {
                 current += last;
                 const byte* const end_plus_last = end + last;
@@ -512,7 +521,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY(*current != bytes[i]))
+                        if (MEM_LIKELY(*current != pat_bytes[i]))
                         {
                             goto suffix_skip_next;
                         }
@@ -533,23 +542,23 @@ namespace mem
                     }
 
                 suffix_skip_next:
-                    const size_t bc_skip = skips[*current];
-                    const size_t gs_skip = suffixes[i];
+                    const size_t bc_skip = pat_skips[*current];
+                    const size_t gs_skip = pat_suffixes[i];
 
                     current += (bc_skip > gs_skip) ? bc_skip : gs_skip;
                 }
 
                 return nullptr;
             }
-            else if (skips)
+            else if (pat_skips)
             {
-                for (; MEM_LIKELY(current <= end); current += skips[current[last]])
+                for (; MEM_LIKELY(current <= end); current += pat_skips[current[last]])
                 {
                     size_t i = last;
 
                     do
                     {
-                        if (MEM_LIKELY(current[i] != bytes[i]))
+                        if (MEM_LIKELY(current[i] != pat_bytes[i]))
                         {
                             goto nomask_skip_next;
                         }
@@ -573,7 +582,7 @@ namespace mem
 
                     do
                     {
-                        if (MEM_LIKELY(current[i] != bytes[i]))
+                        if (MEM_LIKELY(current[i] != pat_bytes[i]))
                         {
                             goto nomask_noskip_next;
                         }
@@ -611,25 +620,26 @@ namespace mem
 
     inline bool pattern::match(pointer address) const noexcept
     {
-        if (bytes_.empty())
+        const byte* const pat_bytes = bytes();
+
+        if (!pat_bytes)
         {
             return false;
         }
 
         const byte* current = address.as<const byte*>();
 
-        const size_t last = bytes_.size() - 1;
+        const size_t last = trimmed_size() - 1;
 
-        const byte* const bytes = bytes_.data();
-        const byte* const masks = !masks_.empty() ? masks_.data() : nullptr;
-
-        if (masks)
+        if (needs_masks())
         {
+            const byte* const pat_masks = masks();
+
             size_t i = last;
 
             do
             {
-                if (MEM_LIKELY((current[i] & masks[i]) != bytes[i]))
+                if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                 {
                     return false;
                 }
@@ -643,7 +653,7 @@ namespace mem
 
             do
             {
-                if (MEM_LIKELY(current[i] != bytes[i]))
+                if (MEM_LIKELY(current[i] != pat_bytes[i]))
                 {
                     return false;
                 }
@@ -667,19 +677,44 @@ namespace mem
         return results;
     }
 
-    MEM_STRONG_INLINE const std::vector<byte>& pattern::bytes() const noexcept
+    MEM_STRONG_INLINE const byte* pattern::bytes() const noexcept
     {
-        return bytes_;
+        return !bytes_.empty() ? bytes_.data() : nullptr;
     }
 
-    MEM_STRONG_INLINE const std::vector<byte>& pattern::masks() const noexcept
+    MEM_STRONG_INLINE const byte* pattern::masks() const noexcept
     {
-        return masks_;
+        return !masks_.empty() ? masks_.data() : nullptr;
+    }
+
+    MEM_STRONG_INLINE const size_t* pattern::bad_char_skips() const noexcept
+    {
+        return !bad_char_skips_.empty() ? bad_char_skips_.data() : nullptr;
+    }
+
+    MEM_STRONG_INLINE const size_t* pattern::good_suffix_skips() const noexcept
+    {
+        return !good_suffix_skips_.empty() ? good_suffix_skips_.data() : nullptr;
     }
 
     MEM_STRONG_INLINE size_t pattern::size() const noexcept
     {
-        return original_size_;
+        return bytes_.size();
+    }
+
+    MEM_STRONG_INLINE size_t pattern::trimmed_size() const noexcept
+    {
+        return trimmed_size_;
+    }
+
+    MEM_STRONG_INLINE size_t pattern::skip_pos() const noexcept
+    {
+        return skip_pos_;
+    }
+
+    MEM_STRONG_INLINE bool pattern::needs_masks() const noexcept
+    {
+        return needs_masks_;
     }
 }
 
