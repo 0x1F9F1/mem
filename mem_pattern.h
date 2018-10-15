@@ -96,9 +96,9 @@ namespace mem
     public:
         pattern() = default;
 
-        pattern(const char* pattern, const pattern_settings& settings = {});
-        pattern(const char* pattern, const char* mask, const pattern_settings& settings = {});
-        pattern(const void* pattern, const void* mask, size_t length, const pattern_settings& settings = {});
+        pattern(const char* bytes, const pattern_settings& settings = {});
+        pattern(const char* bytes, const char* masks, const pattern_settings& settings = {});
+        pattern(const void* bytes, const void* masks, size_t length, const pattern_settings& settings = {});
 
         template <typename UnaryPredicate>
         pointer scan_predicate(region range, UnaryPredicate pred) const;
@@ -149,7 +149,7 @@ namespace mem
         };
     }
 
-    inline pattern::pattern(const char* pattern, const pattern_settings& settings)
+    inline pattern::pattern(const char* bytes, const pattern_settings& settings)
     {
         while (true)
         {
@@ -159,7 +159,7 @@ namespace mem
             char c = 0;
             size_t i = 0;
 
-            while ((c = *pattern++) != '\0')
+            while ((c = *bytes++) != '\0')
             {
                 const int8_t value = detail::hex_char_table[static_cast<uint8_t>(c)];
                 const bool is_wildcard = c == settings.wildcard;
@@ -206,7 +206,7 @@ namespace mem
         finalize(settings);
     }
 
-    inline pattern::pattern(const char* pattern, const char* mask, const pattern_settings& settings)
+    inline pattern::pattern(const char* bytes, const char* mask, const pattern_settings& settings)
     {
         if (mask)
         {
@@ -224,7 +224,7 @@ namespace mem
                 }
                 else
                 {
-                    const char c = pattern[i];
+                    const char c = bytes[i];
 
                     bytes_[i] = static_cast<byte>(c);
                     masks_[i] = byte(~0);
@@ -233,14 +233,14 @@ namespace mem
         }
         else
         {
-            const size_t size = strlen(pattern);
+            const size_t size = strlen(bytes);
 
             bytes_.resize(size);
             masks_.resize(size);
 
             for (size_t i = 0; i < size; ++i)
             {
-                const char c = pattern[i];
+                const char c = bytes[i];
 
                 bytes_[i] = static_cast<byte>(c);
                 masks_[i] = byte(~0);
@@ -250,7 +250,7 @@ namespace mem
         finalize(settings);
     }
 
-    inline pattern::pattern(const void* pattern, const void* mask, size_t length, const pattern_settings& settings)
+    inline pattern::pattern(const void* bytes, const void* mask, size_t length, const pattern_settings& settings)
     {
         if (mask)
         {
@@ -259,7 +259,7 @@ namespace mem
 
             for (size_t i = 0; i < length; ++i)
             {
-                const byte v = static_cast<const byte*>(pattern)[i];
+                const byte v = static_cast<const byte*>(bytes)[i];
                 const byte m = static_cast<const byte*>(mask)[i];
 
                 bytes_[i] = v & m;
@@ -273,7 +273,7 @@ namespace mem
 
             for (size_t i = 0; i < length; ++i)
             {
-                bytes_[i] = static_cast<const byte*>(pattern)[i];
+                bytes_[i] = static_cast<const byte*>(bytes)[i];
                 masks_[i] = byte(~0);
             }
         }
