@@ -2,10 +2,10 @@
 #include <Windows.h>
 
 #define MEM_AUTO_PLATFORM
-#include "..\mem.h"
-#include "..\mem_scoped_seh.h"
-#include "..\mem_pattern.h"
-#include "..\mem_utils.h"
+#include <mem/mem.h>
+#include <mem/scoped_seh.h>
+#include <mem/pattern.h>
+#include <mem/utils.h>
 
 #include <string>
 

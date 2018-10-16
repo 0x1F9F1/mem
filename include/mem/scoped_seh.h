@@ -20,7 +20,7 @@
 #if !defined(MEM_SCOPED_SEH_BRICK_H)
 #define MEM_SCOPED_SEH_BRICK_H
 
-#include "mem_defines.h"
+#include "defines.h"
 
 #if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
 # if !defined(MEM_PLATFORM_WINDOWS)

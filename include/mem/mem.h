@@ -20,7 +20,7 @@
 #if !defined(MEM_BRICK_H)
 #define MEM_BRICK_H
 
-#include "mem_defines.h"
+#include "defines.h"
 
 #include <type_traits>
 

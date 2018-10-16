@@ -20,7 +20,7 @@
 #if !defined(MEM_ALIGNED_ALLOCATOR_BRICK_H)
 #define MEM_ALIGNED_ALLOCATOR_BRICK_H
 
-#include "mem_defines.h"
+#include "defines.h"
 
 #include <memory>
 #include <malloc.h>
