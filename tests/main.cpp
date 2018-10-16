@@ -30,37 +30,40 @@
 
 #include <gtest/gtest.h>
 
-void check_ida_pattern(const char* pattern, size_t original_size, size_t trimmed_size, bool needs_masks, const void* bytes, const void* masks)
+void check_pattern(const mem::pattern& pattern, size_t original_size, size_t trimmed_size, bool needs_masks, const void* bytes, const void* masks)
 {
-    mem::pattern pat(pattern);
+    EXPECT_EQ(pattern.size(), original_size);
+    EXPECT_EQ(pattern.trimmed_size(), trimmed_size);
+    EXPECT_EQ(pattern.needs_masks(), needs_masks);
 
-    EXPECT_EQ(pat.size(), original_size);
-    EXPECT_EQ(pat.trimmed_size(), trimmed_size);
-    EXPECT_EQ(pat.needs_masks(), needs_masks);
-
-    EXPECT_FALSE(memcmp(bytes, pat.bytes(), pat.size()));
-    EXPECT_FALSE(memcmp(masks, pat.masks(), pat.size()));
+    EXPECT_EQ(memcmp(bytes, pattern.bytes(), pattern.size()), 0);
+    EXPECT_EQ(memcmp(masks, pattern.masks(), pattern.size()), 0);
 }
 
-TEST(pattern, ida)
+TEST(pattern, parse)
 {
-    check_ida_pattern("01 02 03 04 05", 5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
-    check_ida_pattern("1 2 3 4 5",      5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
-    check_ida_pattern("1 ?2 3 4? 5",    5, 5, true,  "\x01\x02\x03\x40\x05", "\xFF\x0F\xFF\xF0\xFF");
-    check_ida_pattern("1? ? 3 ?? 5?",   5, 5, true,  "\x10\x00\x03\x00\x50", "\xF0\x00\xFF\x00\xF0");
-    check_ida_pattern("?1 ? 3 ?? ?5",   5, 5, true,  "\x01\x00\x03\x00\x05", "\x0F\x00\xFF\x00\x0F");
-    check_ida_pattern("01?12???34",     5, 5, true,  "\x01\x01\x20\x00\x34", "\xFF\x0F\xF0\x00\xFF");
+    check_pattern(mem::pattern("01 02 03 04 05"), 5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
+    check_pattern(mem::pattern("1 2 3 4 5"),      5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
+    check_pattern(mem::pattern("1 ?2 3 4? 5"),    5, 5, true,  "\x01\x02\x03\x40\x05", "\xFF\x0F\xFF\xF0\xFF");
+    check_pattern(mem::pattern("1? ? 3 ?? 5?"),   5, 5, true,  "\x10\x00\x03\x00\x50", "\xF0\x00\xFF\x00\xF0");
+    check_pattern(mem::pattern("?1 ? 3 ?? ?5"),   5, 5, true,  "\x01\x00\x03\x00\x05", "\x0F\x00\xFF\x00\x0F");
+    check_pattern(mem::pattern("01?12???34"),     5, 5, true,  "\x01\x01\x20\x00\x34", "\xFF\x0F\xF0\x00\xFF");
 
-    check_ida_pattern("12345678", 4, 4, false, "\x12\x34\x56\x78", "\xFF\xFF\xFF\xFF");
+    check_pattern(mem::pattern("12345678"), 4, 4, false, "\x12\x34\x56\x78", "\xFF\xFF\xFF\xFF");
 
-    check_ida_pattern("? 01 02 03 04 ? ? ?", 8, 5, true, "\x00\x01\x02\x03\x04\x00\x00\x00", "\x00\xFF\xFF\xFF\xFF\x00\x00\x00");
+    check_pattern(mem::pattern("? 01 02 03 04 ? ? ?"), 8, 5, true, "\x00\x01\x02\x03\x04\x00\x00\x00", "\x00\xFF\xFF\xFF\xFF\x00\x00\x00");
+
+    check_pattern(mem::pattern("\x12\x34\x56\x78\xAB", "x?xx?"), 5, 4, true, "\x12\x00\x56\x78\x00", "\xFF\x00\xFF\xFF\x00");
+
+    check_pattern(mem::pattern("Hello", nullptr), 5, 5, false, "\x48\x65\x6C\x6C\x6F", "\xFF\xFF\xFF\xFF\xFF");
+
+    check_pattern(mem::pattern("\x12\x34\x56\x78\xAB", "\xFF\x00\xFF\xFF\x00", 5), 5, 4, true, "\x12\x00\x56\x78\x00", "\xFF\x00\xFF\xFF\x00");
+    check_pattern(mem::pattern("\x12\x34\x56\x78\xAB", nullptr, 5), 5, 5, false, "\x12\x34\x56\x78\xAB", "\xFF\xFF\xFF\xFF\xFF");
 }
 
-void check_pattern_results(const mem::region& whole_region, const char* pattern, const std::vector<uint8_t>& scan_data, const std::unordered_set<size_t>& offsets)
+void check_pattern_results(const mem::region& whole_region, const mem::pattern& pattern, const std::vector<uint8_t>& scan_data, const std::unordered_set<size_t>& offsets)
 {
     EXPECT_LE(scan_data.size(), whole_region.size);
-
-    mem::pattern pat(pattern);
 
     mem::region scan_region = whole_region.sub_region(whole_region.start.add(whole_region.size - scan_data.size()));
 
@@ -69,7 +72,7 @@ void check_pattern_results(const mem::region& whole_region, const char* pattern,
 
     scan_region.copy(scan_data.data());
 
-    auto scan_results = pat.scan_all(scan_region);
+    auto scan_results = pattern.scan_all(scan_region);
 
     EXPECT_EQ(scan_results.size(), offsets.size());
 
