@@ -1,66 +1,77 @@
+/*
+    Copyright 2018 Brick
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+    and associated documentation files (the "Software"), to deal in the Software without restriction,
+    including without limitation the rights to use, copy, modify, merge, publish, distribute,
+    sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or
+    substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <Windows.h>
 
-#define MEM_AUTO_PLATFORM
 #include <mem/mem.h>
-#include <mem/scoped_seh.h>
 #include <mem/pattern.h>
 #include <mem/utils.h>
 
 #include <string>
-
 #include <unordered_set>
 
-void Assert(bool value, const char* format, ...)
-{
-    if (!value)
-    {
-        va_list args;
-        va_start(args, format);
-        vprintf(format, args);
-        putchar('\n');
-        va_end(args);
+#include <gtest/gtest.h>
 
-        DebugBreak();
-
-        throw std::runtime_error("Assertion Failed");
-    }
-}
-
-void check_ida_pattern(const char* pattern, const void* bytes, const void* masks, const size_t original_length, const size_t actual_length)
+void check_ida_pattern(const char* pattern, size_t original_size, size_t trimmed_size, bool needs_masks, const void* bytes, const void* masks)
 {
     mem::pattern pat(pattern);
 
-    Assert(pat.size() == original_length, "Orignal Length: Expected %zu, Got %zu", original_length, pat.size());
+    EXPECT_EQ(pat.size(), original_size);
+    EXPECT_EQ(pat.trimmed_size(), trimmed_size);
+    EXPECT_EQ(pat.needs_masks(), needs_masks);
 
-    Assert(pat.trimmed_size() == actual_length, "Actual Bytes Length: Expected %zu, Got %zu", actual_length, pat.trimmed_size());
+    EXPECT_FALSE(memcmp(bytes, pat.bytes(), pat.size()));
+    EXPECT_FALSE(memcmp(masks, pat.masks(), pat.size()));
+}
 
-    Assert(!memcmp(bytes, pat.bytes(), pat.trimmed_size()), "Invalid Pattern Bytes");
+TEST(pattern, ida)
+{
+    check_ida_pattern("01 02 03 04 05", 5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
+    check_ida_pattern("1 2 3 4 5",      5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
+    check_ida_pattern("1 ?2 3 4? 5",    5, 5, true,  "\x01\x02\x03\x40\x05", "\xFF\x0F\xFF\xF0\xFF");
+    check_ida_pattern("1? ? 3 ?? 5?",   5, 5, true,  "\x10\x00\x03\x00\x50", "\xF0\x00\xFF\x00\xF0");
+    check_ida_pattern("?1 ? 3 ?? ?5",   5, 5, true,  "\x01\x00\x03\x00\x05", "\x0F\x00\xFF\x00\x0F");
+    check_ida_pattern("01?12???34",     5, 5, true,  "\x01\x01\x20\x00\x34", "\xFF\x0F\xF0\x00\xFF");
 
-    Assert(pat.needs_masks() == (masks != nullptr), "Invalid Masks");
+    check_ida_pattern("12345678", 4, 4, false, "\x12\x34\x56\x78", "\xFF\xFF\xFF\xFF");
 
-    if (masks)
-    {
-        Assert(!memcmp(masks, pat.masks(), pat.trimmed_size()), "Invalid Pattern Masks");
-    }
+    check_ida_pattern("? 01 02 03 04 ? ? ?", 8, 5, true, "\x00\x01\x02\x03\x04\x00\x00\x00", "\x00\xFF\xFF\xFF\xFF\x00\x00\x00");
 }
 
 void check_pattern_results(const mem::region& whole_region, const char* pattern, const std::vector<uint8_t>& scan_data, const std::unordered_set<size_t>& offsets)
 {
-    Assert(scan_data.size() <= whole_region.size, "Data Too Large");
+    EXPECT_LE(scan_data.size(), whole_region.size);
 
     mem::pattern pat(pattern);
 
     mem::region scan_region = whole_region.sub_region(whole_region.start.add(whole_region.size - scan_data.size()));
 
-    Assert(scan_region.start == whole_region.start.add(whole_region.size - scan_data.size()), "Invalid Scan Region Address");
-    Assert(scan_region.size == scan_data.size(), "Invalid Scan Region Size");
+    EXPECT_EQ(scan_region.start, whole_region.start.add(whole_region.size - scan_data.size()));
+    EXPECT_EQ(scan_region.size, scan_data.size());
 
     scan_region.copy(scan_data.data());
 
     auto scan_results = pat.scan_all(scan_region);
 
-    Assert(scan_results.size() == offsets.size(), "Incorrect Result Count");
+    EXPECT_EQ(scan_results.size(), offsets.size());
 
     std::unordered_set<size_t> scan_results_set;
 
@@ -69,15 +80,15 @@ void check_pattern_results(const mem::region& whole_region, const char* pattern,
         scan_results_set.emplace(result - scan_region.start);
     }
 
-    Assert(scan_results_set.size() == offsets.size(), "Invalid Result Count");
+    EXPECT_EQ(scan_results_set.size(), offsets.size());
 
     for (auto expected : offsets)
     {
-        Assert(scan_results_set.find(expected) != scan_results_set.end(), "Missing Result");
+        EXPECT_NE(scan_results_set.find(expected), scan_results_set.end());
     }
 }
 
-void check_patterns()
+TEST(pattern, scan)
 {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
@@ -93,128 +104,105 @@ void check_patterns()
 
     mem::region scan_region(data + si.dwPageSize, size - (2 * si.dwPageSize));
 
-    try
-    {
-        check_pattern_results(scan_region, "01 02 03 04 05", {
-            0x01, 0x02, 0x03, 0x04, 0x05
-        },{
-            0
-        });
+    check_pattern_results(scan_region, "01 02 03 04 05", {
+        0x01, 0x02, 0x03, 0x04, 0x05
+    },{
+        0
+    });
 
-        check_pattern_results(scan_region, "01 02 03 04 ?", {
-            0x01, 0x02, 0x03, 0x04, 0x05
-        },{
-            0
-        });
+    check_pattern_results(scan_region, "01 02 03 04 ?", {
+        0x01, 0x02, 0x03, 0x04, 0x05
+    },{
+        0
+    });
 
-        check_pattern_results(scan_region, "01 02 03 04 ?", {
-            0x01, 0x02, 0x03, 0x04
-        },{
+    check_pattern_results(scan_region, "01 02 03 04 ?", {
+        0x01, 0x02, 0x03, 0x04
+    },{
 
-        });
+    });
 
-        check_pattern_results(scan_region, "01 02 01 02 01", {
-            0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01
-        }, {
-            0, 2, 4, 6
-        });
+    check_pattern_results(scan_region, "01 02 01 02 01", {
+        0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01
+    }, {
+        0, 2, 4, 6
+    });
 
-        check_pattern_results(scan_region, "", {
+    check_pattern_results(scan_region, "", {
 
-        }, {
+    }, {
 
-        });
+    });
 
-        check_pattern_results(scan_region, "", {
-            0x01, 0x02, 0x03, 0x04, 0x05, 0x06
-        }, {
+    check_pattern_results(scan_region, "", {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+    }, {
 
-        });
+    });
 
-        check_pattern_results(scan_region, "01 ?2 3? 45", {
-            0x02, 0x59, 0x72, 0x01, 0x01, 0x02, 0x34, 0x45, 0x59, 0x92
-        }, {
-            4
-        });
+    check_pattern_results(scan_region, "01 ?2 3? 45", {
+        0x02, 0x59, 0x72, 0x01, 0x01, 0x02, 0x34, 0x45, 0x59, 0x92
+    }, {
+        4
+    });
 
-        check_pattern_results(scan_region, "01 ?2 3? 45", {
-            0x02, 0x59, 0x72, 0x01, 0x01, 0x02, 0x43, 0x45, 0x59, 0x92
-        }, {
+    check_pattern_results(scan_region, "01 ?2 3? 45", {
+        0x02, 0x59, 0x72, 0x01, 0x01, 0x02, 0x43, 0x45, 0x59, 0x92
+    }, {
 
-        });
-    }
-    catch (...)
-    {
-        Assert(false, "Exception Scanning");
-    }
+    });
 
     VirtualFree(data, 0, MEM_RELEASE);
 }
 
-void check_pattern_parsing()
+TEST(region, contains)
 {
-    check_ida_pattern("01 02 03 04 05", "\x01\x02\x03\x04\x05", nullptr, 5, 5);
-    check_ida_pattern("1 2 3 4 5", "\x01\x02\x03\x04\x05", nullptr, 5, 5);
-    check_ida_pattern("1 ?2 3 4? 5", "\x01\x02\x03\x40\x05", "\xFF\x0F\xFF\xF0\xFF", 5, 5);
-    check_ida_pattern("1? ? 3 ?? 5?", "\x10\x00\x03\x00\x50", "\xF0\x00\xFF\x00\xF0", 5, 5);
-    check_ida_pattern("?1 ? 3 ?? ?5", "\x01\x00\x03\x00\x05", "\x0F\x00\xFF\x00\x0F", 5, 5);
-    check_ida_pattern("12345678", "\x12\x34\x56\x78", nullptr, 4, 4);
-    check_ida_pattern("01?12???34", "\x01\x01\x20\x00\x34", "\xFF\x0F\xF0\x00\xFF", 5, 5);
-    check_ida_pattern("? 01 02 03 04 ? ? ?", "\x00\x01\x02\x03\x04", "\x00\xFF\xFF\xFF\xFF", 8, 5);
+    EXPECT_TRUE(mem::region(0x1234, 0x10).contains(mem::region(0x1234, 0x10)));
+    EXPECT_TRUE(mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x09)));
+    EXPECT_FALSE(mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x10)));
+
+    EXPECT_TRUE(mem::region(0x1234, 0x10).contains(0x1234, 0x10));
+    EXPECT_TRUE(mem::region(0x1234, 0x10).contains(0x1235, 0x09));
+    EXPECT_FALSE(mem::region(0x1234, 0x10).contains(0x1235, 0x10));
+
+    EXPECT_TRUE(mem::region(0x1234, 0x10).contains(0x1234));
+    EXPECT_TRUE(mem::region(0x1234, 0x10).contains(0x1234 + 0x9));
+    EXPECT_TRUE(mem::region(0x1234, 1).contains(0x1234));
+    EXPECT_FALSE(mem::region(0x1234, 0x10).contains(0x1233));
+    EXPECT_FALSE(mem::region(0x1234, 0x10).contains(0x1234 + 0x10));
+    EXPECT_FALSE(mem::region(0x1234, 0).contains(0x1234));
+
+    EXPECT_TRUE(mem::region(0x1234, 4).contains<int>(0x1234));
+    EXPECT_TRUE(mem::region(0x1234, 4).contains<int>(0x1234));
+    EXPECT_FALSE(mem::region(0x1234, 3).contains<int>(0x1234));
+    EXPECT_FALSE(mem::region(0x1235, 3).contains<int>(0x1234));
 }
 
-void check_bounds()
+void check_pointer_aligment(mem::pointer address, size_t alignment, mem::pointer aligned_down, mem::pointer aligned_up)
 {
-    static_assert(mem::region(0x1234, 0x10).contains(mem::region(0x1234, 0x10)), "Region Checking Failed");
-    static_assert(!mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x10)), "Region Checking Failed");
-    static_assert(mem::region(0x1234, 0x10).contains(mem::region(0x1235, 0x09)), "Region Checking Failed");
-
-    static_assert(mem::region(0x1234, 0x10).contains(0x1234, 0x10), "Region Checking Failed");
-    static_assert(!mem::region(0x1234, 0x10).contains(0x1235, 0x10), "Region Checking Failed");
-    static_assert(mem::region(0x1234, 0x10).contains(0x1235, 0x09), "Region Checking Failed");
-
-    static_assert(mem::region(0x1234, 0x10).contains(0x1234), "Region Checking Failed");
-    static_assert(!mem::region(0x1234, 0x10).contains(0x1233), "Region Checking Failed");
-    static_assert(mem::region(0x1234, 0x10).contains(0x1234 + 0x9), "Region Checking Failed");
-    static_assert(!mem::region(0x1234, 0x10).contains(0x1234 + 0x10), "Region Checking Failed");
-    static_assert(!mem::region(0x1234, 0).contains(0x1234), "Region Checking Failed");
-    static_assert(mem::region(0x1234, 1).contains(0x1234), "Region Checking Failed");
-
-    static_assert(mem::region(0x1234, 4).contains<int>(0x1234), "Region Checking Failed");
-    static_assert(!mem::region(0x1234, 3).contains<int>(0x1234), "Region Checking Failed");
-    static_assert(!mem::region(0x1235, 3).contains<int>(0x1234), "Region Checking Failed");
-    static_assert(mem::region(0x1234, 4).contains<int>(0x1234), "Region Checking Failed");
+    EXPECT_EQ(address.align_down(alignment), aligned_down);
+    EXPECT_EQ(address.align_up(alignment), aligned_up);
 }
 
-void check_aligning()
+TEST(pointer, align)
 {
-    static_assert(mem::pointer(13).align_down(1) == 13, "Bad Alignment");
-    static_assert(mem::pointer(13).align_up(1)   == 13, "Bad Alignment");
-
-    static_assert(mem::pointer(13).align_down(2) == 12, "Bad Alignment");
-    static_assert(mem::pointer(13).align_up(2)   == 14, "Bad Alignment");
-
-    static_assert(mem::pointer(13).align_down(5) == 10, "Bad Alignment");
-    static_assert(mem::pointer(13).align_up(5)   == 15, "Bad Alignment");
-
-    static_assert(mem::pointer(16).align_down(5) == 15, "Bad Alignment");
-    static_assert(mem::pointer(14).align_up(5)   == 15, "Bad Alignment");
-
-    static_assert(mem::pointer(15).align_down(15) == 15, "Bad Alignment");
-    static_assert(mem::pointer(15).align_up(15)   == 15, "Bad Alignment");
+    check_pointer_aligment(13, 1, 13, 13);
+    check_pointer_aligment(13, 2, 12, 14);
+    check_pointer_aligment(13, 5, 10, 15);
+    check_pointer_aligment(16, 5, 15, 20);
+    check_pointer_aligment(14, 5, 10, 15);
+    check_pointer_aligment(15, 15, 15, 15);
 }
 
-int main()
+void check_hex_conversion(const void* data, size_t length, bool upper_case, bool padded, const char* expected)
 {
-    check_pattern_parsing();
+    EXPECT_EQ(mem::as_hex({ data, length }, upper_case, padded), expected);
+}
 
-    check_patterns();
-
-    check_bounds();
-
-    check_aligning();
-
-    printf("Done\n");
-
-    return 0;
+TEST(utils, as_hex)
+{
+    check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, true,  true, "01 23 45 67 89 AB CD EF");
+    check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, false, true, "01 23 45 67 89 ab cd ef");
+    check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, true,  false, "0123456789ABCDEF");
+    check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, false, false, "0123456789abcdef");
 }
