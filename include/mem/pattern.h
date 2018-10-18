@@ -457,9 +457,9 @@ namespace mem
 
             if (pat_skips)
             {
-                const size_t pad_skip_pos = skip_pos();
+                const size_t pat_skip_pos = skip_pos();
 
-                for (; MEM_LIKELY(current <= end); current += pat_skips[current[pad_skip_pos]])
+                for (; MEM_LIKELY(current <= end); current += pat_skips[current[pat_skip_pos]])
                 {
                     size_t i = last;
 
