@@ -17,9 +17,13 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
+#if defined(_WIN32)
+# define WIN32_LEAN_AND_MEAN
+# define NOMINMAX
+# include <Windows.h>
+#else
+# include <cstdlib>
+#endif
 
 #include <mem/mem.h>
 #include <mem/pattern.h>
@@ -93,6 +97,7 @@ void check_pattern_results(const mem::region& whole_region, const mem::pattern& 
 
 TEST(pattern, scan)
 {
+#if defined(_WIN32)
     SYSTEM_INFO si;
     GetSystemInfo(&si);
 
@@ -106,6 +111,11 @@ TEST(pattern, scan)
     VirtualProtect(data + size - si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &dwOld);
 
     mem::region scan_region(data + si.dwPageSize, size - (2 * si.dwPageSize));
+#else
+    uint8_t* data = static_cast<uint8_t*>(std::malloc(8192));
+
+    mem::region scan_region(data, 8192);
+#endif
 
     check_pattern_results(scan_region, "01 02 03 04 05", {
         0x01, 0x02, 0x03, 0x04, 0x05
@@ -155,7 +165,11 @@ TEST(pattern, scan)
 
     });
 
+#if defined(_WIN32)
     VirtualFree(data, 0, MEM_RELEASE);
+#else
+    std::free(data);
+#endif
 }
 
 TEST(region, contains)
