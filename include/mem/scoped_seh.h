@@ -38,7 +38,7 @@
 
 namespace mem
 {
-    namespace detail
+    namespace internal
     {
         struct named_exception_code
         {
@@ -111,7 +111,7 @@ namespace mem
     protected:
         static void translate_seh(unsigned int code, EXCEPTION_POINTERS* ep)
         {
-            const char* code_name = detail::get_exception_code_name(code);
+            const char* code_name = internal::get_exception_code_name(code);
 
             char buffer[2048];
 

@@ -41,7 +41,7 @@ namespace mem
         return base.at<T>(offset);
     }
 
-    namespace detail
+    namespace internal
     {
         static MEM_CONSTEXPR const int8_t utf8_length_table[256]
         {
@@ -68,7 +68,7 @@ namespace mem
     {
         for (size_t i = 0; i < range.size;)
         {
-            const size_t length = detail::utf8_length_table[range.start.at<const uint8_t>(i)];
+            const size_t length = internal::utf8_length_table[range.start.at<const uint8_t>(i)];
 
             if (length != 1)
             {
@@ -85,7 +85,7 @@ namespace mem
     {
         for (size_t i = 0; i < range.size;)
         {
-            const size_t length = detail::utf8_length_table[range.start.at<const uint8_t>(i)];
+            const size_t length = internal::utf8_length_table[range.start.at<const uint8_t>(i)];
 
             if (length == 0)
             {

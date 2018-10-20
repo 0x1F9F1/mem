@@ -21,6 +21,7 @@
 #define MEM_PATTERN_BRICK_H
 
 #include "mem.h"
+#include "internal/char_queue.h"
 
 #include <vector>
 
@@ -96,7 +97,7 @@ namespace mem
     public:
         pattern() = default;
 
-        pattern(const char* bytes, const pattern_settings& settings = {});
+        pattern(const char* string, const pattern_settings& settings = {});
         pattern(const char* bytes, const char* masks, const pattern_settings& settings = {});
         pattern(const void* bytes, const void* masks, size_t length, const pattern_settings& settings = {});
 
@@ -121,86 +122,86 @@ namespace mem
         size_t skip_pos() const noexcept;
 
         bool needs_masks() const noexcept;
+
+        explicit operator bool() const noexcept;
     };
 
-    namespace detail
+    inline pattern::pattern(const char* string, const pattern_settings& settings)
     {
-        // '0'-'9' => 0x0-0x9
-        // 'a'-'f' => 0xA-0xF
-        // 'A'-'F' => 0xA-0xF
-        static MEM_CONSTEXPR const int8_t hex_char_table[256]
+        internal::char_queue input(string);
+
+        while (input)
         {
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x00 => 0x0F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x10 => 0x1F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x20 => 0x2F
-             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1, // 0x30 => 0x3F
-            -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x40 => 0x4F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x50 => 0x5F
-            -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x60 => 0x6F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x70 => 0x7F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x80 => 0x8F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0x90 => 0x9F
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xA0 => 0xAF
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xB0 => 0xBF
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xC0 => 0xCF
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xD0 => 0xDF
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xE0 => 0xEF
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 0xF0 => 0xFF
-        };
-    }
+            uint8_t value     = 0x00;
+            uint8_t mask      = 0x00;
+            uint8_t expl_mask = 0xFF;
+            size_t  count     = 1;
 
-    inline pattern::pattern(const char* bytes, const pattern_settings& settings)
-    {
-        while (true)
-        {
-            uint8_t b = 0x00;
-            uint8_t m = 0x00;
+            int current = -1;
 
-            char c = 0;
-            size_t i = 0;
+        start:
+            current = input.peek();
+            if (internal::is_hex_char(current))    { input.pop(); value = internal::hex_char_to_byte(current); mask = 0xFF; }
+            else if (current == settings.wildcard) { input.pop(); value = 0x00;                                mask = 0x00; }
+            else if (current == ' ')               { input.pop(); goto start; }
+            else                                   {              goto error; }
 
-            while ((c = *bytes++) != '\0')
+            current = input.peek();
+            if (internal::is_hex_char(current))    { input.pop(); value = (value << 4) | internal::hex_char_to_byte(current); mask = (mask << 4) | 0x0F; }
+            else if (current == settings.wildcard) { input.pop(); value = (value << 4);                                       mask = (mask << 4);        }
+            else if (current == '&')               { input.pop(); goto masks;   }
+            else if (current == '#')               { input.pop(); goto repeats; }
+            else                                   {              goto end;     }
+
+            current = input.peek();
+            if (current == '&')      { input.pop(); goto masks;   }
+            else if (current == '#') { input.pop(); goto repeats; }
+            else                     {              goto end;     }
+
+        masks:
+            current = input.peek();
+            if (internal::is_hex_char(current)) { input.pop(); expl_mask = internal::hex_char_to_byte(current); }
+            else                                { goto error; }
+
+            current = input.peek();
+            if (internal::is_hex_char(current)) { input.pop(); expl_mask = (expl_mask << 4) | internal::hex_char_to_byte(current); }
+            else if (current == '#')            { input.pop(); goto repeats; }
+            else                                {              goto end;     }
+
+            current = input.peek();
+            if (current == '#') { input.pop(); goto repeats; }
+            else                {              goto end;     }
+
+        repeats:
+            count = 0;
+
+            while (true)
             {
-                const int8_t value = detail::hex_char_table[static_cast<uint8_t>(c)];
-                const bool is_wildcard = c == settings.wildcard;
-
-                if (((value >= 0) && (value <= 0xF)) || is_wildcard)
-                {
-                    b <<= 4;
-                    m <<= 4;
-
-                    if (!is_wildcard)
-                    {
-                        b |= value;
-                        m |= 0xF;
-                    }
-
-                    if (++i >= 2)
-                    {
-                        break;
-                    }
-                }
-                else if (i)
-                {
-                    break;
-                }
+                current = input.peek();
+                if (internal::is_dec_char(current)) { input.pop(); count = (count * 10) + internal::dec_char_to_byte(current); }
+                else if (count > 0)                 { goto end;   }
+                else                                { goto error; }
             }
 
-            if (i)
-            {
-                if ((i == 1) && (m != 0))
-                {
-                    m |= 0xF0;
-                }
+        end:
+            value &= (mask &= expl_mask);
 
-                bytes_.push_back(b);
-                masks_.push_back(m);
+            for (size_t i = 0; i < count; ++i)
+            {
+                bytes_.push_back(value);
+                masks_.push_back(mask);
             }
 
-            if (!c)
+            continue;
+
+        error:
+            if (input)
             {
-                break;
+                masks_.clear();
+                bytes_.clear();
             }
+
+            break;
         }
 
         finalize(settings);
@@ -601,7 +602,7 @@ namespace mem
         }
     }
 
-    namespace detail
+    namespace internal
     {
         struct always_true
         {
@@ -615,7 +616,7 @@ namespace mem
 
     inline pointer pattern::scan(region range) const noexcept
     {
-        return scan_predicate(range, detail::always_true {});
+        return scan_predicate(range, internal::always_true {});
     }
 
     inline bool pattern::match(pointer address) const noexcept
@@ -715,6 +716,11 @@ namespace mem
     MEM_STRONG_INLINE bool pattern::needs_masks() const noexcept
     {
         return needs_masks_;
+    }
+
+    MEM_STRONG_INLINE pattern::operator bool() const noexcept
+    {
+        return !bytes_.empty() && !masks_.empty();
     }
 }
 

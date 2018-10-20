@@ -484,7 +484,7 @@ namespace mem
         return success_;
     }
 
-    extern "C" namespace detail
+    extern "C" namespace internal
     {
         IMAGE_DOS_HEADER __ImageBase;
     }
@@ -514,7 +514,7 @@ namespace mem
 
     MEM_STRONG_INLINE module module::self()
     {
-        return get_nt_module(&detail::__ImageBase);
+        return get_nt_module(&internal::__ImageBase);
     }
 #endif // MEM_PLATFORM_WINDOWS
 }

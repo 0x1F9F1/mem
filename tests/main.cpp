@@ -53,6 +53,13 @@ TEST(pattern, parse)
     check_pattern(mem::pattern("?1 ? 3 ?? ?5"),   5, 5, true,  "\x01\x00\x03\x00\x05", "\x0F\x00\xFF\x00\x0F");
     check_pattern(mem::pattern("01?12???34"),     5, 5, true,  "\x01\x01\x20\x00\x34", "\xFF\x0F\xF0\x00\xFF");
 
+    check_pattern(mem::pattern("01 02 03#3 04 05"),    7, 7, false, "\x01\x02\x03\x03\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF\xFF\xFF");
+    check_pattern(mem::pattern("01 02 03&F#3 04 05"),  7, 7, true,  "\x01\x02\x03\x03\x03\x04\x05", "\xFF\xFF\x0F\x0F\x0F\xFF\xFF");
+    check_pattern(mem::pattern("01 02 33&F0#3 04 05"), 7, 7, true,  "\x01\x02\x30\x30\x30\x04\x05", "\xFF\xFF\xF0\xF0\xF0\xFF\xFF");
+
+    check_pattern(mem::pattern("01 02 03&F"), 3, 3, true, "\x01\x02\x03", "\xFF\xFF\x0F");
+    check_pattern(mem::pattern("01 02 03#2"), 4, 4, false, "\x01\x02\x03\x03", "\xFF\xFF\xFF\xFF");
+
     check_pattern(mem::pattern("12345678"), 4, 4, false, "\x12\x34\x56\x78", "\xFF\xFF\xFF\xFF");
 
     check_pattern(mem::pattern("? 01 02 03 04 ? ? ?"), 8, 5, true, "\x00\x01\x02\x03\x04\x00\x00\x00", "\x00\xFF\xFF\xFF\xFF\x00\x00\x00");
