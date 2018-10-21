@@ -1,0 +1,28 @@
+version: 1.0.{build}
+build:
+  verbosity: minimal
+
+environment:
+  matrix:
+  - CMAKE_GENERATOR: Unix Makefiles
+    BUILD_TYPE: Release
+    APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+  - CMAKE_GENERATOR: Visual Studio 15 2017
+    BUILD_TYPE: Release
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  - CMAKE_GENERATOR: Visual Studio 15 2017 Win64
+    BUILD_TYPE: Release
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+build_script:
+  - cmd: mkdir build
+  - cmd: cd build
+  - cmd: cmake .. -DMEM_TEST=ON -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE="%BUILD_TYPE%"
+  - cmd: cmake --build . --config "%BUILD_TYPE%"
+  - cmd: ctest
+
+  - sh: mkdir build
+  - sh: cd build
+  - sh: cmake .. -DMEM_TEST=ON -G "$CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+  - sh: cmake --build . --config "$BUILD_TYPE"
+  - sh: ctest
