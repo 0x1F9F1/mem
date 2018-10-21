@@ -195,11 +195,8 @@ namespace mem
             continue;
 
         error:
-            if (input)
-            {
-                masks_.clear();
-                bytes_.clear();
-            }
+            masks_.clear();
+            bytes_.clear();
 
             break;
         }
