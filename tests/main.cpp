@@ -230,3 +230,22 @@ TEST(utils, as_hex)
     check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, true,  false, "0123456789ABCDEF");
     check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, false, false, "0123456789abcdef");
 }
+
+void check_unescape_string(const char* string, const void* data, size_t length)
+{
+    std::string unescaped = mem::unescape_string({ string, strlen(string) });
+
+    EXPECT_EQ(unescaped.size(), length);
+    EXPECT_EQ(memcmp(unescaped.data(), data, length), 0);
+}
+
+TEST(utils, unescape)
+{
+    check_unescape_string(R"(\x12\x34)", "\x12\x34", 2);
+    check_unescape_string(R"(\0\1\10)", "\0\1\10", 3);
+    check_unescape_string(R"(\0\1\1011)", "\0\1\1011", 4);
+    check_unescape_string(R"(\1\2\3)", "\1\2\3", 3);
+    check_unescape_string(R"(Hello There)", "Hello There", 11);
+    check_unescape_string(R"(Hello\nThere)", "Hello\nThere", 11);
+    check_unescape_string(R"(Hello \"Bob)", "Hello \"Bob", 10);
+}

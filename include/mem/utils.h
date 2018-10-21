@@ -24,6 +24,8 @@
 
 #include <string>
 
+#include "internal/char_queue.h"
+
 namespace mem
 {
     template <typename T>
@@ -138,6 +140,78 @@ namespace mem
         }
 
         return result;
+    }
+
+    inline std::string unescape_string(region string)
+    {
+        std::string results;
+
+        internal::char_queue input(string.start.as<const char*>(), string.size);
+
+        while (input)
+        {
+            int current = -1;
+            size_t result = 0;
+            size_t count = 0;
+
+            current = input.peek();
+            if (current == '\\') { input.pop(); goto escape; }
+            else                 { input.pop(); results.push_back(static_cast<char>(current)); continue; }
+
+        escape:
+            current = input.peek();
+            if      (current == '\'')                { input.pop(); result = '\''; goto end; }
+            else if (current == '\"')                { input.pop(); result = '\"'; goto end; }
+            else if (current == '\\')                { input.pop(); result = '\\'; goto end; }
+            else if (current == '?')                 { input.pop(); result = '\?'; goto end; }
+            else if (current == 'a')                 { input.pop(); result = '\a'; goto end; }
+            else if (current == 'b')                 { input.pop(); result = '\b'; goto end; }
+            else if (current == 'f')                 { input.pop(); result = '\f'; goto end; }
+            else if (current == 'n')                 { input.pop(); result = '\n'; goto end; }
+            else if (current == 'r')                 { input.pop(); result = '\r'; goto end; }
+            else if (current == 't')                 { input.pop(); result = '\t'; goto end; }
+            else if (current == 'v')                 { input.pop(); result = '\v'; goto end; }
+            else if (current == 'x')                 { input.pop(); goto hex;   }
+            else if (internal::is_oct_char(current)) {              goto octal; }
+            else                                     {              goto error; }
+
+        hex:
+            result = 0;
+            count = 0;
+
+            while (true)
+            {
+                current = input.peek();
+                if (internal::is_hex_char(current)) { input.pop(); result = (result * 16) + internal::hex_char_to_byte(current); ++count; }
+                else if (count > 0)                 { goto end; }
+                else                                { goto error; }
+            }
+
+        octal:
+            result = 0;
+            count = 0;
+
+            while (true)
+            {
+                current = input.peek();
+                if (internal::is_oct_char(current)) { input.pop(); result = (result * 8) + internal::oct_char_to_byte(current); if (++count == 3) { goto end; } }
+                else if (count > 0)                 { goto end;   }
+                else                                { goto error; }
+            }
+
+        end:
+            if (result <= byte(~0)) { results.push_back(static_cast<char>(result)); }
+            else                    { goto error; }
+
+            continue;
+
+        error:
+            results.clear();
+
+            break;
+        }
+
+        return results;
     }
 }
 
