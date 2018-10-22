@@ -25,7 +25,7 @@
 #if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
 # if !defined(_WIN32)
 #  error mem::rtti only supports windows
-# endif // !WIN32
+# endif // !_WIN32
 #else
 # error mem::rtti only supports x86 and x64
 #endif
