@@ -26,12 +26,6 @@
 # define MEM_ARCH_X86
 #endif
 
-#if defined(MEM_AUTO_PLATFORM)
-# if defined(_WIN32) || defined(_WIN64)
-#  define MEM_PLATFORM_WINDOWS
-# endif
-#endif // MEM_AUTO_PLATFORM
-
 #if !defined(MEM_CONSTEXPR)
 # if (defined(__cpp_constexpr) && (__cpp_constexpr >= 200704)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190024210))
 #  define MEM_CONSTEXPR constexpr
@@ -71,5 +65,10 @@
 #else
 # define MEM_NOINLINE
 #endif
+
+namespace mem
+{
+    using byte = unsigned char;
+}
 
 #endif // MEM_DEFINES_BRICK_H

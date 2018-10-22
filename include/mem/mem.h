@@ -30,16 +30,6 @@
 
 namespace mem
 {
-    class pointer;
-    class region;
-
-#if defined(MEM_PLATFORM_WINDOWS)
-    class protect;
-    class module;
-#endif // MEM_PLATFORM_WINDOWS
-
-    using byte = unsigned char;
-
     class pointer
     {
     protected:
@@ -144,46 +134,7 @@ namespace mem
         void fill(byte value) const noexcept;
 
         MEM_CONSTEXPR region sub_region(pointer address) const noexcept;
-
-#if defined(MEM_PLATFORM_WINDOWS)
-        protect unprotect() const;
-#endif // MEM_PLATFORM_WINDOWS
     };
-
-#if defined(MEM_PLATFORM_WINDOWS)
-    class protect
-        : public region
-    {
-    protected:
-        DWORD old_protect_;
-        bool success_;
-
-    public:
-        protect(region range, DWORD new_protect);
-        ~protect();
-
-        protect(protect&& rhs) noexcept;
-        protect(const protect&) = delete;
-
-        explicit operator bool() const noexcept;
-    };
-
-    class module
-        : public region
-    {
-    protected:
-        static module get_nt_module(pointer address);
-
-    public:
-        using region::region;
-
-        static module named(const char* name);
-        static module named(const wchar_t* name);
-
-        static module main();
-        static module self();
-    };
-#endif // MEM_PLATFORM_WINDOWS
 
     MEM_CONSTEXPR MEM_STRONG_INLINE pointer::pointer(std::nullptr_t) noexcept
         : value_(0)
@@ -438,84 +389,5 @@ namespace mem
     {
         return region(address, size - static_cast<size_t>(address - start));
     }
-
-#if defined(MEM_PLATFORM_WINDOWS)
-    MEM_STRONG_INLINE protect region::unprotect() const
-    {
-        return protect(*this, PAGE_EXECUTE_READWRITE);
-    }
-#endif // MEM_PLATFORM_WINDOWS
-
-#if defined(MEM_PLATFORM_WINDOWS)
-    MEM_STRONG_INLINE protect::protect(region range, DWORD new_protect)
-        : region(range)
-        , old_protect_(0)
-        , success_(false)
-    {
-        success_ = VirtualProtect(start.as<void*>(), size, new_protect, &old_protect_);
-    }
-
-    MEM_STRONG_INLINE protect::~protect()
-    {
-        if (success_)
-        {
-            bool flush = old_protect_ & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
-
-            VirtualProtect(start.as<void*>(), size, old_protect_, &old_protect_);
-
-            if (flush)
-            {
-                FlushInstructionCache(GetCurrentProcess(), start.as<void*>(), size);
-            }
-        }
-    }
-
-    MEM_STRONG_INLINE protect::protect(protect&& rhs) noexcept
-        : region(rhs)
-        , old_protect_(rhs.old_protect_)
-        , success_(rhs.success_)
-    {
-        rhs.old_protect_ = 0;
-        rhs.success_ = false;
-    }
-
-    MEM_STRONG_INLINE protect::operator bool() const noexcept
-    {
-        return success_;
-    }
-
-    extern "C" namespace internal
-    {
-        IMAGE_DOS_HEADER __ImageBase;
-    }
-
-    MEM_STRONG_INLINE module module::get_nt_module(pointer address)
-    {
-        const IMAGE_DOS_HEADER& dos = address.at<const IMAGE_DOS_HEADER>(0);
-        const IMAGE_NT_HEADERS& nt = address.at<const IMAGE_NT_HEADERS>(dos.e_lfanew);
-
-        return module(address, nt.OptionalHeader.SizeOfImage);
-    }
-
-    MEM_STRONG_INLINE module module::named(const char* name)
-    {
-        return get_nt_module(GetModuleHandleA(name));
-    }
-
-    MEM_STRONG_INLINE module module::named(const wchar_t* name)
-    {
-        return get_nt_module(GetModuleHandleW(name));
-    }
-
-    MEM_STRONG_INLINE module module::main()
-    {
-        return module::named(static_cast<const char*>(nullptr));
-    }
-
-    MEM_STRONG_INLINE module module::self()
-    {
-        return get_nt_module(&internal::__ImageBase);
-    }
-#endif // MEM_PLATFORM_WINDOWS
 }
 #endif // !MEM_BRICK_H

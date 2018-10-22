@@ -29,6 +29,9 @@
 #include <mem/pattern.h>
 #include <mem/utils.h>
 
+#include <mem/platform.h>
+#include <mem/platform-inl.h>
+
 #include <string>
 #include <unordered_set>
 

@@ -23,9 +23,9 @@
 #include "mem.h"
 
 #if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-# if !defined(MEM_PLATFORM_WINDOWS)
+# if !defined(_WIN32)
 #  error mem::rtti only supports windows
-# endif // !MEM_PLATFORM_WINDOWS
+# endif // !WIN32
 #else
 # error mem::rtti only supports x86 and x64
 #endif
