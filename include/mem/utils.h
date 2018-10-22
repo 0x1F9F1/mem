@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include "internal/char_queue.h"
+#include "char_queue.h"
 
 namespace mem
 {
@@ -37,13 +37,15 @@ namespace mem
     std::string as_string(region range);
     std::string as_hex(region range, bool upper_case = true, bool padded = true);
 
+    std::string unescape_string(region string);
+
     template <typename T>
     MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(pointer base, const ptrdiff_t offset) noexcept
     {
         return base.at<T>(offset);
     }
 
-    inline bool is_ascii(region range) noexcept
+    MEM_STRONG_INLINE bool is_ascii(region range) noexcept
     {
         for (size_t i = 0; i < range.size; ++i)
         {
@@ -142,7 +144,7 @@ namespace mem
     {
         std::string results;
 
-        internal::char_queue input(string.start.as<const char*>(), string.size);
+        char_queue input(string.start.as<const char*>(), string.size);
 
         while (input)
         {
@@ -158,20 +160,20 @@ namespace mem
 
         escape:
             current = input.peek();
-            if      (current == '\'')                          { input.pop(); result = '\''; goto end; }
-            else if (current == '\"')                          { input.pop(); result = '\"'; goto end; }
-            else if (current == '\\')                          { input.pop(); result = '\\'; goto end; }
-            else if (current == '?')                           { input.pop(); result = '\?'; goto end; }
-            else if (current == 'a')                           { input.pop(); result = '\a'; goto end; }
-            else if (current == 'b')                           { input.pop(); result = '\b'; goto end; }
-            else if (current == 'f')                           { input.pop(); result = '\f'; goto end; }
-            else if (current == 'n')                           { input.pop(); result = '\n'; goto end; }
-            else if (current == 'r')                           { input.pop(); result = '\r'; goto end; }
-            else if (current == 't')                           { input.pop(); result = '\t'; goto end; }
-            else if (current == 'v')                           { input.pop(); result = '\v'; goto end; }
-            else if (current == 'x')                           { input.pop(); goto hex;   }
-            else if (internal::oct_char_to_int(current) != -1) {              goto octal; }
-            else                                               {              goto error; }
+            if      (current == '\'')                { input.pop(); result = '\''; goto end; }
+            else if (current == '\"')                { input.pop(); result = '\"'; goto end; }
+            else if (current == '\\')                { input.pop(); result = '\\'; goto end; }
+            else if (current == '?')                 { input.pop(); result = '\?'; goto end; }
+            else if (current == 'a')                 { input.pop(); result = '\a'; goto end; }
+            else if (current == 'b')                 { input.pop(); result = '\b'; goto end; }
+            else if (current == 'f')                 { input.pop(); result = '\f'; goto end; }
+            else if (current == 'n')                 { input.pop(); result = '\n'; goto end; }
+            else if (current == 'r')                 { input.pop(); result = '\r'; goto end; }
+            else if (current == 't')                 { input.pop(); result = '\t'; goto end; }
+            else if (current == 'v')                 { input.pop(); result = '\v'; goto end; }
+            else if (current == 'x')                 { input.pop(); goto hex;   }
+            else if (oct_char_to_int(current) != -1) {              goto octal; }
+            else                                     {              goto error; }
 
         hex:
             result = 0;
@@ -180,9 +182,9 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if ((temp = internal::hex_char_to_int(current)) != -1) { input.pop(); result = (result * 16) + temp; ++count; }
-                else if (count > 0)                                    { goto end; }
-                else                                                   { goto error; }
+                if ((temp = hex_char_to_int(current)) != -1) { input.pop(); result = (result * 16) + temp; ++count; }
+                else if (count > 0)                          { goto end; }
+                else                                         { goto error; }
             }
 
         octal:
@@ -192,9 +194,9 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if ((temp = internal::oct_char_to_int(current)) != -1) { input.pop(); result = (result * 8) + temp; if (++count == 3) { goto end; } }
-                else if (count > 0)                                    { goto end;   }
-                else                                                   { goto error; }
+                if ((temp = oct_char_to_int(current)) != -1) { input.pop(); result = (result * 8) + temp; if (++count == 3) { goto end; } }
+                else if (count > 0)                          { goto end;   }
+                else                                         { goto error; }
             }
 
         end:
