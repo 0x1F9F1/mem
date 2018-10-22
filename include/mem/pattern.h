@@ -74,7 +74,7 @@ namespace mem
 
     class pattern
     {
-    protected:
+    private:
         std::vector<byte> bytes_ {};
         std::vector<byte> masks_ {};
 
@@ -132,23 +132,23 @@ namespace mem
 
         while (input)
         {
-            uint8_t value     = 0x00;
-            uint8_t mask      = 0x00;
-            uint8_t expl_mask = 0xFF;
-            size_t  count     = 1;
+            byte   value     = 0x00;
+            byte   mask      = 0x00;
+            byte   expl_mask = 0xFF;
+            size_t count     = 1;
 
             int current = -1;
 
         start:
             current = input.peek();
-            if (internal::is_hex_char(current))    { input.pop(); value = internal::hex_char_to_byte(current); mask = 0xFF; }
-            else if (current == settings.wildcard) { input.pop(); value = 0x00;                                mask = 0x00; }
+            if (internal::is_hex_char(current))    { input.pop(); value = static_cast<byte>(internal::hex_char_to_int(current)); mask = 0xFF; }
+            else if (current == settings.wildcard) { input.pop(); value = 0x00;                                                   mask = 0x00; }
             else if (current == ' ')               { input.pop(); goto start; }
             else                                   {              goto error; }
 
             current = input.peek();
-            if (internal::is_hex_char(current))    { input.pop(); value = (value << 4) | internal::hex_char_to_byte(current); mask = (mask << 4) | 0x0F; }
-            else if (current == settings.wildcard) { input.pop(); value = (value << 4);                                       mask = (mask << 4);        }
+            if (internal::is_hex_char(current))    { input.pop(); value = (value << 4) | static_cast<byte>(internal::hex_char_to_int(current)); mask = (mask << 4) | 0x0F; }
+            else if (current == settings.wildcard) { input.pop(); value = (value << 4);                                                          mask = (mask << 4);        }
             else if (current == '&')               { input.pop(); goto masks;   }
             else if (current == '#')               { input.pop(); goto repeats; }
             else                                   {              goto end;     }
@@ -160,11 +160,11 @@ namespace mem
 
         masks:
             current = input.peek();
-            if (internal::is_hex_char(current)) { input.pop(); expl_mask = internal::hex_char_to_byte(current); }
+            if (internal::is_hex_char(current)) { input.pop(); expl_mask = internal::hex_char_to_int(current); }
             else                                { goto error; }
 
             current = input.peek();
-            if (internal::is_hex_char(current)) { input.pop(); expl_mask = (expl_mask << 4) | internal::hex_char_to_byte(current); }
+            if (internal::is_hex_char(current)) { input.pop(); expl_mask = (expl_mask << 4) | internal::hex_char_to_int(current); }
             else if (current == '#')            { input.pop(); goto repeats; }
             else                                {              goto end;     }
 
@@ -178,7 +178,7 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if (internal::is_dec_char(current)) { input.pop(); count = (count * 10) + internal::dec_char_to_byte(current); }
+                if (internal::is_dec_char(current)) { input.pop(); count = (count * 10) + internal::dec_char_to_int(current); }
                 else if (count > 0)                 { goto end;   }
                 else                                { goto error; }
             }
@@ -225,7 +225,7 @@ namespace mem
                     const char c = bytes[i];
 
                     bytes_[i] = static_cast<byte>(c);
-                    masks_[i] = byte(~0);
+                    masks_[i] = 0xFF;
                 }
             }
         }
@@ -241,7 +241,7 @@ namespace mem
                 const char c = bytes[i];
 
                 bytes_[i] = static_cast<byte>(c);
-                masks_[i] = byte(~0);
+                masks_[i] = 0xFF;
             }
         }
 
@@ -272,7 +272,7 @@ namespace mem
             for (size_t i = 0; i < length; ++i)
             {
                 bytes_[i] = static_cast<const byte*>(bytes)[i];
-                masks_[i] = byte(~0);
+                masks_[i] = 0xFF;
             }
         }
 

@@ -50,21 +50,22 @@ namespace mem
         MEM_CONSTEXPR bool is_hex_char(int value) noexcept;
         MEM_CONSTEXPR bool is_dec_char(int value) noexcept;
         MEM_CONSTEXPR bool is_oct_char(int value) noexcept;
-        MEM_CONSTEXPR uint8_t hex_char_to_byte(int value) noexcept;
-        MEM_CONSTEXPR uint8_t dec_char_to_byte(int value) noexcept;
-        MEM_CONSTEXPR uint8_t oct_char_to_byte(int value) noexcept;
 
-        inline char_queue::char_queue(const char* string)
+        MEM_CONSTEXPR int hex_char_to_int(int value) noexcept;
+        MEM_CONSTEXPR int dec_char_to_int(int value) noexcept;
+        MEM_CONSTEXPR int oct_char_to_int(int value) noexcept;
+
+        MEM_STRONG_INLINE char_queue::char_queue(const char* string)
             : char_queue(string, strlen(string))
         { }
 
-        inline char_queue::char_queue(const char* string, size_t length)
+        MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
             : start(string)
             , end(string + length)
             , current(start)
         { }
 
-        inline int char_queue::peek() noexcept
+        MEM_STRONG_INLINE int char_queue::peek() noexcept
         {
             if (current < end)
             {
@@ -74,7 +75,7 @@ namespace mem
             return -1;
         }
 
-        inline void char_queue::pop() noexcept
+        MEM_STRONG_INLINE void char_queue::pop() noexcept
         {
             if (current < end)
             {
@@ -82,51 +83,51 @@ namespace mem
             }
         }
 
-        inline size_t char_queue::pos() const noexcept
+        MEM_STRONG_INLINE size_t char_queue::pos() const noexcept
         {
             return current - start;
         }
 
-        inline char_queue::operator bool() const noexcept
+        MEM_STRONG_INLINE char_queue::operator bool() const noexcept
         {
             return current < end;
         }
 
-        MEM_CONSTEXPR inline bool is_hex_char(int value) noexcept
+        MEM_CONSTEXPR MEM_STRONG_INLINE bool is_hex_char(int value) noexcept
         {
             return (value >= '0' && value <= '9')
                 || (value >= 'a' && value <= 'f')
                 || (value >= 'A' && value <= 'F');
         }
 
-        MEM_CONSTEXPR inline bool is_dec_char(int value) noexcept
+        MEM_CONSTEXPR MEM_STRONG_INLINE bool is_dec_char(int value) noexcept
         {
             return (value >= '0' && value <= '9');
         }
 
-        MEM_CONSTEXPR inline bool is_oct_char(int value) noexcept
+        MEM_CONSTEXPR MEM_STRONG_INLINE bool is_oct_char(int value) noexcept
         {
             return (value >= '0' && value <= '7');
         }
 
-        MEM_CONSTEXPR inline uint8_t hex_char_to_byte(int value) noexcept
+        MEM_CONSTEXPR MEM_STRONG_INLINE int hex_char_to_int(int value) noexcept
         {
             return (value >= '0' && value <= '9') ? (value - '0')
                  : (value >= 'a' && value <= 'f') ? (value - 'a' + 10)
                  : (value >= 'A' && value <= 'F') ? (value - 'A' + 10)
-                 : (0);
+                 : -1;
         }
 
-        MEM_CONSTEXPR inline uint8_t dec_char_to_byte(int value) noexcept
+        MEM_CONSTEXPR MEM_STRONG_INLINE int dec_char_to_int(int value) noexcept
         {
             return (value >= '0' && value <= '9') ? (value - '0')
-                 : (0);
+                 : -1;
         }
 
-        MEM_CONSTEXPR inline uint8_t oct_char_to_byte(int value) noexcept
+        MEM_CONSTEXPR MEM_STRONG_INLINE int oct_char_to_int(int value) noexcept
         {
             return (value >= '0' && value <= '7') ? (value - '0')
-                 : (0);
+                 : -1;
         }
     }
 }

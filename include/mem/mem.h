@@ -32,7 +32,7 @@ namespace mem
 {
     class pointer
     {
-    protected:
+    private:
         uintptr_t value_ {0};
 
     public:

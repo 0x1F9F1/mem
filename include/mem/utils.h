@@ -43,6 +43,19 @@ namespace mem
         return base.at<T>(offset);
     }
 
+    inline bool is_ascii(region range) noexcept
+    {
+        for (size_t i = 0; i < range.size; ++i)
+        {
+            if (range.start.at<const byte>(i) >= 0x80)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     namespace internal
     {
         static MEM_CONSTEXPR const int8_t utf8_length_table[256]
@@ -66,28 +79,11 @@ namespace mem
         };
     }
 
-    inline bool is_ascii(region range) noexcept
-    {
-        for (size_t i = 0; i < range.size;)
-        {
-            const size_t length = internal::utf8_length_table[range.start.at<const uint8_t>(i)];
-
-            if (length != 1)
-            {
-                return false;
-            }
-
-            i += length;
-        }
-
-        return true;
-    }
-
     inline bool is_utf8(region range) noexcept
     {
         for (size_t i = 0; i < range.size;)
         {
-            const size_t length = internal::utf8_length_table[range.start.at<const uint8_t>(i)];
+            const size_t length = internal::utf8_length_table[range.start.at<const byte>(i)];
 
             if (length == 0)
             {
@@ -101,7 +97,7 @@ namespace mem
 
             for (size_t j = 1; j < length; ++j)
             {
-                if ((range.start.at<const uint8_t>(i + j) & 0xC0) != 0x80)
+                if ((range.start.at<const byte>(i + j) & 0xC0) != 0x80)
                 {
                     return false;
                 }
@@ -133,7 +129,7 @@ namespace mem
                 result.push_back(' ');
             }
 
-            const uint8_t value = range.start.at<const uint8_t>(i);
+            const byte value = range.start.at<const byte>(i);
 
             result.push_back(char_hex_table[(value >> 4) & 0xF]);
             result.push_back(char_hex_table[(value >> 0) & 0xF]);
@@ -182,7 +178,7 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if (internal::is_hex_char(current)) { input.pop(); result = (result * 16) + internal::hex_char_to_byte(current); ++count; }
+                if (internal::is_hex_char(current)) { input.pop(); result = (result * 16) + internal::hex_char_to_int(current); ++count; }
                 else if (count > 0)                 { goto end; }
                 else                                { goto error; }
             }
@@ -194,14 +190,14 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if (internal::is_oct_char(current)) { input.pop(); result = (result * 8) + internal::oct_char_to_byte(current); if (++count == 3) { goto end; } }
+                if (internal::is_oct_char(current)) { input.pop(); result = (result * 8) + internal::oct_char_to_int(current); if (++count == 3) { goto end; } }
                 else if (count > 0)                 { goto end;   }
                 else                                { goto error; }
             }
 
         end:
-            if (result <= byte(~0)) { results.push_back(static_cast<char>(result)); }
-            else                    { goto error; }
+            if (result <= 0xFF) { results.push_back(static_cast<char>(result)); }
+            else                { goto error; }
 
             continue;
 

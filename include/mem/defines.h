@@ -66,6 +66,12 @@
 # define MEM_NOINLINE
 #endif
 
+#include <climits>
+
+#if CHAR_BIT != 8
+# error Only 8-bit bytes are supported
+#endif
+
 namespace mem
 {
     using byte = unsigned char;
