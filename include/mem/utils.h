@@ -146,9 +146,11 @@ namespace mem
 
         while (input)
         {
-            int current = -1;
             size_t result = 0;
             size_t count = 0;
+
+            int current = -1;
+            int temp = -1;
 
             current = input.peek();
             if (current == '\\') { input.pop(); goto escape; }
@@ -156,20 +158,20 @@ namespace mem
 
         escape:
             current = input.peek();
-            if      (current == '\'')                { input.pop(); result = '\''; goto end; }
-            else if (current == '\"')                { input.pop(); result = '\"'; goto end; }
-            else if (current == '\\')                { input.pop(); result = '\\'; goto end; }
-            else if (current == '?')                 { input.pop(); result = '\?'; goto end; }
-            else if (current == 'a')                 { input.pop(); result = '\a'; goto end; }
-            else if (current == 'b')                 { input.pop(); result = '\b'; goto end; }
-            else if (current == 'f')                 { input.pop(); result = '\f'; goto end; }
-            else if (current == 'n')                 { input.pop(); result = '\n'; goto end; }
-            else if (current == 'r')                 { input.pop(); result = '\r'; goto end; }
-            else if (current == 't')                 { input.pop(); result = '\t'; goto end; }
-            else if (current == 'v')                 { input.pop(); result = '\v'; goto end; }
-            else if (current == 'x')                 { input.pop(); goto hex;   }
-            else if (internal::is_oct_char(current)) {              goto octal; }
-            else                                     {              goto error; }
+            if      (current == '\'')                          { input.pop(); result = '\''; goto end; }
+            else if (current == '\"')                          { input.pop(); result = '\"'; goto end; }
+            else if (current == '\\')                          { input.pop(); result = '\\'; goto end; }
+            else if (current == '?')                           { input.pop(); result = '\?'; goto end; }
+            else if (current == 'a')                           { input.pop(); result = '\a'; goto end; }
+            else if (current == 'b')                           { input.pop(); result = '\b'; goto end; }
+            else if (current == 'f')                           { input.pop(); result = '\f'; goto end; }
+            else if (current == 'n')                           { input.pop(); result = '\n'; goto end; }
+            else if (current == 'r')                           { input.pop(); result = '\r'; goto end; }
+            else if (current == 't')                           { input.pop(); result = '\t'; goto end; }
+            else if (current == 'v')                           { input.pop(); result = '\v'; goto end; }
+            else if (current == 'x')                           { input.pop(); goto hex;   }
+            else if (internal::oct_char_to_int(current) != -1) {              goto octal; }
+            else                                               {              goto error; }
 
         hex:
             result = 0;
@@ -178,9 +180,9 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if (internal::is_hex_char(current)) { input.pop(); result = (result * 16) + internal::hex_char_to_int(current); ++count; }
-                else if (count > 0)                 { goto end; }
-                else                                { goto error; }
+                if ((temp = internal::hex_char_to_int(current)) != -1) { input.pop(); result = (result * 16) + temp; ++count; }
+                else if (count > 0)                                    { goto end; }
+                else                                                   { goto error; }
             }
 
         octal:
@@ -190,9 +192,9 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if (internal::is_oct_char(current)) { input.pop(); result = (result * 8) + internal::oct_char_to_int(current); if (++count == 3) { goto end; } }
-                else if (count > 0)                 { goto end;   }
-                else                                { goto error; }
+                if ((temp = internal::oct_char_to_int(current)) != -1) { input.pop(); result = (result * 8) + temp; if (++count == 3) { goto end; } }
+                else if (count > 0)                                    { goto end;   }
+                else                                                   { goto error; }
             }
 
         end:

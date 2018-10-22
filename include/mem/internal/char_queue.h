@@ -47,10 +47,6 @@ namespace mem
             explicit operator bool() const noexcept;
         };
 
-        MEM_CONSTEXPR bool is_hex_char(int value) noexcept;
-        MEM_CONSTEXPR bool is_dec_char(int value) noexcept;
-        MEM_CONSTEXPR bool is_oct_char(int value) noexcept;
-
         MEM_CONSTEXPR int hex_char_to_int(int value) noexcept;
         MEM_CONSTEXPR int dec_char_to_int(int value) noexcept;
         MEM_CONSTEXPR int oct_char_to_int(int value) noexcept;
@@ -91,23 +87,6 @@ namespace mem
         MEM_STRONG_INLINE char_queue::operator bool() const noexcept
         {
             return current < end;
-        }
-
-        MEM_CONSTEXPR MEM_STRONG_INLINE bool is_hex_char(int value) noexcept
-        {
-            return (value >= '0' && value <= '9')
-                || (value >= 'a' && value <= 'f')
-                || (value >= 'A' && value <= 'F');
-        }
-
-        MEM_CONSTEXPR MEM_STRONG_INLINE bool is_dec_char(int value) noexcept
-        {
-            return (value >= '0' && value <= '9');
-        }
-
-        MEM_CONSTEXPR MEM_STRONG_INLINE bool is_oct_char(int value) noexcept
-        {
-            return (value >= '0' && value <= '7');
         }
 
         MEM_CONSTEXPR MEM_STRONG_INLINE int hex_char_to_int(int value) noexcept
