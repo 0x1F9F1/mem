@@ -221,6 +221,21 @@ TEST(pointer, align)
     check_pointer_aligment(15, 15, 15, 15);
 }
 
+template <typename T>
+void check_any_pointer()
+{
+    mem::pointer result(0x1234);
+
+    EXPECT_EQ(result.as<T>(), static_cast<T>(result.any()));
+}
+
+TEST(pointer, any)
+{
+    check_any_pointer<uintptr_t>();
+    check_any_pointer<int*>();
+    check_any_pointer<void*>();
+}
+
 void check_hex_conversion(const void* data, size_t length, bool upper_case, bool padded, const char* expected)
 {
     EXPECT_EQ(mem::as_hex({ data, length }, upper_case, padded), expected);

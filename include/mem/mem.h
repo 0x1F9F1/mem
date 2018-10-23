@@ -30,6 +30,8 @@
 
 namespace mem
 {
+    class any_pointer;
+
     class pointer
     {
     private:
@@ -90,11 +92,11 @@ namespace mem
 
         MEM_CONSTEXPR explicit operator bool() const noexcept;
 
-        template <typename T>
-        MEM_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
-
         template <typename T = pointer>
         typename std::add_lvalue_reference<T>::type at(size_t offset) const noexcept;
+
+        template <typename T>
+        MEM_CONSTEXPR typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
 
         template <typename T>
         typename std::enable_if<std::is_pointer<T>::value, T>::type as() const noexcept;
@@ -107,6 +109,22 @@ namespace mem
 
         template <typename T>
         typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type as() const noexcept;
+
+        MEM_CONSTEXPR any_pointer any() const noexcept;
+    };
+
+    class any_pointer
+    {
+    private:
+        uintptr_t value_ {0};
+
+    public:
+        MEM_CONSTEXPR any_pointer(pointer value = pointer()) noexcept;
+
+        MEM_CONSTEXPR operator uintptr_t() const noexcept;
+
+        template <typename T>
+        operator T*() const noexcept;
     };
 
     class region
@@ -337,6 +355,26 @@ namespace mem
     MEM_STRONG_INLINE typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::as() const noexcept
     {
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
+    }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE any_pointer pointer::any() const noexcept
+    {
+        return any_pointer(*this);
+    }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE any_pointer::any_pointer(pointer value) noexcept
+        : value_(value.as<uintptr_t>())
+    { }
+
+    MEM_CONSTEXPR MEM_STRONG_INLINE any_pointer::operator uintptr_t() const noexcept
+    {
+        return value_;
+    }
+
+    template <typename T>
+    MEM_STRONG_INLINE any_pointer::operator T*() const noexcept
+    {
+        return reinterpret_cast<T*>(value_);
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE region::region(pointer start_, size_t size_) noexcept
