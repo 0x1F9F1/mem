@@ -30,7 +30,6 @@
 #  include <Windows.h>
 #  undef WIN32_LEAN_AND_MEAN
 # endif
-# include <Windows.h>
 # include <malloc.h>
 # include <eh.h>
 # include <stdexcept>
@@ -101,8 +100,24 @@ namespace mem
 
     module module::nt(pointer address)
     {
+        if (!address)
+        {
+            return module();
+        }
+
         const IMAGE_DOS_HEADER& dos = address.at<const IMAGE_DOS_HEADER>(0);
-        const IMAGE_NT_HEADERS& nt  = address.at<const IMAGE_NT_HEADERS>(dos.e_lfanew);
+
+        if (dos.e_magic != IMAGE_DOS_SIGNATURE)
+        {
+            return module();
+        }
+
+        const IMAGE_NT_HEADERS& nt = address.at<const IMAGE_NT_HEADERS>(dos.e_lfanew);
+
+        if (nt.Signature != IMAGE_NT_SIGNATURE)
+        {
+            return module();
+        }
 
         return module(address, nt.OptionalHeader.SizeOfImage);
     }
@@ -119,7 +134,7 @@ namespace mem
 
     module module::main()
     {
-        return module::named(static_cast<const char*>(nullptr));
+        return nt(GetModuleHandleA(nullptr));
     }
 
     module module::self()
