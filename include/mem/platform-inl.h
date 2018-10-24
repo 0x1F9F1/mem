@@ -44,7 +44,7 @@ namespace mem
 #if defined(_WIN32)
     namespace internal
     {
-        static MEM_CONSTEXPR MEM_STRONG_INLINE DWORD translate_prot_flags(prot_flags flags) noexcept
+        static MEM_CONSTEXPR DWORD translate_prot_flags(prot_flags flags) noexcept
         {
             if (flags & prot_flags::X)
             {
@@ -61,7 +61,7 @@ namespace mem
         }
     }
 
-    MEM_STRONG_INLINE protect::protect(region range, prot_flags flags)
+    protect::protect(region range, prot_flags flags)
         : region(range)
         , old_protect_(0)
         , success_(false)
@@ -71,7 +71,7 @@ namespace mem
         old_protect_ = old_protect;
     }
 
-    MEM_STRONG_INLINE protect::~protect()
+    protect::~protect()
     {
         if (success_)
         {
@@ -85,7 +85,7 @@ namespace mem
         }
     }
 
-    MEM_STRONG_INLINE protect::protect(protect&& rhs) noexcept
+    protect::protect(protect&& rhs) noexcept
         : region(rhs)
         , old_protect_(rhs.old_protect_)
         , success_(rhs.success_)
@@ -99,7 +99,7 @@ namespace mem
         IMAGE_DOS_HEADER __ImageBase;
     }
 
-    MEM_STRONG_INLINE module module::nt(pointer address)
+    module module::nt(pointer address)
     {
         const IMAGE_DOS_HEADER& dos = address.at<const IMAGE_DOS_HEADER>(0);
         const IMAGE_NT_HEADERS& nt  = address.at<const IMAGE_NT_HEADERS>(dos.e_lfanew);
@@ -107,29 +107,29 @@ namespace mem
         return module(address, nt.OptionalHeader.SizeOfImage);
     }
 
-    MEM_STRONG_INLINE module module::named(const char* name)
+    module module::named(const char* name)
     {
         return nt(GetModuleHandleA(name));
     }
 
-    MEM_STRONG_INLINE module module::named(const wchar_t* name)
+    module module::named(const wchar_t* name)
     {
         return nt(GetModuleHandleW(name));
     }
 
-    MEM_STRONG_INLINE module module::main()
+    module module::main()
     {
         return module::named(static_cast<const char*>(nullptr));
     }
 
-    MEM_STRONG_INLINE module module::self()
+    module module::self()
     {
         return nt(&internal::__ImageBase);
     }
 
     namespace internal
     {
-        static MEM_CONSTEXPR MEM_STRONG_INLINE const char* translate_exception_code(uint32_t code) noexcept
+        static MEM_CONSTEXPR const char* translate_exception_code(uint32_t code) noexcept
         {
             switch (code)
             {
@@ -214,11 +214,11 @@ namespace mem
 
 #pragma warning(push)
 #pragma warning(disable: 4535) // warning C4535: calling _set_se_translator() requires /EHa
-    MEM_STRONG_INLINE scoped_seh::scoped_seh()
+    scoped_seh::scoped_seh()
         : context_(_set_se_translator(&internal::translate_seh))
     { }
 
-    MEM_STRONG_INLINE scoped_seh::~scoped_seh()
+    scoped_seh::~scoped_seh()
     {
         _set_se_translator(static_cast<_se_translator_function>(context_));
     }
@@ -226,7 +226,7 @@ namespace mem
 
 #endif // _WIN32
 
-    MEM_STRONG_INLINE void* aligned_alloc(size_t size, size_t alignment)
+    void* aligned_alloc(size_t size, size_t alignment)
     {
 #if defined(_WIN32)
         return _aligned_malloc(size, alignment);
@@ -254,7 +254,7 @@ namespace mem
 #endif
     }
 
-    MEM_STRONG_INLINE void aligned_free(void* address)
+    void aligned_free(void* address)
     {
         if (!address)
         {
