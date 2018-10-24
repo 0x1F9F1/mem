@@ -119,7 +119,7 @@ namespace mem
         uintptr_t value_ {0};
 
     public:
-        MEM_CONSTEXPR any_pointer(pointer value = pointer()) noexcept;
+        MEM_CONSTEXPR any_pointer(pointer value) noexcept;
 
         MEM_CONSTEXPR operator uintptr_t() const noexcept;
 
