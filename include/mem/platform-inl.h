@@ -17,7 +17,10 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_PLATFORM_INL_BRICK_H)
+#if defined(MEM_PLATFORM_INL_BRICK_H)
+# error mem/platform-inl.h should only be included once
+#endif // MEM_PLATFORM_INL_BRICK_H
+
 #define MEM_PLATFORM_INL_BRICK_H
 
 #include "platform.h"
@@ -285,5 +288,3 @@ namespace mem
 #endif
     }
 }
-
-#endif // MEM_PLATFORM_INL_BRICK_H
