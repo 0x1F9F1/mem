@@ -127,49 +127,49 @@ TEST(pattern, scan)
     mem::region scan_region(data, 8192);
 #endif
 
-    check_pattern_results(scan_region, "01 02 03 04 05", {
+    check_pattern_results(scan_region, mem::pattern("01 02 03 04 05"), {
         0x01, 0x02, 0x03, 0x04, 0x05
     },{
         0
     });
 
-    check_pattern_results(scan_region, "01 02 03 04 ?", {
+    check_pattern_results(scan_region, mem::pattern("01 02 03 04 ?"), {
         0x01, 0x02, 0x03, 0x04, 0x05
     },{
         0
     });
 
-    check_pattern_results(scan_region, "01 02 03 04 ?", {
+    check_pattern_results(scan_region, mem::pattern("01 02 03 04 ?"), {
         0x01, 0x02, 0x03, 0x04
     },{
 
     });
 
-    check_pattern_results(scan_region, "01 02 01 02 01", {
+    check_pattern_results(scan_region, mem::pattern("01 02 01 02 01"), {
         0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01
     }, {
         0, 2, 4, 6
     });
 
-    check_pattern_results(scan_region, "", {
+    check_pattern_results(scan_region, mem::pattern(""), {
 
     }, {
 
     });
 
-    check_pattern_results(scan_region, "", {
+    check_pattern_results(scan_region, mem::pattern(""), {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06
     }, {
 
     });
 
-    check_pattern_results(scan_region, "01 ?2 3? 45", {
+    check_pattern_results(scan_region, mem::pattern("01 ?2 3? 45"), {
         0x02, 0x59, 0x72, 0x01, 0x01, 0x02, 0x34, 0x45, 0x59, 0x92
     }, {
         4
     });
 
-    check_pattern_results(scan_region, "01 ?2 3? 45", {
+    check_pattern_results(scan_region, mem::pattern("01 ?2 3? 45"), {
         0x02, 0x59, 0x72, 0x01, 0x01, 0x02, 0x43, 0x45, 0x59, 0x92
     }, {
 
