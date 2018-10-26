@@ -95,11 +95,11 @@ namespace mem
         void finalize(const pattern_settings& settings);
 
     public:
-        pattern() = default;
+        explicit pattern() = default;
 
-        pattern(const char* string, const pattern_settings& settings = {});
-        pattern(const char* bytes, const char* masks, const pattern_settings& settings = {});
-        pattern(const void* bytes, const void* masks, size_t length, const pattern_settings& settings = {});
+        explicit pattern(const char* string, const pattern_settings& settings = {});
+        explicit pattern(const char* bytes, const char* masks, const pattern_settings& settings = {});
+        explicit pattern(const void* bytes, const void* masks, size_t length, const pattern_settings& settings = {});
 
         template <typename UnaryPredicate>
         pointer scan_predicate(region range, UnaryPredicate pred) const;
