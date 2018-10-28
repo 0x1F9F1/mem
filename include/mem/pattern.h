@@ -142,17 +142,17 @@ namespace mem
 
         start:
             current = input.peek();
-            if ((temp = hex_char_to_int(current)) != -1) { input.pop(); value = static_cast<byte>(temp); mask = 0xFF; }
-            else if (current == settings.wildcard)       { input.pop(); value = 0x00;                    mask = 0x00; }
-            else if (current == ' ')                     { input.pop(); goto start; }
-            else                                         {              goto error; }
+            if ((temp = xctoi(current)) != -1)     { input.pop(); value = static_cast<byte>(temp); mask = 0xFF; }
+            else if (current == settings.wildcard) { input.pop(); value = 0x00;                    mask = 0x00; }
+            else if (current == ' ')               { input.pop(); goto start; }
+            else                                   {              goto error; }
 
             current = input.peek();
-            if ((temp = hex_char_to_int(current)) != -1) { input.pop(); value = (value << 4) | static_cast<byte>(temp); mask = (mask << 4) | 0x0F; }
-            else if (current == settings.wildcard)       { input.pop(); value = (value << 4);                           mask = (mask << 4);        }
-            else if (current == '&')                     { input.pop(); goto masks;   }
-            else if (current == '#')                     { input.pop(); goto repeats; }
-            else                                         {              goto end;     }
+            if ((temp = xctoi(current)) != -1)     { input.pop(); value = (value << 4) | static_cast<byte>(temp); mask = (mask << 4) | 0x0F; }
+            else if (current == settings.wildcard) { input.pop(); value = (value << 4);                           mask = (mask << 4);        }
+            else if (current == '&')               { input.pop(); goto masks;   }
+            else if (current == '#')               { input.pop(); goto repeats; }
+            else                                   {              goto end;     }
 
             current = input.peek();
             if (current == '&')      { input.pop(); goto masks;   }
@@ -161,13 +161,13 @@ namespace mem
 
         masks:
             current = input.peek();
-            if ((temp = hex_char_to_int(current)) != -1) { input.pop(); expl_mask = static_cast<byte>(temp); }
-            else                                         { goto error; }
+            if ((temp = xctoi(current)) != -1) { input.pop(); expl_mask = static_cast<byte>(temp); }
+            else                               { goto error; }
 
             current = input.peek();
-            if ((temp = hex_char_to_int(current)) != -1) { input.pop(); expl_mask = (expl_mask << 4) | temp; }
-            else if (current == '#')                     { input.pop(); goto repeats; }
-            else                                                   {              goto end;     }
+            if ((temp = xctoi(current)) != -1) { input.pop(); expl_mask = (expl_mask << 4) | temp; }
+            else if (current == '#')           { input.pop(); goto repeats; }
+            else                               {              goto end;     }
 
             current = input.peek();
             if (current == '#') { input.pop(); goto repeats; }
@@ -179,9 +179,9 @@ namespace mem
             while (true)
             {
                 current = input.peek();
-                if ((temp = dec_char_to_int(current)) != -1) { input.pop(); count = (count * 10) + temp; }
-                else if (count > 0)                          { goto end;   }
-                else                                         { goto error; }
+                if ((temp = dctoi(current)) != -1) { input.pop(); count = (count * 10) + temp; }
+                else if (count > 0)                { goto end;   }
+                else                               { goto error; }
             }
 
         end:

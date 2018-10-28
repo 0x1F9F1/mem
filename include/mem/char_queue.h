@@ -45,9 +45,9 @@ namespace mem
         explicit operator bool() const noexcept;
     };
 
-    MEM_CONSTEXPR int hex_char_to_int(int value) noexcept;
-    MEM_CONSTEXPR int dec_char_to_int(int value) noexcept;
-    MEM_CONSTEXPR int oct_char_to_int(int value) noexcept;
+    MEM_CONSTEXPR int xctoi(int value) noexcept;
+    MEM_CONSTEXPR int dctoi(int value) noexcept;
+    MEM_CONSTEXPR int octoi(int value) noexcept;
 
     MEM_STRONG_INLINE char_queue::char_queue(const char* string)
         : char_queue(string, strlen(string))
@@ -87,7 +87,7 @@ namespace mem
         return current < end;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int hex_char_to_int(int value) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE int xctoi(int value) noexcept
     {
         return (value >= '0' && value <= '9') ? (value - '0')
              : (value >= 'a' && value <= 'f') ? (value - 'a' + 10)
@@ -95,12 +95,12 @@ namespace mem
              : -1;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int dec_char_to_int(int value) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE int dctoi(int value) noexcept
     {
         return (value >= '0' && value <= '9') ? (value - '0') : -1;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int oct_char_to_int(int value) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE int octoi(int value) noexcept
     {
         return (value >= '0' && value <= '7') ? (value - '0') : -1;
     }
