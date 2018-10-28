@@ -251,7 +251,7 @@ TEST(utils, as_hex)
 
 void check_unescape_string(const char* string, const void* data, size_t length)
 {
-    std::string unescaped = mem::unescape_string({ string, strlen(string) });
+    std::string unescaped = mem::unescape(string, strlen(string));
 
     EXPECT_EQ(unescaped.size(), length);
     EXPECT_EQ(memcmp(unescaped.data(), data, length), 0);
