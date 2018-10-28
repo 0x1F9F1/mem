@@ -29,9 +29,9 @@ namespace mem
     struct char_queue
     {
     private:
-        const char* start;
-        const char* end;
-        const char* current;
+        const byte* start;
+        const byte* end;
+        const byte* current;
 
     public:
         char_queue(const char* string);
@@ -54,8 +54,8 @@ namespace mem
     { }
 
     MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
-        : start(string)
-        , end(string + length)
+        : start(reinterpret_cast<const byte*>(string))
+        , end(start + length)
         , current(start)
     { }
 
@@ -63,7 +63,7 @@ namespace mem
     {
         if (current < end)
         {
-            return static_cast<unsigned char>(*current);
+            return *current;
         }
 
         return -1;
