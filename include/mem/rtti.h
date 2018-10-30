@@ -129,7 +129,7 @@ namespace mem
         inline T* get_rtti_pointer(const region& region, const uint32_t address) noexcept
         {
 #if defined(MEM_ARCH_X86_64)
-            return region.at(address).as<T*>();
+            return region.start.add(address).as<T*>();
 #elif defined(MEM_ARCH_X32)
             const pointer result = address;
 
@@ -222,7 +222,7 @@ namespace mem
         {
             for (size_t i = 0; i < region.size; i += sizeof(void*))
             {
-                const RTTICompleteObjectLocator*& locator = region.base.add(i).as<const RTTICompleteObjectLocator*&>();
+                const RTTICompleteObjectLocator*& locator = region.start.at<const RTTICompleteObjectLocator*>(i);
 
                 if (!region.contains<RTTICompleteObjectLocator>(locator))
                 {

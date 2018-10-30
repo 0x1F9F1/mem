@@ -37,6 +37,10 @@
 
 #include <gtest/gtest.h>
 
+#if defined(_WIN32)
+# include <mem/rtti.h>
+#endif
+
 void check_pattern(const mem::pattern& pattern, size_t original_size, size_t trimmed_size, bool needs_masks, const void* bytes, const void* masks)
 {
     EXPECT_EQ(pattern.size(), original_size);
