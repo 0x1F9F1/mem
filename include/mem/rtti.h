@@ -118,7 +118,7 @@ namespace mem
         {
 #if defined(MEM_ARCH_X86_64)
             return signature == 1;
-#elif defined(MEM_ARCH_X32)
+#elif defined(MEM_ARCH_X86)
             return signature == 0;
 #else
 # error "Invalid Architecture"
@@ -130,7 +130,7 @@ namespace mem
         {
 #if defined(MEM_ARCH_X86_64)
             return region.start.add(address).as<T*>();
-#elif defined(MEM_ARCH_X32)
+#elif defined(MEM_ARCH_X86)
             const pointer result = address;
 
             return region.contains(result) ? result.as<T*>() : nullptr;
