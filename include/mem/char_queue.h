@@ -37,9 +37,9 @@ namespace mem
         char_queue(const char* string);
         MEM_CONSTEXPR char_queue(const char* string, size_t length);
 
-        MEM_CONSTEXPR int peek() noexcept;
+        MEM_CONSTEXPR int peek() const noexcept;
 
-        MEM_CONSTEXPR void pop() noexcept;
+        MEM_CONSTEXPR_14 void pop() noexcept;
         MEM_CONSTEXPR size_t pos() const noexcept;
 
         MEM_CONSTEXPR explicit operator bool() const noexcept;
@@ -59,17 +59,12 @@ namespace mem
         , current(start)
     { }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int char_queue::peek() noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE int char_queue::peek() const noexcept
     {
-        if (current < end)
-        {
-            return static_cast<byte>(*current);
-        }
-
-        return -1;
+        return (current < end) ? static_cast<byte>(*current) : -1;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE void char_queue::pop() noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE void char_queue::pop() noexcept
     {
         if (current < end)
         {
