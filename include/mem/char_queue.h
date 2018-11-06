@@ -29,20 +29,20 @@ namespace mem
     struct char_queue
     {
     private:
-        const byte* start;
-        const byte* end;
-        const byte* current;
+        const char* start {nullptr};
+        const char* end {nullptr};
+        const char* current {nullptr};
 
     public:
         char_queue(const char* string);
-        char_queue(const char* string, size_t length);
+        MEM_CONSTEXPR char_queue(const char* string, size_t length);
 
-        int peek() noexcept;
+        MEM_CONSTEXPR int peek() noexcept;
 
-        void pop() noexcept;
-        size_t pos() const noexcept;
+        MEM_CONSTEXPR void pop() noexcept;
+        MEM_CONSTEXPR size_t pos() const noexcept;
 
-        explicit operator bool() const noexcept;
+        MEM_CONSTEXPR explicit operator bool() const noexcept;
     };
 
     MEM_CONSTEXPR int xctoi(int value) noexcept;
@@ -53,23 +53,23 @@ namespace mem
         : char_queue(string, strlen(string))
     { }
 
-    MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
-        : start(reinterpret_cast<const byte*>(string))
+    MEM_CONSTEXPR MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
+        : start(string)
         , end(start + length)
         , current(start)
     { }
 
-    MEM_STRONG_INLINE int char_queue::peek() noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE int char_queue::peek() noexcept
     {
         if (current < end)
         {
-            return *current;
+            return static_cast<byte>(*current);
         }
 
         return -1;
     }
 
-    MEM_STRONG_INLINE void char_queue::pop() noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE void char_queue::pop() noexcept
     {
         if (current < end)
         {
@@ -77,12 +77,12 @@ namespace mem
         }
     }
 
-    MEM_STRONG_INLINE size_t char_queue::pos() const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE size_t char_queue::pos() const noexcept
     {
         return current - start;
     }
 
-    MEM_STRONG_INLINE char_queue::operator bool() const noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE char_queue::operator bool() const noexcept
     {
         return current < end;
     }
