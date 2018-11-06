@@ -273,7 +273,7 @@ namespace mem
     template <typename T>
     inline void data_buffer<T>::clear()
     {
-        reallocate(0);
+        size_ = 0;
     }
 
     template <typename T>
