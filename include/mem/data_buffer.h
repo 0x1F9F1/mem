@@ -17,8 +17,8 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_FAST_VECTOR_BRICK_H)
-#define MEM_FAST_VECTOR_BRICK_H
+#if !defined(MEM_DATA_BUFFER_BRICK_H)
+#define MEM_DATA_BUFFER_BRICK_H
 
 #include "defines.h"
 
@@ -30,7 +30,7 @@
 namespace mem
 {
     template <typename T>
-    class fast_vector
+    class data_buffer
     {
     private:
         static_assert(std::is_trivial<T>::value, "Type is not trivially copyable");
@@ -40,23 +40,26 @@ namespace mem
         size_t capacity_ {0};
 
         size_t calculate_growth(size_t new_size) const noexcept;
-        void realloc_data(size_t length);
+        void reallocate(size_t length);
 
     public:
-        fast_vector() noexcept = default;
+        data_buffer() noexcept = default;
 
-        fast_vector(const fast_vector& other);
-        fast_vector(fast_vector&& other) noexcept;
+        data_buffer(size_t length);
 
-        ~fast_vector();
+        data_buffer(const data_buffer& other);
+        data_buffer(data_buffer&& other) noexcept;
 
-        fast_vector& operator=(const fast_vector& other);
-        fast_vector& operator=(fast_vector&& other);
+        ~data_buffer();
 
-        void swap(fast_vector& other) noexcept;
+        data_buffer& operator=(const data_buffer& other);
+        data_buffer& operator=(data_buffer&& other);
+
+        void swap(data_buffer& other) noexcept;
 
         void reserve(size_t length);
         void resize(size_t length);
+        void reset(size_t length);
 
         void assign(const T* source, size_t length);
         void append(const T* source, size_t length);
@@ -79,6 +82,7 @@ namespace mem
 
         size_t size() const noexcept;
         size_t capacity() const noexcept;
+        bool empty() const noexcept;
 
         using value_type = T;
 
@@ -95,10 +99,16 @@ namespace mem
         using const_iterator = const value_type*;
     };
 
-    using byte_buffer = fast_vector<byte>;
+    using byte_buffer = data_buffer<byte>;
 
     template <typename T>
-    inline fast_vector<T>::fast_vector(const fast_vector<T>& other)
+    inline data_buffer<T>::data_buffer(size_t length)
+    {
+        resize(length);
+    }
+
+    template <typename T>
+    inline data_buffer<T>::data_buffer(const data_buffer<T>& other)
     {
         if (this != &other)
         {
@@ -107,7 +117,7 @@ namespace mem
     }
 
     template <typename T>
-    inline fast_vector<T>::fast_vector(fast_vector<T>&& other) noexcept
+    inline data_buffer<T>::data_buffer(data_buffer<T>&& other) noexcept
     {
         if (this != &other)
         {
@@ -116,16 +126,13 @@ namespace mem
     }
 
     template <typename T>
-    inline fast_vector<T>::~fast_vector()
+    inline data_buffer<T>::~data_buffer()
     {
-        if (data_)
-        {
-            free(data_);
-        }
+        clear();
     }
 
     template <typename T>
-    inline fast_vector<T>& fast_vector<T>::operator=(const fast_vector<T>& other)
+    inline data_buffer<T>& data_buffer<T>::operator=(const data_buffer<T>& other)
     {
         if (this != &other)
         {
@@ -136,7 +143,7 @@ namespace mem
     }
 
     template <typename T>
-    inline fast_vector<T>& fast_vector<T>::operator=(fast_vector<T>&& other)
+    inline data_buffer<T>& data_buffer<T>::operator=(data_buffer<T>&& other)
     {
         if (this != &other)
         {
@@ -149,7 +156,7 @@ namespace mem
     }
 
     template <typename T>
-    inline size_t fast_vector<T>::calculate_growth(size_t new_size) const noexcept
+    inline size_t data_buffer<T>::calculate_growth(size_t new_size) const noexcept
     {
         size_t old_capacity = capacity();
         size_t new_capacity = old_capacity + (old_capacity >> 1);
@@ -163,28 +170,44 @@ namespace mem
     }
 
     template <typename T>
-    inline void fast_vector<T>::realloc_data(size_t length)
+    inline void data_buffer<T>::reallocate(size_t length)
     {
-        void* new_data = realloc(data_, length * sizeof(T));
+        if (length != capacity_)
+        {
+            void* new_data = nullptr;
 
-        if (new_data)
-        {
+            if (length)
+            {
+                new_data = realloc(data_, length * sizeof(T));
+
+                if (new_data == nullptr)
+                {
+                    abort();
+                }
+            }
+            else
+            {
+                free(data_);
+            }
+
             data_ = static_cast<T*>(new_data);
-        }
-        else
-        {
-            abort();
+            capacity_ = length;
+
+            if (size_ > capacity_)
+            {
+                size_ = capacity_;
+            }
         }
     }
 
     template <typename T>
-    inline void fast_vector<T>::swap(fast_vector<T>& other) noexcept
+    inline void data_buffer<T>::swap(data_buffer<T>& other) noexcept
     {
         if (this != &other)
         {
             T* temp_data = data_;
             size_t temp_size = size_;
-            size_t temp_max_size = capacity_;
+            size_t temp_capacity = capacity_;
 
             data_ = other.data_;
             size_ = other.size_;
@@ -192,30 +215,37 @@ namespace mem
 
             other.data_ = temp_data;
             other.size_ = temp_size;
-            other.capacity_ = temp_max_size;
+            other.capacity_ = temp_capacity;
         }
     }
 
     template <typename T>
-    inline void fast_vector<T>::reserve(size_t length)
+    inline void data_buffer<T>::reserve(size_t length)
     {
         if (length > capacity_)
         {
-            realloc_data(length);
-            capacity_ = length;
+            reallocate(length);
         }
     }
 
     template <typename T>
-    inline void fast_vector<T>::resize(size_t length)
+    inline void data_buffer<T>::resize(size_t length)
     {
-        realloc_data(length);
+        reallocate(length);
+
         size_ = length;
-        capacity_ = length;
     }
 
     template <typename T>
-    inline void fast_vector<T>::assign(const T* source, size_t length)
+    inline void data_buffer<T>::reset(size_t length)
+    {
+        clear();
+
+        resize(length);
+    }
+
+    template <typename T>
+    inline void data_buffer<T>::assign(const T* source, size_t length)
     {
         clear();
 
@@ -223,100 +253,100 @@ namespace mem
     }
 
     template <typename T>
-    inline void fast_vector<T>::append(const T* source, size_t length)
+    inline void data_buffer<T>::append(const T* source, size_t length)
     {
-        size_t new_size = size_ + length;
+        size_t old_size = size_;
+        size_t new_size = old_size + length;
 
         reserve(calculate_growth(new_size));
-        memcpy(data_ + size_, source, length * sizeof(T));
+        memcpy(data_ + old_size, source, length * sizeof(T));
 
         size_ = new_size;
     }
 
     template <typename T>
-    inline void fast_vector<T>::push_back(const T& value)
+    inline void data_buffer<T>::push_back(const T& value)
     {
         append(&value, 1);
     }
 
     template <typename T>
-    inline void fast_vector<T>::clear()
+    inline void data_buffer<T>::clear()
     {
-        if (data_)
-        {
-            free(data_);
-        }
-
-        data_ = nullptr;
-        size_ = 0;
-        capacity_ = 0;
+        reallocate(0);
     }
 
     template <typename T>
-    inline void fast_vector<T>::shrink_to_fit()
+    inline void data_buffer<T>::shrink_to_fit()
     {
         resize(size_);
     }
 
     template <typename T>
-    inline T& fast_vector<T>::operator[](size_t index) noexcept
+    inline T& data_buffer<T>::operator[](size_t index) noexcept
     {
         return data_[index];
     }
 
     template <typename T>
-    inline const T& fast_vector<T>::operator[](size_t index) const noexcept
+    inline const T& data_buffer<T>::operator[](size_t index) const noexcept
     {
         return data_[index];
     }
 
     template <typename T>
-    inline T* fast_vector<T>::data() noexcept
+    inline T* data_buffer<T>::data() noexcept
     {
         return data_;
     }
 
     template <typename T>
-    inline T* fast_vector<T>::begin() noexcept
+    inline T* data_buffer<T>::begin() noexcept
     {
         return data_;
     }
 
     template <typename T>
-    inline T* fast_vector<T>::end() noexcept
+    inline T* data_buffer<T>::end() noexcept
     {
         return data_ + size_;
     }
 
     template <typename T>
-    inline const T* fast_vector<T>::data() const noexcept
+    inline const T* data_buffer<T>::data() const noexcept
     {
         return data_;
     }
 
     template <typename T>
-    inline const T* fast_vector<T>::begin() const noexcept
+    inline const T* data_buffer<T>::begin() const noexcept
     {
         return data_;
     }
 
     template <typename T>
-    inline const T* fast_vector<T>::end() const noexcept
+    inline const T* data_buffer<T>::end() const noexcept
     {
         return data_ + size_;
     }
 
     template <typename T>
-    inline size_t fast_vector<T>::size() const noexcept
+    inline size_t data_buffer<T>::size() const noexcept
     {
         return size_;
     }
 
     template <typename T>
-    inline size_t fast_vector<T>::capacity() const noexcept
+    inline size_t data_buffer<T>::capacity() const noexcept
     {
         return capacity_;
     }
+
+    template <typename T>
+    bool data_buffer<T>::empty() const noexcept
+    {
+        return size_ == 0;
+    }
 }
 
-#endif // MEM_FAST_VECTOR_BRICK_H
+#endif // MEM_DATA_BUFFER_BRICK_H
