@@ -66,7 +66,7 @@ namespace mem
 
         void push_back(const T& value);
 
-        void clear();
+        void clear() noexcept;
         void shrink_to_fit();
 
         T& operator[](size_t index) noexcept;
@@ -271,7 +271,7 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::clear()
+    inline void data_buffer<T>::clear() noexcept
     {
         size_ = 0;
     }
