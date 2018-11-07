@@ -458,7 +458,7 @@ namespace mem
             {
                 const size_t pat_skip_pos = skip_pos();
 
-                for (; MEM_LIKELY(current <= end); current += pat_skips[current[pat_skip_pos]])
+                while (MEM_LIKELY(current <= end))
                 {
                     size_t i = last;
 
@@ -466,23 +466,32 @@ namespace mem
                     {
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                         {
-                            goto mask_skip_next;
+                            break;
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
-                    }
+                        if (MEM_LIKELY(i))
+                        {
+                            --i;
 
-                mask_skip_next:;
+                            continue;
+                        }
+
+                        if (MEM_UNLIKELY(pred(current)))
+                        {
+                            return current;
+                        }
+
+                        break;
+                    } while (true);
+
+                    current += pat_skips[current[pat_skip_pos]];
                 }
 
                 return nullptr;
             }
             else
             {
-                for (; MEM_LIKELY(current <= end); ++current)
+                while (MEM_LIKELY(current <= end))
                 {
                     size_t i = last;
 
@@ -490,16 +499,25 @@ namespace mem
                     {
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                         {
-                            goto mask_noskip_next;
+                            break;
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
-                    }
+                        if (MEM_LIKELY(i))
+                        {
+                            --i;
 
-                mask_noskip_next:;
+                            continue;
+                        }
+
+                        if (MEM_UNLIKELY(pred(current)))
+                        {
+                            return current;
+                        }
+
+                        break;
+                    } while (true);
+
+                    ++current;
                 }
 
                 return nullptr;
@@ -514,7 +532,7 @@ namespace mem
                 current += last;
                 const byte* const end_plus_last = end + last;
 
-                for (; MEM_LIKELY(current <= end_plus_last);)
+                while (MEM_LIKELY(current <= end_plus_last))
                 {
                     size_t i = last;
 
@@ -522,25 +540,25 @@ namespace mem
                     {
                         if (MEM_LIKELY(*current != pat_bytes[i]))
                         {
-                            goto suffix_skip_next;
+                            break;
                         }
-                        else if (MEM_LIKELY(i))
+
+                        if (MEM_LIKELY(i))
                         {
                             --current;
                             --i;
+
+                            continue;
                         }
-                        else
+
+                        if (MEM_UNLIKELY(pred(current)))
                         {
-                            break;
+                            return current;
                         }
+
+                        break;
                     } while (true);
 
-                    if (pred(current))
-                    {
-                        return current;
-                    }
-
-                suffix_skip_next:
                     const size_t bc_skip = pat_skips[*current];
                     const size_t gs_skip = pat_suffixes[i];
 
@@ -551,7 +569,7 @@ namespace mem
             }
             else if (pat_skips)
             {
-                for (; MEM_LIKELY(current <= end); current += pat_skips[current[last]])
+                while (MEM_LIKELY(current <= end))
                 {
                     size_t i = last;
 
@@ -559,23 +577,32 @@ namespace mem
                     {
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
                         {
-                            goto nomask_skip_next;
+                            break;
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
-                    }
+                        if (MEM_LIKELY(i))
+                        {
+                            --i;
 
-                nomask_skip_next:;
+                            continue;
+                        }
+
+                        if (MEM_UNLIKELY(pred(current)))
+                        {
+                            return current;
+                        }
+
+                        break;
+                    } while (true);
+
+                    current += pat_skips[current[last]];
                 }
 
                 return nullptr;
             }
             else
             {
-                for (; MEM_LIKELY(current <= end); ++current)
+                while (MEM_LIKELY(current <= end))
                 {
                     size_t i = last;
 
@@ -583,16 +610,25 @@ namespace mem
                     {
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
                         {
-                            goto nomask_noskip_next;
+                            break;
                         }
-                    } while (MEM_LIKELY(i--));
 
-                    if (pred(current))
-                    {
-                        return current;
-                    }
+                        if (MEM_LIKELY(i))
+                        {
+                            --i;
 
-                nomask_noskip_next:;
+                            continue;
+                        }
+
+                        if (MEM_UNLIKELY(pred(current)))
+                        {
+                            return current;
+                        }
+
+                        break;
+                    } while (true);
+
+                    ++current;
                 }
 
                 return nullptr;
