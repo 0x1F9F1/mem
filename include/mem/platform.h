@@ -51,12 +51,12 @@ namespace mem
 
     using enums::prot_flags;
 
-    size_t get_page_size();
+    size_t page_size();
 
-    void* allocate_protected(size_t length, prot_flags flags);
-    void free_protected(void* memory);
+    void* protect_alloc(size_t length, prot_flags flags);
+    void protect_free(void* memory);
 
-    bool protect_memory(void* memory, size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
+    bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
 
     class protect
         : public region

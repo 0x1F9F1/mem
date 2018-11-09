@@ -101,19 +101,19 @@ namespace mem
         return static_cast<prot_flags>(result);
     }
 
-    size_t get_page_size()
+    size_t page_size()
     {
         SYSTEM_INFO si;
         GetSystemInfo(&si);
         return si.dwPageSize;
     }
 
-    void* allocate_protected(size_t length, prot_flags flags)
+    void* protect_alloc(size_t length, prot_flags flags)
     {
         return VirtualAlloc(nullptr, length, MEM_RESERVE | MEM_COMMIT, from_prot_flags(flags));
     }
 
-    void free_protected(void* memory)
+    void protect_free(void* memory)
     {
         if (memory != nullptr)
         {
@@ -121,7 +121,7 @@ namespace mem
         }
     }
 
-    bool protect_memory(void* memory, size_t length, prot_flags flags, prot_flags* old_flags)
+    bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags)
     {
         if (flags == prot_flags::INVALID)
             return false;
@@ -140,14 +140,14 @@ namespace mem
     protect::protect(region range, prot_flags flags)
         : region(range)
         , old_flags_(prot_flags::INVALID)
-        , success_(protect_memory(start.as<void*>(), size, flags, &old_flags_))
+        , success_(protect_modify(start.as<void*>(), size, flags, &old_flags_))
     { }
 
     protect::~protect()
     {
         if (success_)
         {
-            protect_memory(start.as<void*>(), size, old_flags_, nullptr);
+            protect_modify(start.as<void*>(), size, old_flags_, nullptr);
         }
     }
 
