@@ -29,7 +29,7 @@ namespace mem
 #if defined(_WIN32)
     namespace enums
     {
-        enum prot_flags : uint32_t
+        enum prot_flags
         {
             INVALID = 0, // Invalid
 
@@ -50,6 +50,9 @@ namespace mem
     }
 
     using enums::prot_flags;
+
+    MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept;
+    MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept;
 
     size_t page_size();
 

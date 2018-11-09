@@ -271,3 +271,24 @@ TEST(utils, unescape)
     check_unescape_string(R"(Hello\nThere)", "Hello\nThere", 11);
     check_unescape_string(R"(Hello \"Bob)", "Hello \"Bob", 10);
 }
+
+#if defined(_WIN32)
+TEST(platform, protect)
+{
+    const mem::prot_flags FLAGS[ ] =
+    {
+        mem::prot_flags::NA,
+        mem::prot_flags::R,
+        mem::prot_flags::RW,
+        mem::prot_flags::RX,
+        mem::prot_flags::RWX,
+    };
+
+    for (mem::prot_flags flags : FLAGS)
+    {
+        mem::prot_flags new_flags = mem::to_prot_flags(mem::from_prot_flags(flags));
+
+        EXPECT_EQ(flags, new_flags);
+    }
+}
+#endif

@@ -44,7 +44,7 @@
 namespace mem
 {
 #if defined(_WIN32)
-    static MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept
+    MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept
     {
         uint32_t result = PAGE_NOACCESS;
 
@@ -71,7 +71,7 @@ namespace mem
         return result;
     }
 
-    static MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept
+    MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept
     {
         uint32_t result = prot_flags::INVALID;
 
