@@ -26,28 +26,43 @@
 
 namespace mem
 {
-    namespace internal
+#if defined(_WIN32)
+    namespace enums
     {
-        enum prot_flags
+        enum prot_flags : uint32_t
         {
-            NONE = 1 << 0,
-            R    = 1 << 1,
-            W    = 1 << 2,
-            X    = 1 << 3,
+            INVALID = 0, // Invalid
+
+            NA = 1 << 0, // No Access
+
+            R  = 1 << 1, // Read
+            W  = 1 << 2, // Write
+            X  = 1 << 3, // Execute
+
+            G  = 1 << 4, // Guard
+            NC = 1 << 5, // No Cache
+            WC = 1 << 6, // Write Combine
 
             RW  = R | W,
+            RX  = R | X,
             RWX = R | W | X,
         };
     }
 
-    using internal::prot_flags;
+    using enums::prot_flags;
 
-#if defined(_WIN32)
+    size_t get_page_size();
+
+    void* allocate_protected(size_t length, prot_flags flags);
+    void free_protected(void* memory);
+
+    bool protect_memory(void* memory, size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
+
     class protect
         : public region
     {
     private:
-        uint32_t old_protect_;
+        prot_flags old_flags_;
         bool success_;
 
     public:
@@ -60,6 +75,13 @@ namespace mem
         MEM_STRONG_INLINE explicit operator bool() const noexcept
         {
             return success_;
+        }
+
+        MEM_STRONG_INLINE prot_flags release() noexcept
+        {
+            success_ = false;
+
+            return old_flags_;
         }
     };
 

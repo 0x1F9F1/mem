@@ -44,55 +44,119 @@
 namespace mem
 {
 #if defined(_WIN32)
-    namespace internal
+    static MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept
     {
-        static MEM_CONSTEXPR DWORD translate_prot_flags(prot_flags flags) noexcept
+        uint32_t result = PAGE_NOACCESS;
+
+        if (flags & prot_flags::X)
         {
-            if (flags & prot_flags::X)
-            {
-                if      (flags & prot_flags::W) { return PAGE_EXECUTE_READWRITE; }
-                else if (flags & prot_flags::R) { return PAGE_EXECUTE_READ;      }
-                else                            { return PAGE_EXECUTE;           }
-            }
-            else
-            {
-                if      (flags & prot_flags::W) { return PAGE_READWRITE; }
-                else if (flags & prot_flags::R) { return PAGE_READONLY;  }
-                else                            { return PAGE_NOACCESS;  }
-            }
+            if      (flags & prot_flags::W) { result = PAGE_EXECUTE_READWRITE; }
+            else if (flags & prot_flags::R) { result = PAGE_EXECUTE_READ;      }
+            else                            { result = PAGE_EXECUTE;           }
         }
+        else
+        {
+            if      (flags & prot_flags::W) { result = PAGE_READWRITE; }
+            else if (flags & prot_flags::R) { result = PAGE_READONLY;  }
+            else                            { result = PAGE_NOACCESS;  }
+        }
+
+        if (flags & prot_flags::G)
+            result |= PAGE_GUARD;
+        if (flags & prot_flags::NC)
+            result |= PAGE_NOCACHE;
+        if (flags & prot_flags::WC)
+            result |= PAGE_WRITECOMBINE;
+
+        return result;
+    }
+
+    static MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept
+    {
+        uint32_t result = prot_flags::INVALID;
+
+        if (flags & PAGE_EXECUTE_READWRITE)
+            result = prot_flags::RWX;
+        else if (flags & PAGE_EXECUTE_READ)
+            result = prot_flags::RX;
+        else if (flags & PAGE_EXECUTE)
+            result = prot_flags::X;
+        else if (flags & PAGE_READWRITE)
+            result = prot_flags::RW;
+        else if (flags & PAGE_READONLY)
+            result = prot_flags::R;
+        else
+            result = prot_flags::NA;
+
+        if (result != prot_flags::INVALID)
+        {
+            if (flags & PAGE_GUARD)
+                result |= prot_flags::G;
+            if (flags & PAGE_NOCACHE)
+                result |= prot_flags::NC;
+            if (flags & PAGE_WRITECOMBINE)
+                result |= prot_flags::WC;
+        }
+
+        return static_cast<prot_flags>(result);
+    }
+
+    size_t get_page_size()
+    {
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
+        return si.dwPageSize;
+    }
+
+    void* allocate_protected(size_t length, prot_flags flags)
+    {
+        return VirtualAlloc(nullptr, length, MEM_RESERVE | MEM_COMMIT, from_prot_flags(flags));
+    }
+
+    void free_protected(void* memory)
+    {
+        if (memory != nullptr)
+        {
+            VirtualFree(memory, 0, MEM_RELEASE);
+        }
+    }
+
+    bool protect_memory(void* memory, size_t length, prot_flags flags, prot_flags* old_flags)
+    {
+        if (flags == prot_flags::INVALID)
+            return false;
+
+        DWORD old_protect = 0;
+        BOOL success = VirtualProtect(memory, length, from_prot_flags(flags), &old_protect);
+
+        if (old_flags)
+        {
+            *old_flags = success ? to_prot_flags(old_protect) : prot_flags::INVALID;
+        }
+
+        return success;
     }
 
     protect::protect(region range, prot_flags flags)
         : region(range)
-        , old_protect_(0)
-        , success_(false)
-    {
-        DWORD old_protect = 0;
-        success_ = VirtualProtect(start.as<void*>(), size, internal::translate_prot_flags(flags), &old_protect);
-        old_protect_ = old_protect;
-    }
+        , old_flags_(prot_flags::INVALID)
+        , success_(protect_memory(start.as<void*>(), size, flags, &old_flags_))
+    { }
 
     protect::~protect()
     {
         if (success_)
         {
-            DWORD old_protect = 0;
-            VirtualProtect(start.as<void*>(), size, old_protect_, &old_protect);
-
-            if (old_protect_ & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY))
-            {
-                FlushInstructionCache(GetCurrentProcess(), start.as<void*>(), size);
-            }
+            protect_memory(start.as<void*>(), size, old_flags_, nullptr);
         }
     }
 
     protect::protect(protect&& rhs) noexcept
         : region(rhs)
-        , old_protect_(rhs.old_protect_)
+        , old_flags_(rhs.old_flags_)
         , success_(rhs.success_)
     {
-        rhs.old_protect_ = 0;
+        rhs.old_flags_ = prot_flags::INVALID;
         rhs.success_ = false;
     }
 
