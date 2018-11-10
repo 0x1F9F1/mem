@@ -362,6 +362,11 @@ namespace mem
             return;
         }
 
+        for (size_t i = 0; i < bytes_.size(); ++i)
+        {
+            bytes_[i] &= masks_[i];
+        }
+
         {
             size_t trimmed_size = bytes_.size();
 
