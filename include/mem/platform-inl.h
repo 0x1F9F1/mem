@@ -215,46 +215,48 @@ namespace mem
         {
             switch (code)
             {
-                case 0x80000001: return "STATUS_GUARD_PAGE_VIOLATION";
-                case 0x80000002: return "STATUS_DATATYPE_MISALIGNMENT";
-                case 0x80000003: return "STATUS_BREAKPOINT";
-                case 0x80000004: return "STATUS_SINGLE_STEP";
-                case 0x80000026: return "STATUS_LONGJUMP";
-                case 0x80000029: return "STATUS_UNWIND_CONSOLIDATE";
-                case 0x80010001: return "DBG_EXCEPTION_NOT_HANDLED";
-                case 0xC0000005: return "STATUS_ACCESS_VIOLATION";
-                case 0xC0000006: return "STATUS_IN_PAGE_ERROR";
-                case 0xC0000008: return "STATUS_INVALID_HANDLE";
-                case 0xC000000D: return "STATUS_INVALID_PARAMETER";
-                case 0xC0000017: return "STATUS_NO_MEMORY";
-                case 0xC000001D: return "STATUS_ILLEGAL_INSTRUCTION";
-                case 0xC0000025: return "STATUS_NONCONTINUABLE_EXCEPTION";
-                case 0xC0000026: return "STATUS_INVALID_DISPOSITION";
-                case 0xC000008C: return "STATUS_ARRAY_BOUNDS_EXCEEDED";
-                case 0xC000008D: return "STATUS_FLOAT_DENORMAL_OPERAND";
-                case 0xC000008E: return "STATUS_FLOAT_DIVIDE_BY_ZERO";
-                case 0xC000008F: return "STATUS_FLOAT_INEXACT_RESULT";
-                case 0xC0000090: return "STATUS_FLOAT_INVALID_OPERATION";
-                case 0xC0000091: return "STATUS_FLOAT_OVERFLOW";
-                case 0xC0000092: return "STATUS_FLOAT_STACK_CHECK";
-                case 0xC0000093: return "STATUS_FLOAT_UNDERFLOW";
-                case 0xC0000094: return "STATUS_INTEGER_DIVIDE_BY_ZERO";
-                case 0xC0000095: return "STATUS_INTEGER_OVERFLOW";
-                case 0xC0000096: return "STATUS_PRIVILEGED_INSTRUCTION";
-                case 0xC00000FD: return "STATUS_STACK_OVERFLOW";
-                case 0xC0000135: return "STATUS_DLL_NOT_FOUND";
-                case 0xC0000138: return "STATUS_ORDINAL_NOT_FOUND";
-                case 0xC0000139: return "STATUS_ENTRYPOINT_NOT_FOUND";
-                case 0xC000013A: return "STATUS_CONTROL_C_EXIT";
-                case 0xC0000142: return "STATUS_DLL_INIT_FAILED";
-                case 0xC00002B4: return "STATUS_FLOAT_MULTIPLE_FAULTS";
-                case 0xC00002B5: return "STATUS_FLOAT_MULTIPLE_TRAPS";
-                case 0xC00002C9: return "STATUS_REG_NAT_CONSUMPTION";
-                case 0xC0000374: return "STATUS_HEAP_CORRUPTION";
-                case 0xC0000409: return "STATUS_STACK_BUFFER_OVERRUN";
-                case 0xC0000417: return "STATUS_INVALID_CRUNTIME_PARAMETER";
-                case 0xC0000420: return "STATUS_ASSERTION_FAILURE";
-                case 0xC00004A2: return "STATUS_ENCLAVE_VIOLATION";
+            #define X(code) case code: return #code;
+                X(STATUS_GUARD_PAGE_VIOLATION)
+                X(STATUS_DATATYPE_MISALIGNMENT)
+                X(STATUS_BREAKPOINT)
+                X(STATUS_SINGLE_STEP)
+                X(STATUS_LONGJUMP)
+                X(STATUS_UNWIND_CONSOLIDATE)
+                X(DBG_EXCEPTION_NOT_HANDLED)
+                X(STATUS_ACCESS_VIOLATION)
+                X(STATUS_IN_PAGE_ERROR)
+                X(STATUS_INVALID_HANDLE)
+                X(STATUS_INVALID_PARAMETER)
+                X(STATUS_NO_MEMORY)
+                X(STATUS_ILLEGAL_INSTRUCTION)
+                X(STATUS_NONCONTINUABLE_EXCEPTION)
+                X(STATUS_INVALID_DISPOSITION)
+                X(STATUS_ARRAY_BOUNDS_EXCEEDED)
+                X(STATUS_FLOAT_DENORMAL_OPERAND)
+                X(STATUS_FLOAT_DIVIDE_BY_ZERO)
+                X(STATUS_FLOAT_INEXACT_RESULT)
+                X(STATUS_FLOAT_INVALID_OPERATION)
+                X(STATUS_FLOAT_OVERFLOW)
+                X(STATUS_FLOAT_STACK_CHECK)
+                X(STATUS_FLOAT_UNDERFLOW)
+                X(STATUS_INTEGER_DIVIDE_BY_ZERO)
+                X(STATUS_INTEGER_OVERFLOW)
+                X(STATUS_PRIVILEGED_INSTRUCTION)
+                X(STATUS_STACK_OVERFLOW)
+                X(STATUS_DLL_NOT_FOUND)
+                X(STATUS_ORDINAL_NOT_FOUND)
+                X(STATUS_ENTRYPOINT_NOT_FOUND)
+                X(STATUS_CONTROL_C_EXIT)
+                X(STATUS_DLL_INIT_FAILED)
+                X(STATUS_FLOAT_MULTIPLE_FAULTS)
+                X(STATUS_FLOAT_MULTIPLE_TRAPS)
+                X(STATUS_REG_NAT_CONSUMPTION)
+                X(STATUS_HEAP_CORRUPTION)
+                X(STATUS_STACK_BUFFER_OVERRUN)
+                X(STATUS_INVALID_CRUNTIME_PARAMETER)
+                X(STATUS_ASSERTION_FAILURE)
+                X(STATUS_ENCLAVE_VIOLATION)
+            #undef X
             }
 
             return "UNKNOWN_EXCEPTION";
@@ -267,7 +269,7 @@ namespace mem
             char buffer[2048];
 
             std::snprintf(buffer, sizeof(buffer),
-    #if defined(MEM_ARCH_X86_64)
+#if defined(MEM_ARCH_X86_64)
                 "%s (0x%08X) at 0x%016llX\n"
                 "RAX = 0x%016llX RBX = 0x%016llX RCX = 0x%016llX RDX = 0x%016llX\n"
                 "RSP = 0x%016llX RBP = 0x%016llX RSI = 0x%016llX RDI = 0x%016llX\n"
@@ -279,7 +281,7 @@ namespace mem
                 ep->ContextRecord->Rsp, ep->ContextRecord->Rbp, ep->ContextRecord->Rsi, ep->ContextRecord->Rdi,
                 ep->ContextRecord->R8,  ep->ContextRecord->R9,  ep->ContextRecord->R10, ep->ContextRecord->R11,
                 ep->ContextRecord->R12, ep->ContextRecord->R13, ep->ContextRecord->R14, ep->ContextRecord->R15
-    #elif defined(MEM_ARCH_X86)
+#else /*if defined(MEM_ARCH_X86)*/
                 "%s (0x%08X) at 0x%08X\n"
                 "EAX = 0x%08lX EBX = 0x%08lX ECX = 0x%08lX EDX = 0x%08lX\n"
                 "ESP = 0x%08lX EBP = 0x%08lX ESI = 0x%08lX EDI = 0x%08lX\n",
@@ -287,7 +289,7 @@ namespace mem
                 reinterpret_cast<DWORD>(ep->ExceptionRecord->ExceptionAddress),
                 ep->ContextRecord->Eax, ep->ContextRecord->Ebx, ep->ContextRecord->Ecx, ep->ContextRecord->Edx,
                 ep->ContextRecord->Esp, ep->ContextRecord->Ebp, ep->ContextRecord->Esi, ep->ContextRecord->Edi
-    #endif
+#endif
             );
 
             throw std::runtime_error(buffer);
