@@ -21,6 +21,7 @@
 #define MEM_PLATFORM_BRICK_H
 
 #include "mem.h"
+#include "bitwise_enum.h"
 
 #include <memory>
 
@@ -29,15 +30,15 @@ namespace mem
 #if defined(_WIN32)
     namespace enums
     {
-        enum prot_flags
+        enum prot_flags : uint32_t
         {
             INVALID = 0, // Invalid
 
-            NA = 1 << 0, // No Access
+            NONE = 1 << 0, // No Access
 
-            R  = 1 << 1, // Read
-            W  = 1 << 2, // Write
-            X  = 1 << 3, // Execute
+            R = 1 << 1, // Read
+            W = 1 << 2, // Write
+            X = 1 << 3, // Execute
 
             G  = 1 << 4, // Guard
             NC = 1 << 5, // No Cache
@@ -50,6 +51,8 @@ namespace mem
     }
 
     using enums::prot_flags;
+
+    MEM_DEFINE_ENUM_FLAG_OPERATORS(prot_flags);
 
     MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept;
     MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept;
@@ -65,8 +68,8 @@ namespace mem
         : public region
     {
     private:
-        prot_flags old_flags_;
-        bool success_;
+        prot_flags old_flags_ {prot_flags::INVALID};
+        bool success_ {false};
 
     public:
         protect(region range, prot_flags flags = prot_flags::RWX);

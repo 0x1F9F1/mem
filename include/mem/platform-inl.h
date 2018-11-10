@@ -73,7 +73,7 @@ namespace mem
 
     MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept
     {
-        uint32_t result = prot_flags::INVALID;
+        prot_flags result = prot_flags::INVALID;
 
         if (flags & PAGE_EXECUTE_READWRITE)
             result = prot_flags::RWX;
@@ -86,7 +86,7 @@ namespace mem
         else if (flags & PAGE_READONLY)
             result = prot_flags::R;
         else
-            result = prot_flags::NA;
+            result = prot_flags::NONE;
 
         if (result != prot_flags::INVALID)
         {
@@ -98,7 +98,7 @@ namespace mem
                 result |= prot_flags::WC;
         }
 
-        return static_cast<prot_flags>(result);
+        return result;
     }
 
     size_t page_size()
