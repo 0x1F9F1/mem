@@ -112,19 +112,17 @@ void check_pattern_results(const mem::region& whole_region, const mem::pattern& 
 TEST(pattern, scan)
 {
 #if defined(_WIN32)
-    SYSTEM_INFO si;
-    GetSystemInfo(&si);
+    size_t page_size = mem::page_size();
 
-    size_t size = si.dwPageSize * (4 + 2); // 4 Pages + Guard Page Before/After
-    uint8_t* data = (uint8_t*) VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    size_t size = page_size * (4 + 2); // 4 Pages + Guard Page Before/After
+    uint8_t* data = static_cast<uint8_t*>(mem::protect_alloc(size, mem::prot_flags::RW));
 
     memset(data, 0, size);
 
-    DWORD dwOld = 0;
-    VirtualProtect(data, si.dwPageSize, PAGE_NOACCESS, &dwOld);
-    VirtualProtect(data + size - si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &dwOld);
+    mem::protect_modify(data, page_size, mem::prot_flags::NONE);
+    mem::protect_modify(data + size - page_size, page_size, mem::prot_flags::NONE);
 
-    mem::region scan_region(data + si.dwPageSize, size - (2 * si.dwPageSize));
+    mem::region scan_region(data + page_size, size - (2 * page_size));
 #else
     uint8_t* data = static_cast<uint8_t*>(std::malloc(8192));
 
@@ -180,7 +178,7 @@ TEST(pattern, scan)
     });
 
 #if defined(_WIN32)
-    VirtualFree(data, 0, MEM_RELEASE);
+    mem::protect_free(data);
 #else
     std::free(data);
 #endif
