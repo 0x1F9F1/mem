@@ -277,7 +277,7 @@ TEST(platform, protect)
 {
     const mem::prot_flags FLAGS[ ] =
     {
-        mem::prot_flags::NA,
+        mem::prot_flags::NONE,
         mem::prot_flags::R,
         mem::prot_flags::RW,
         mem::prot_flags::RX,
