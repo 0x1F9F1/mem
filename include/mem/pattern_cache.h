@@ -126,7 +126,11 @@ namespace mem
         }
         else
         {
-            find = results_.emplace(hash, pattern_results { true, pattern.scan_all(region_) }).first;
+            pattern_results results;
+            results.checked = true;
+            results.results = pattern.scan_all(region_);
+
+            find = results_.emplace(hash, std::move(results)).first;
         }
 
         return find->second.results;
