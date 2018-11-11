@@ -17,37 +17,15 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_ALIGNED_ALLOCATOR_BRICK_H)
-#define MEM_ALIGNED_ALLOCATOR_BRICK_H
+#if defined(MEM_INIT_FUNCTION_INL_BRICK_H)
+# error mem/init_function-inl.h should only be included once
+#endif // MEM_INIT_FUNCTION_INL_BRICK_H
 
-#include "mem_defines.h"
+#define MEM_INIT_FUNCTION_INL_BRICK_H
 
-#include <memory>
-#include <malloc.h>
-
-#if !defined(MEM_PLATFORM_WINDOWS)
-# error mem::aligned_allocator only supports windows
-#endif // !MEM_PLATFORM_WINDOWS
+#include "init_function.h"
 
 namespace mem
 {
-    template <typename T, size_t Alignment>
-    class aligned_allocator
-        : public std::allocator<T>
-    {
-    public:
-        inline T* allocate(size_t n)
-        {
-            return _aligned_malloc(n * sizeof(T), Alignment);
-        }
-
-        inline void deallocate(T* p, size_t n)
-        {
-            (void) n;
-
-            return _aligned_free(p);
-        }
-    };
+    init_function* init_function::ROOT {nullptr};
 }
-
-#endif // MEM_ALIGNED_ALLOCATOR_BRICK_H

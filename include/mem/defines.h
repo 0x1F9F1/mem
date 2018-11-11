@@ -21,16 +21,10 @@
 #define MEM_DEFINES_BRICK_H
 
 #if defined(__x86_64__) || defined(_M_X64)
-# define MEM_ARCH_X64
+# define MEM_ARCH_X86_64
 #elif defined(__i386) || defined(_M_IX86)
 # define MEM_ARCH_X86
 #endif
-
-#if defined(MEM_AUTO_PLATFORM)
-# if defined(_WIN32) || defined(_WIN64)
-#  define MEM_PLATFORM_WINDOWS
-# endif
-#endif // MEM_AUTO_PLATFORM
 
 #if !defined(MEM_CONSTEXPR)
 # if (defined(__cpp_constexpr) && (__cpp_constexpr >= 200704)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190024210))
@@ -63,5 +57,24 @@
 #else
 # define MEM_STRONG_INLINE inline
 #endif
+
+#if defined(__GNUC__) || defined(__clang__)
+# define MEM_NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+# define MEM_NOINLINE __declspec(noinline)
+#else
+# define MEM_NOINLINE
+#endif
+
+#include <climits>
+
+#if CHAR_BIT != 8
+# error Only 8-bit bytes are supported
+#endif
+
+namespace mem
+{
+    using byte = unsigned char;
+}
 
 #endif // MEM_DEFINES_BRICK_H
