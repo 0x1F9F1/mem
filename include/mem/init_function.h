@@ -44,7 +44,7 @@ namespace mem
         static void init();
     };
 
-    init_function::init_function(init_function*& parent, callback_t callback)
+    MEM_STRONG_INLINE init_function::init_function(init_function*& parent, callback_t callback)
         : next_(parent)
         , callback_(callback)
     {
