@@ -26,7 +26,7 @@
 
 namespace mem
 {
-    struct char_queue
+    class char_queue
     {
     private:
         const char* start {nullptr};
