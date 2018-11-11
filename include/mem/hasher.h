@@ -26,15 +26,15 @@ namespace mem
 {
     class hasher
     {
-    protected:
+    private:
         uint32_t hash_;
 
     public:
-        hasher(const uint32_t seed = 0)
+        hasher(uint32_t seed = 0)
             : hash_(seed)
         { }
 
-        void update(const void* data, const size_t length)
+        void update(const void* data, size_t length)
         {
             uint32_t hash = hash_;
 
