@@ -20,7 +20,7 @@
 #if !defined(MEM_HASHER_BRICK_H)
 #define MEM_HASHER_BRICK_H
 
-#include <cstdint>
+#include "defines.h"
 
 namespace mem
 {
@@ -30,43 +30,52 @@ namespace mem
         uint32_t hash_;
 
     public:
-        hasher(uint32_t seed = 0)
-            : hash_(seed)
-        { }
+        hasher(uint32_t seed = 0) noexcept;
 
-        void update(const void* data, size_t length)
-        {
-            uint32_t hash = hash_;
-
-            for (size_t i = 0; i < length; ++i)
-            {
-                hash += static_cast<const uint8_t*>(data)[i];
-                hash += (hash << 10);
-                hash ^= (hash >> 6);
-            }
-
-            hash_ = hash;
-        }
+        void update(const void* data, size_t length) noexcept;
 
         template <typename T>
-        void update(const T& value)
-        {
-            static_assert(std::is_integral<T>::value, "Invalid Type");
+        void update(const T& value) noexcept;
 
-            update(&value, sizeof(value));
-        }
-
-        uint32_t digest() const
-        {
-            uint32_t hash = hash_;
-
-            hash += (hash << 3);
-            hash ^= (hash >> 11);
-            hash += (hash << 15);
-
-            return hash;
-        }
+        uint32_t digest() const noexcept;
     };
+
+    MEM_STRONG_INLINE hasher::hasher(uint32_t seed) noexcept
+        : hash_(seed)
+    { }
+
+    MEM_STRONG_INLINE void hasher::update(const void* data, size_t length) noexcept
+    {
+        uint32_t hash = hash_;
+
+        for (size_t i = 0; i < length; ++i)
+        {
+            hash += static_cast<const uint8_t*>(data)[i];
+            hash += (hash << 10);
+            hash ^= (hash >> 6);
+        }
+
+        hash_ = hash;
+    }
+
+    template <typename T>
+    MEM_STRONG_INLINE void hasher::update(const T& value) noexcept
+    {
+        static_assert(std::is_integral<T>::value, "Invalid Type");
+
+        update(&value, sizeof(value));
+    }
+
+    MEM_STRONG_INLINE uint32_t hasher::digest() const noexcept
+    {
+        uint32_t hash = hash_;
+
+        hash += (hash << 3);
+        hash ^= (hash >> 11);
+        hash += (hash << 15);
+
+        return hash;
+    }
 }
 
 #endif // MEM_HASHER_BRICK_H

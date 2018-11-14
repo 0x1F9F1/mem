@@ -77,4 +77,7 @@ namespace mem
     using byte = unsigned char;
 }
 
+#include <stdint.h>
+#include <stddef.h>
+
 #endif // MEM_DEFINES_BRICK_H

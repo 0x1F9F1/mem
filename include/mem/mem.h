@@ -24,8 +24,6 @@
 
 #include <type_traits>
 
-#include <cstdint>
-#include <cstddef>
 #include <cstring>
 
 namespace mem
@@ -40,7 +38,7 @@ namespace mem
     public:
         MEM_CONSTEXPR pointer() noexcept = default;
 
-        MEM_CONSTEXPR pointer(std::nullptr_t) noexcept;
+        MEM_CONSTEXPR pointer(nullptr_t) noexcept;
         MEM_CONSTEXPR pointer(uintptr_t address) noexcept;
 
         template <typename T>
@@ -154,7 +152,7 @@ namespace mem
         MEM_CONSTEXPR region sub_region(pointer address) const noexcept;
     };
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE pointer::pointer(std::nullptr_t) noexcept
+    MEM_CONSTEXPR MEM_STRONG_INLINE pointer::pointer(nullptr_t) noexcept
         : value_(0)
     { }
 

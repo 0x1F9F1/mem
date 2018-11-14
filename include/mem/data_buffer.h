@@ -178,16 +178,16 @@ namespace mem
 
             if (length)
             {
-                new_data = realloc(data_, length * sizeof(T));
+                new_data = std::realloc(data_, length * sizeof(T));
 
                 if (new_data == nullptr)
                 {
-                    abort();
+                    std::abort();
                 }
             }
             else
             {
-                free(data_);
+                std::free(data_);
             }
 
             data_ = static_cast<T*>(new_data);
@@ -259,7 +259,7 @@ namespace mem
         size_t new_size = old_size + length;
 
         reserve(calculate_growth(new_size));
-        memcpy(data_ + old_size, source, length * sizeof(T));
+        std::memcpy(data_ + old_size, source, length * sizeof(T));
 
         size_ = new_size;
     }

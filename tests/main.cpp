@@ -35,6 +35,8 @@
 #include <mem/init_function.h>
 #include <mem/pattern_cache.h>
 
+#include <mem/data_buffer.h>
+
 #include <string>
 #include <unordered_set>
 

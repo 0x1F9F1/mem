@@ -323,7 +323,7 @@ namespace mem
         return result;
 #else
         const size_t max_offset = alignment - 1 + sizeof(void*);
-        void* result = malloc(size + max_offset);
+        void* result = std::malloc(size + max_offset);
 
         if (result)
         {
@@ -348,7 +348,7 @@ namespace mem
 #elif _POSIX_C_SOURCE >= 200112L
         free(address);
 #else
-        free(reinterpret_cast<void**>(address)[-1]);
+        std::free(reinterpret_cast<void**>(address)[-1]);
 #endif
     }
 }
