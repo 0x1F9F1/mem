@@ -343,7 +343,7 @@ namespace mem
     }
 
     template <typename T>
-    bool data_buffer<T>::empty() const noexcept
+    inline bool data_buffer<T>::empty() const noexcept
     {
         return size_ == 0;
     }
