@@ -22,7 +22,7 @@
 
 #include "pattern.h"
 
-#if !defined(__AVX2__) && !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
+#if !defined(MEM_SIMD_SSE2) && !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
 # define MEM_SIMD_PATTERN_USE_MEMCHR
 #endif
 
@@ -31,7 +31,16 @@
 #  include <intrin.h>
 #  pragma intrinsic(_BitScanForward)
 # endif
-# include <immintrin.h>
+# if defined(MEM_SIMD_AVX2)
+#  include <immintrin.h>
+# elif defined(MEM_SIMD_SSE2)
+#  include <emmintrin.h>
+#  if defined(MEM_SIMD_SSE3)
+#   include <pmmintrin.h>
+#  endif
+# else
+#  error Sorry, No Potatoes
+# endif
 #endif
 
 namespace mem
@@ -241,6 +250,7 @@ namespace mem
     MEM_STRONG_INLINE const byte* find_byte(const byte* b, const byte* e, byte c)
     {
 #if !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
+# if defined(MEM_SIMD_AVX2)
         const __m256i q = _mm256_set1_epi8(c);
 
         for (; MEM_LIKELY(b + 32 <= e); b += 32)
@@ -258,6 +268,33 @@ namespace mem
                 return b;
 
         return e;
+# elif defined(MEM_SIMD_SSE2)
+        const __m128i q = _mm_set1_epi8(c);
+
+        for (; MEM_LIKELY(b + 16 <= e); b += 16)
+        {
+            int mask = _mm_movemask_epi8(_mm_cmpeq_epi8(
+# if defined(MEM_SIMD_SSE3)
+                _mm_lddqu_si128
+# else
+                _mm_loadu_si128
+# endif
+                (reinterpret_cast<const __m128i*>(b)), q));
+
+            if (MEM_UNLIKELY(mask))
+            {
+                return b + bsf(static_cast<unsigned int>(mask));
+            }
+        }
+
+        for (; MEM_LIKELY(b < e); ++b)
+            if (MEM_UNLIKELY(*b == c))
+                return b;
+
+        return e;
+# else
+#  error Sorry, No Potatoes
+# endif
 #else
         if (b < e)
         {
