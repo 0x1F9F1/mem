@@ -448,7 +448,7 @@ namespace mem
         const byte* const region_end = region_base + region_size;
 
         const byte* current = region_base;
-        const byte* const end = region_end - original_size;
+        const byte* const end = region_end - original_size + 1;
 
         const size_t last = trimmed_size() - 1;
 
@@ -463,7 +463,7 @@ namespace mem
             {
                 const size_t pat_skip_pos = skip_pos();
 
-                while (MEM_LIKELY(current <= end))
+                while (MEM_LIKELY(current < end))
                 {
                     size_t i = last;
 
@@ -496,7 +496,7 @@ namespace mem
             }
             else
             {
-                while (MEM_LIKELY(current <= end))
+                while (MEM_LIKELY(current < end))
                 {
                     size_t i = last;
 
@@ -537,7 +537,7 @@ namespace mem
                 current += last;
                 const byte* const end_plus_last = end + last;
 
-                while (MEM_LIKELY(current <= end_plus_last))
+                while (MEM_LIKELY(current < end_plus_last))
                 {
                     size_t i = last;
 
@@ -574,7 +574,7 @@ namespace mem
             }
             else if (pat_skips)
             {
-                while (MEM_LIKELY(current <= end))
+                while (MEM_LIKELY(current < end))
                 {
                     size_t i = last;
 
@@ -607,7 +607,7 @@ namespace mem
             }
             else
             {
-                while (MEM_LIKELY(current <= end))
+                while (MEM_LIKELY(current < end))
                 {
                     size_t i = last;
 
