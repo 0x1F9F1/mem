@@ -20,10 +20,30 @@
 #if !defined(MEM_DEFINES_BRICK_H)
 #define MEM_DEFINES_BRICK_H
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 # define MEM_ARCH_X86_64
 #elif defined(__i386) || defined(_M_IX86)
 # define MEM_ARCH_X86
+#endif
+
+#if defined(__AVX2__)
+# define MEM_SIMD_AVX2
+#endif
+
+#if defined (__AVX__)
+# define MEM_SIMD_AVX
+#endif
+
+#if defined(__SSE3__) || defined(_M_AMD64) || defined(_M_X64) || (_M_IX86_FP == 2)
+# define MEM_SIMD_SSE3
+#endif
+
+#if defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (_M_IX86_FP == 2)
+# define MEM_SIMD_SSE2
+#endif
+
+#if defined(__SSE__) || (_M_IX86_FP == 1)
+# define MEM_SIMD_SSE
 #endif
 
 #if !defined(MEM_CONSTEXPR)
