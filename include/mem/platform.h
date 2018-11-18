@@ -27,7 +27,7 @@
 
 namespace mem
 {
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__unix__)
     namespace enums
     {
         enum prot_flags : uint32_t
@@ -54,13 +54,13 @@ namespace mem
 
     MEM_DEFINE_ENUM_FLAG_OPERATORS(prot_flags);
 
-    MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept;
-    MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept;
+    MEM_CONSTEXPR_14 uint32_t from_prot_flags(prot_flags flags) noexcept;
+    MEM_CONSTEXPR_14 prot_flags to_prot_flags(uint32_t flags) noexcept;
 
     size_t page_size();
 
     void* protect_alloc(size_t length, prot_flags flags);
-    void protect_free(void* memory);
+    void protect_free(void* memory, size_t length);
 
     bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
 
@@ -90,7 +90,9 @@ namespace mem
             return old_flags_;
         }
     };
+#endif
 
+#if defined(_WIN32)
     class module
         : public region
     {

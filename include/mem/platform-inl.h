@@ -37,15 +37,19 @@
 # include <eh.h>
 # include <stdexcept>
 # include <cstdio>
+#elif defined(__unix__)
+# include <unistd.h>
+# include <sys/mman.h>
 #else
 # include <cstdlib>
 #endif
 
 namespace mem
 {
-#if defined(_WIN32)
-    MEM_CONSTEXPR uint32_t from_prot_flags(prot_flags flags) noexcept
+#if defined(_WIN32) || defined(__unix__)
+    MEM_CONSTEXPR_14 uint32_t from_prot_flags(prot_flags flags) noexcept
     {
+#if defined(_WIN32)
         uint32_t result = PAGE_NOACCESS;
 
         if (flags & prot_flags::X)
@@ -69,10 +73,23 @@ namespace mem
             result |= PAGE_WRITECOMBINE;
 
         return result;
+#elif defined(__unix__)
+        uint32_t result = 0;
+
+        if (flags & prot_flags::R)
+            result |= PROT_READ;
+        if (flags & prot_flags::W)
+            result |= PROT_WRITE;
+        if (flags & prot_flags::X)
+            result |= PROT_EXEC;
+
+        return result;
+#endif
     }
 
-    MEM_CONSTEXPR prot_flags to_prot_flags(uint32_t flags) noexcept
+    MEM_CONSTEXPR_14 prot_flags to_prot_flags(uint32_t flags) noexcept
     {
+#if defined(_WIN32)
         prot_flags result = prot_flags::INVALID;
 
         if (flags & PAGE_EXECUTE_READWRITE)
@@ -99,25 +116,55 @@ namespace mem
         }
 
         return result;
+#elif defined(__unix__)
+        prot_flags result = prot_flags::NONE;
+
+        if (flags & PROT_READ)
+            result |= prot_flags::R;
+
+        if (flags & PROT_WRITE)
+            result |= prot_flags::W;
+
+        if (flags & PROT_EXEC)
+            result |= prot_flags::X;
+
+        return result;
+#endif
     }
 
     size_t page_size()
     {
+#if defined(_WIN32)
         SYSTEM_INFO si;
         GetSystemInfo(&si);
-        return si.dwPageSize;
+        return static_cast<size_t>(si.dwPageSize);
+#elif defined(__unix__)
+        return static_cast<size_t>(getpagesize());
+#endif
     }
 
     void* protect_alloc(size_t length, prot_flags flags)
     {
+#if defined(_WIN32)
         return VirtualAlloc(nullptr, length, MEM_RESERVE | MEM_COMMIT, from_prot_flags(flags));
+#elif defined(__unix__)
+        void* result = mmap(nullptr, length, (int) from_prot_flags(flags), MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        if (result == MAP_FAILED)
+            result = nullptr;
+        return result;
+#endif
     }
 
-    void protect_free(void* memory)
+    void protect_free(void* memory, size_t length)
     {
         if (memory != nullptr)
         {
+#if defined(_WIN32)
+            (void) length;
             VirtualFree(memory, 0, MEM_RELEASE);
+#elif defined(__unix__)
+            munmap(memory, length);
+#endif
         }
     }
 
@@ -126,12 +173,20 @@ namespace mem
         if (flags == prot_flags::INVALID)
             return false;
 
+#if defined(_WIN32)
         DWORD old_protect = 0;
         BOOL success = VirtualProtect(memory, length, from_prot_flags(flags), &old_protect);
+#elif defined(__unix__)
+        bool success = mprotect(memory, length, (int) from_prot_flags(flags)) == 0;
+#endif
 
         if (old_flags)
         {
+#if defined(_WIN32)
             *old_flags = success ? to_prot_flags(old_protect) : prot_flags::INVALID;
+#elif defined(__unix__)
+            *old_flags = prot_flags::INVALID;
+#endif
         }
 
         return success;
@@ -159,7 +214,9 @@ namespace mem
         rhs.old_flags_ = prot_flags::INVALID;
         rhs.success_ = false;
     }
+#endif
 
+#if defined(_WIN32)
     extern "C" namespace internal
     {
         IMAGE_DOS_HEADER __ImageBase;

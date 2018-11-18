@@ -17,14 +17,6 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if defined(_WIN32)
-# define WIN32_LEAN_AND_MEAN
-# define NOMINMAX
-# include <Windows.h>
-#else
-# include <cstdlib>
-#endif
-
 #include <mem/mem.h>
 #include <mem/pattern.h>
 #include <mem/utils.h>
@@ -119,23 +111,17 @@ void check_pattern_results(mem::region whole_region, const mem::pattern& pattern
 
 TEST(pattern, scan)
 {
-#if defined(_WIN32)
     size_t page_size = mem::page_size();
 
-    size_t size = page_size * (4 + 2); // 4 Pages + Guard Page Before/After
-    uint8_t* data = static_cast<uint8_t*>(mem::protect_alloc(size, mem::prot_flags::RW));
+    size_t raw_size = page_size * (4 + 2); // 4 Pages + Guard Page Before/After
+    uint8_t* raw_data = static_cast<uint8_t*>(mem::protect_alloc(raw_size, mem::prot_flags::RW));
 
-    memset(data, 0, size);
+    memset(raw_data, 0, raw_size);
 
-    mem::protect_modify(data, page_size, mem::prot_flags::NONE);
-    mem::protect_modify(data + size - page_size, page_size, mem::prot_flags::NONE);
+    mem::protect_modify(raw_data, page_size, mem::prot_flags::NONE);
+    mem::protect_modify(raw_data + raw_size - page_size, page_size, mem::prot_flags::NONE);
 
-    mem::region scan_region(data + page_size, size - (2 * page_size));
-#else
-    uint8_t* data = static_cast<uint8_t*>(std::malloc(8192));
-
-    mem::region scan_region(data, 8192);
-#endif
+    mem::region scan_region(raw_data + page_size, raw_size - (2 * page_size));
 
     check_pattern_results(scan_region, mem::pattern("01 02 03 04 05"), {
         0x01, 0x02, 0x03, 0x04, 0x05
@@ -185,11 +171,7 @@ TEST(pattern, scan)
 
     });
 
-#if defined(_WIN32)
-    mem::protect_free(data);
-#else
-    std::free(data);
-#endif
+    mem::protect_free(raw_data, raw_size);
 }
 
 TEST(region, contains)
