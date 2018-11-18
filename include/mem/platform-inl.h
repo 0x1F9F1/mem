@@ -176,6 +176,8 @@ namespace mem
 
         if (VirtualQuery(memory, &info, sizeof(info)))
             return to_prot_flags(info.Protect);
+
+        return prot_flags::INVALID;
 #elif defined(__unix__)
         FILE* maps = std::fopen("/proc/self/maps", "r");
 
@@ -217,8 +219,6 @@ namespace mem
 
         return result;
 #endif
-
-        return prot_flags::INVALID;
     }
 
     bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags)
