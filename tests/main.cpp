@@ -35,6 +35,9 @@
 #include <mem/init_function.h>
 #include <mem/pattern_cache.h>
 
+#include <mem/simd_scanner.h>
+#include <mem/boyer_moore_scanner.h>
+
 #include <mem/data_buffer.h>
 
 #include <string>
@@ -84,7 +87,7 @@ TEST(pattern, parse)
     check_pattern(mem::pattern("\x12\x34\x56\x78\xAB", nullptr, 5), 5, 5, false, "\x12\x34\x56\x78\xAB", "\xFF\xFF\xFF\xFF\xFF");
 }
 
-void check_pattern_results(const mem::region& whole_region, const mem::pattern& pattern, const std::vector<uint8_t>& scan_data, const std::unordered_set<size_t>& offsets)
+void check_pattern_results(mem::region whole_region, const mem::pattern& pattern, const std::vector<uint8_t>& scan_data, const std::unordered_set<size_t>& offsets)
 {
     EXPECT_LE(scan_data.size(), whole_region.size);
 
@@ -95,7 +98,7 @@ void check_pattern_results(const mem::region& whole_region, const mem::pattern& 
 
     scan_region.copy(scan_data.data());
 
-    auto scan_results = pattern.scan_all(scan_region);
+    auto scan_results = pattern.scan_all(whole_region, mem::default_scanner(pattern));
 
     EXPECT_EQ(scan_results.size(), offsets.size());
 

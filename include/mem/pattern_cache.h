@@ -35,8 +35,8 @@ namespace mem
     private:
         struct pattern_results
         {
-            bool checked {false};
             std::vector<pointer> results {};
+            bool checked {false};
         };
 
         region region_;
@@ -107,7 +107,7 @@ namespace mem
             {
                 bool changed = false;
 
-                for (mem::pointer result : find->second.results)
+                for (pointer result : find->second.results)
                 {
                     if (!pattern.match(result))
                     {
@@ -119,7 +119,7 @@ namespace mem
 
                 if (changed)
                 {
-                    find->second.results = pattern.scan_all(region_);
+                    find->second.results = pattern.scan_all(region_, default_scanner(pattern));
                     find->second.checked = true;
                 }
             }
@@ -128,7 +128,7 @@ namespace mem
         {
             pattern_results results;
             results.checked = true;
-            results.results = pattern.scan_all(region_);
+            results.results = pattern.scan_all(region_, default_scanner(pattern));
 
             find = results_.emplace(hash, std::move(results)).first;
         }

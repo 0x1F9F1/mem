@@ -61,7 +61,7 @@ namespace mem
 
     MEM_CONSTEXPR MEM_STRONG_INLINE int char_queue::peek() const noexcept
     {
-        return (current < end) ? static_cast<byte>(*current) : -1;
+        return (current < end) ? byte(*current) : -1;
     }
 
     MEM_CONSTEXPR_14 MEM_STRONG_INLINE void char_queue::pop() noexcept

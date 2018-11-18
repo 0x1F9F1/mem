@@ -17,92 +17,77 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_SIMD_PATTERN_BRICK_H)
-#define MEM_SIMD_PATTERN_BRICK_H
+#if !defined(MEM_SIMD_SCANNER_BRICK_H)
+#define MEM_SIMD_SCANNER_BRICK_H
 
 #include "pattern.h"
 
-#if !defined(MEM_SIMD_SSE2) && !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
-# define MEM_SIMD_PATTERN_USE_MEMCHR
+#if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
+# if defined(MEM_SIMD_AVX2)
+#  include <immintrin.h>
+# elif defined(MEM_SIMD_SSE3)
+#  include <emmintrin.h>
+#  include <pmmintrin.h>
+# elif defined(MEM_SIMD_SSE2)
+#  include <emmintrin.h>
+# else
+#  define MEM_SIMD_SCANNER_USE_MEMCHR
+# endif
 #endif
 
-#if !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
+#if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
 # if defined(_MSC_VER)
 #  include <intrin.h>
 #  pragma intrinsic(_BitScanForward)
-# endif
-# if defined(MEM_SIMD_AVX2)
-#  include <immintrin.h>
-# elif defined(MEM_SIMD_SSE2)
-#  include <emmintrin.h>
-#  if defined(MEM_SIMD_SSE3)
-#   include <pmmintrin.h>
-#  endif
-# else
-#  error Sorry, No Potatoes
 # endif
 #endif
 
 namespace mem
 {
-    class simd_pattern
+    class simd_scanner
     {
     private:
-        const byte* bytes_ {nullptr};
-        const byte* masks_ {nullptr};
-        size_t size_ {0};
-        size_t trimmed_size_ {0};
-        bool needs_masks_ {true};
+        const pattern* pattern_ {nullptr};
         size_t skip_pos_ {SIZE_MAX};
 
-        size_t get_skip_pos() const noexcept;
-
     public:
-        simd_pattern(const mem::pattern& pattern);
+        simd_scanner(const pattern& pattern);
 
         template <typename UnaryPredicate>
-        pointer scan_predicate(region range, UnaryPredicate pred) const;
+        pointer operator()(region range, UnaryPredicate pred) const;
     };
 
     const byte* find_byte(const byte* b, const byte* e, byte c);
 
-    MEM_STRONG_INLINE simd_pattern::simd_pattern(const mem::pattern& pattern)
-        : bytes_(pattern.bytes())
-        , masks_(pattern.masks())
-        , size_(pattern.size())
-        , trimmed_size_(pattern.trimmed_size())
-        , needs_masks_(pattern.needs_masks())
-        , skip_pos_(get_skip_pos())
-    { }
-
-    MEM_STRONG_INLINE size_t simd_pattern::get_skip_pos() const noexcept
+    MEM_STRONG_INLINE simd_scanner::simd_scanner(const pattern& _pattern)
+        : pattern_(&_pattern)
     {
-        for (size_t i = trimmed_size_; i--;)
+        const byte* masks = pattern_->masks();
+
+        for (size_t i = pattern_->trimmed_size(); i--;)
         {
-            if (masks_[i] == 0xFF)
+            if (masks[i] == 0xFF)
             {
-                return i;
+                skip_pos_ = i;
+
+                break;
             }
         }
-
-        return SIZE_MAX;
     }
 
     template <typename UnaryPredicate>
-    MEM_NOINLINE pointer simd_pattern::scan_predicate(region range, UnaryPredicate pred) const
+    inline pointer simd_scanner::operator()(region range, UnaryPredicate pred) const
     {
-        if (!trimmed_size_)
-        {
-            return nullptr;
-        }
+        const size_t trimmed_size = pattern_->trimmed_size();
 
-        const size_t original_size = size_;
+        if (!trimmed_size)
+            return nullptr;
+
+        const size_t original_size = pattern_->size();
         const size_t region_size = range.size;
 
         if (original_size > region_size)
-        {
             return nullptr;
-        }
 
         const byte* const region_base = range.start.as<const byte*>();
         const byte* const region_end = region_base + region_size;
@@ -110,17 +95,17 @@ namespace mem
         const byte* current = region_base;
         const byte* const end = region_end - original_size + 1;
 
-        const size_t last = trimmed_size_ - 1;
+        const size_t last = trimmed_size - 1;
 
-        const byte* const pat_bytes = bytes_;
+        const byte* const pat_bytes = pattern_->bytes();
 
         const size_t skip_pos = skip_pos_;
 
         if (skip_pos != SIZE_MAX)
         {
-            if (needs_masks_)
+            if (pattern_->needs_masks())
             {
-                const byte* const pat_masks = masks_;
+                const byte* const pat_masks = pattern_->masks();
 
                 while (MEM_LIKELY(current < end))
                 {
@@ -129,9 +114,7 @@ namespace mem
                     do
                     {
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                        {
                             break;
-                        }
 
                         if (MEM_LIKELY(i))
                         {
@@ -141,9 +124,7 @@ namespace mem
                         }
 
                         if (MEM_UNLIKELY(pred(current)))
-                        {
                             return current;
-                        }
 
                         break;
                     } while (true);
@@ -162,9 +143,7 @@ namespace mem
                     do
                     {
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
-                        {
                             break;
-                        }
 
                         if (MEM_LIKELY(i))
                         {
@@ -174,9 +153,7 @@ namespace mem
                         }
 
                         if (MEM_UNLIKELY(pred(current)))
-                        {
                             return current;
-                        }
 
                         break;
                     } while (true);
@@ -189,7 +166,7 @@ namespace mem
         }
         else
         {
-            const byte* const pat_masks = masks_;
+            const byte* const pat_masks = pattern_->masks();
 
             while (MEM_LIKELY(current < end))
             {
@@ -198,9 +175,7 @@ namespace mem
                 do
                 {
                     if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                    {
                         break;
-                    }
 
                     if (MEM_LIKELY(i))
                     {
@@ -210,9 +185,7 @@ namespace mem
                     }
 
                     if (MEM_UNLIKELY(pred(current)))
-                    {
                         return current;
-                    }
 
                     break;
                 } while (true);
@@ -224,7 +197,7 @@ namespace mem
         }
     }
 
-#if !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
+#if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
 # if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
     MEM_STRONG_INLINE int bsf(unsigned int x) noexcept
     {
@@ -233,14 +206,14 @@ namespace mem
 # elif defined(_MSC_VER)
     MEM_STRONG_INLINE int bsf(unsigned int x) noexcept
     {
-        unsigned long result = 0;
+        unsigned long result;
         _BitScanForward(&result, static_cast<unsigned long>(x));
         return static_cast<int>(result);
     }
 # else
     MEM_STRONG_INLINE int bsf(unsigned int x) noexcept
     {
-        int result = 0;
+        int result;
         asm("bsf %1, %0" : "=r" (result) : "rm" (x));
         return result;
     }
@@ -249,52 +222,46 @@ namespace mem
 
     MEM_STRONG_INLINE const byte* find_byte(const byte* b, const byte* e, byte c)
     {
-#if !defined(MEM_SIMD_PATTERN_USE_MEMCHR)
+#if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
 # if defined(MEM_SIMD_AVX2)
-        const __m256i q = _mm256_set1_epi8(c);
-
-        for (; MEM_LIKELY(b + 32 <= e); b += 32)
-        {
-            int mask = _mm256_movemask_epi8(_mm256_cmpeq_epi8(_mm256_lddqu_si256(reinterpret_cast<const __m256i*>(b)), q));
-
-            if (MEM_UNLIKELY(mask))
-            {
-                return b + bsf(static_cast<unsigned int>(mask));
-            }
-        }
-
-        for (; MEM_LIKELY(b < e); ++b)
-            if (MEM_UNLIKELY(*b == c))
-                return b;
-
-        return e;
+#  define l_SIMD_TYPE __m256i
+#  define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
+#  define l_SIMD_LOAD(x) _mm256_lddqu_si256(x)
+#  define l_SIMD_CMPEQ_MASK(x, y) _mm256_movemask_epi8(_mm256_cmpeq_epi8(x, y))
+# elif defined(MEM_SIMD_SSE3)
+#  define l_SIMD_TYPE __m128i
+#  define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
+#  define l_SIMD_LOAD(x) _mm_lddqu_si128(x)
+#  define l_SIMD_CMPEQ_MASK(x, y) _mm_movemask_epi8(_mm_cmpeq_epi8(x, y))
 # elif defined(MEM_SIMD_SSE2)
-        const __m128i q = _mm_set1_epi8(c);
-
-        for (; MEM_LIKELY(b + 16 <= e); b += 16)
-        {
-            int mask = _mm_movemask_epi8(_mm_cmpeq_epi8(
-# if defined(MEM_SIMD_SSE3)
-                _mm_lddqu_si128
-# else
-                _mm_loadu_si128
-# endif
-                (reinterpret_cast<const __m128i*>(b)), q));
-
-            if (MEM_UNLIKELY(mask))
-            {
-                return b + bsf(static_cast<unsigned int>(mask));
-            }
-        }
-
-        for (; MEM_LIKELY(b < e); ++b)
-            if (MEM_UNLIKELY(*b == c))
-                return b;
-
-        return e;
+#  define l_SIMD_TYPE __m128i
+#  define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
+#  define l_SIMD_LOAD(x) _mm_loadu_si128(x)
+#  define l_SIMD_CMPEQ_MASK(x, y) _mm_movemask_epi8(_mm_cmpeq_epi8(x, y))
 # else
 #  error Sorry, No Potatoes
 # endif
+
+        const l_SIMD_TYPE q = l_SIMD_FILL(c);
+
+        for (; MEM_LIKELY(b + sizeof(l_SIMD_TYPE) <= e); b += sizeof(l_SIMD_TYPE))
+        {
+            const int mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(b)), q);
+
+            if (MEM_UNLIKELY(mask))
+                return b + bsf(static_cast<unsigned int>(mask));
+        }
+
+        for (; MEM_LIKELY(b < e); ++b)
+            if (MEM_UNLIKELY(*b == c))
+                return b;
+
+        return e;
+
+#undef l_SIMD_TYPE
+#undef l_SIMD_FILL
+#undef l_SIMD_LOAD
+#undef l_SIMD_CMPEQ_MASK
 #else
         if (b < e)
         {
@@ -309,4 +276,4 @@ namespace mem
     }
 }
 
-#endif // MEM_SIMD_PATTERN_BRICK_H
+#endif // MEM_SIMD_SCANNER_BRICK_H
