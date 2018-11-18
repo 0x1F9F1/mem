@@ -62,6 +62,8 @@ namespace mem
     void* protect_alloc(size_t length, prot_flags flags);
     void protect_free(void* memory, size_t length);
 
+    prot_flags protect_query(void* memory);
+
     bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
 
     class protect

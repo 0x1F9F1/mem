@@ -25,6 +25,9 @@
 
 #include "platform.h"
 
+#include <cstdio>
+#include <cstdlib>
+
 #if defined(_WIN32)
 # if defined(WIN32_LEAN_AND_MEAN)
 #  include <Windows.h>
@@ -36,12 +39,10 @@
 # include <malloc.h>
 # include <eh.h>
 # include <stdexcept>
-# include <cstdio>
 #elif defined(__unix__)
 # include <unistd.h>
 # include <sys/mman.h>
-#else
-# include <cstdlib>
+# include <cinttypes>
 #endif
 
 namespace mem
@@ -168,6 +169,58 @@ namespace mem
         }
     }
 
+    prot_flags protect_query(void* memory)
+    {
+#if defined(_WIN32)
+        MEMORY_BASIC_INFORMATION info;
+
+        if (VirtualQuery(memory, &info, sizeof(info)))
+            return to_prot_flags(info.Protect);
+#elif defined(__unix__)
+        FILE* maps = std::fopen("/proc/self/maps", "r");
+
+        prot_flags result = prot_flags::INVALID;
+        uintptr_t address = reinterpret_cast<uintptr_t>(memory);
+
+        if (maps != nullptr)
+        {
+            char buffer[256];
+
+            while (std::fgets(buffer, 256, maps))
+            {
+                uintptr_t start;
+                uintptr_t end;
+                char perms[16];
+
+                if (std::sscanf(buffer, "%" SCNxPTR "-%" SCNxPTR " %15s", &start, &end, perms) != 3)
+                    continue;
+
+                if (address >= start && address < end)
+                {
+                    result = prot_flags::NONE;
+
+                    if (std::strchr(perms, 'r'))
+                        result |= prot_flags::R;
+
+                    if (std::strchr(perms, 'w'))
+                        result |= prot_flags::W;
+
+                    if (std::strchr(perms, 'x'))
+                        result |= prot_flags::X;
+
+                    break;
+                }
+            }
+
+            std::fclose(maps);
+        }
+
+        return result;
+#endif
+
+        return prot_flags::INVALID;
+    }
+
     bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags)
     {
         if (flags == prot_flags::INVALID)
@@ -175,21 +228,22 @@ namespace mem
 
 #if defined(_WIN32)
         DWORD old_protect = 0;
-        BOOL success = VirtualProtect(memory, length, from_prot_flags(flags), &old_protect);
-#elif defined(__unix__)
-        bool success = mprotect(memory, length, (int) from_prot_flags(flags)) == 0;
-#endif
+        BOOL success = VirtualProtect(memory, length, static_cast<DWORD>(from_prot_flags(flags)), &old_protect);
 
         if (old_flags)
-        {
-#if defined(_WIN32)
             *old_flags = success ? to_prot_flags(old_protect) : prot_flags::INVALID;
-#elif defined(__unix__)
-            *old_flags = prot_flags::INVALID;
-#endif
-        }
 
         return success;
+#elif defined(__unix__)
+        prot_flags current_protect = old_flags ? protect_query(memory) : prot_flags::INVALID;
+
+        bool success = mprotect(memory, length, static_cast<int>(from_prot_flags(flags))) == 0;
+
+        if (old_flags)
+            *old_flags = current_protect;
+
+        return success;
+#endif
     }
 
     protect::protect(region range, prot_flags flags)
