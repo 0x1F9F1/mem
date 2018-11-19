@@ -199,7 +199,7 @@ namespace mem
                 const RTTIBaseClassDescriptor* base_class = base_classes->get_base_class(region, i);
                 const RTTITypeDescriptor* base_type = base_class->get_type(region);
 
-                if (!strcmp(base_type->DecoratedName, type->DecoratedName))
+                if (!std::strcmp(base_type->DecoratedName, type->DecoratedName))
                 {
                     return true;
                 }

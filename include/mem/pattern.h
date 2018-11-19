@@ -149,7 +149,7 @@ namespace mem
     {
         if (mask)
         {
-            const size_t size = strlen(mask);
+            const size_t size = std::strlen(mask);
 
             bytes_.resize(size);
             masks_.resize(size);
@@ -170,7 +170,7 @@ namespace mem
         }
         else
         {
-            const size_t size = strlen(static_cast<const char*>(bytes));
+            const size_t size = std::strlen(static_cast<const char*>(bytes));
 
             bytes_.resize(size);
             masks_.resize(size);

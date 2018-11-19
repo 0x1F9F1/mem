@@ -50,7 +50,7 @@ namespace mem
     MEM_CONSTEXPR int octoi(int value) noexcept;
 
     MEM_STRONG_INLINE char_queue::char_queue(const char* string)
-        : char_queue(string, strlen(string))
+        : char_queue(string, std::strlen(string))
     { }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
