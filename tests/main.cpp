@@ -249,6 +249,11 @@ void check_unescape_string(const char* string, const void* data, size_t length)
     EXPECT_EQ(memcmp(unescaped.data(), data, length), 0);
 }
 
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable: 4125) // warning C4125: decimal digit terminates octal escape sequence
+#endif
+
 TEST(utils, unescape)
 {
     check_unescape_string(R"(\x12\x34)", "\x12\x34", 2);
@@ -259,6 +264,10 @@ TEST(utils, unescape)
     check_unescape_string(R"(Hello\nThere)", "Hello\nThere", 11);
     check_unescape_string(R"(Hello \"Bob)", "Hello \"Bob", 10);
 }
+
+#if defined(_MSC_VER)
+# pragma warning(pop)
+#endif
 
 #if defined(_WIN32)
 TEST(platform, protect)

@@ -105,7 +105,7 @@ namespace mem
             else                               { goto error; }
 
             current = input.peek();
-            if ((temp = xctoi(current)) != -1) { input.pop(); expl_mask = (expl_mask << 4) | temp; }
+            if ((temp = xctoi(current)) != -1) { input.pop(); expl_mask = (expl_mask << 4) | byte(temp); }
             else if (current == '#')           { input.pop(); goto repeats; }
             else                               {              goto end;     }
 

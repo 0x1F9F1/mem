@@ -27,7 +27,6 @@
 
 namespace mem
 {
-#if defined(_WIN32) || defined(__unix__)
     namespace enums
     {
         enum prot_flags : uint32_t
@@ -51,9 +50,12 @@ namespace mem
     }
 
     using enums::prot_flags;
+}
 
-    MEM_DEFINE_ENUM_FLAG_OPERATORS(prot_flags);
+MEM_DEFINE_ENUM_FLAG_OPERATORS(mem::prot_flags)
 
+namespace mem
+{
     MEM_CONSTEXPR_14 uint32_t from_prot_flags(prot_flags flags) noexcept;
     MEM_CONSTEXPR_14 prot_flags to_prot_flags(uint32_t flags) noexcept;
 
@@ -92,7 +94,6 @@ namespace mem
             return old_flags_;
         }
     };
-#endif
 
 #if defined(_WIN32)
     class module

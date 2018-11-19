@@ -405,8 +405,11 @@ namespace mem
         }
     }
 
-#pragma warning(push)
-#pragma warning(disable: 4535) // warning C4535: calling _set_se_translator() requires /EHa
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable: 4535) // warning C4535: calling _set_se_translator() requires /EHa
+#endif
+
     scoped_seh::scoped_seh()
         : context_(_set_se_translator(&internal::translate_seh))
     { }
@@ -415,7 +418,10 @@ namespace mem
     {
         _set_se_translator(static_cast<_se_translator_function>(context_));
     }
-#pragma warning(pop)
+
+#if defined(_MSC_VER)
+# pragma warning(pop)
+#endif
 
 #endif // _WIN32
 
