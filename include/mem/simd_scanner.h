@@ -57,7 +57,7 @@ namespace mem
         pointer operator()(region range, UnaryPredicate pred) const;
     };
 
-    const byte* find_byte(const byte* b, const byte* e, byte c);
+    const byte* find_byte(const byte* ptr, byte value, size_t num);
 
     inline simd_scanner::simd_scanner(const pattern& _pattern)
         : pattern_(&_pattern)
@@ -118,7 +118,8 @@ namespace mem
                         break;
                     } while (true);
 
-                    current = find_byte(current + 1 + skip_pos, end + skip_pos, pat_bytes[skip_pos]) - skip_pos;
+                    ++current;
+                    current = find_byte(current + skip_pos, pat_bytes[skip_pos], end - current) - skip_pos;
                 }
 
                 return nullptr;
@@ -147,7 +148,8 @@ namespace mem
                         break;
                     } while (true);
 
-                    current = find_byte(current + 1 + skip_pos, end + skip_pos, pat_bytes[skip_pos]) - skip_pos;
+                    ++current;
+                    current = find_byte(current + skip_pos, pat_bytes[skip_pos], end - current) - skip_pos;
                 }
 
                 return nullptr;
@@ -209,7 +211,7 @@ namespace mem
 # endif
 #endif
 
-    MEM_STRONG_INLINE const byte* find_byte(const byte* b, const byte* e, byte c)
+    MEM_STRONG_INLINE const byte* find_byte(const byte* ptr, byte value, size_t num)
     {
 #if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
 # if defined(MEM_SIMD_AVX2)
@@ -231,36 +233,33 @@ namespace mem
 #  error Sorry, No Potatoes
 # endif
 
-        const l_SIMD_TYPE q = l_SIMD_FILL(c);
+        const l_SIMD_TYPE q = l_SIMD_FILL(value);
 
-        for (; MEM_LIKELY(b + sizeof(l_SIMD_TYPE) <= e); b += sizeof(l_SIMD_TYPE))
+        for (; MEM_LIKELY(num >= sizeof(l_SIMD_TYPE)); num -= sizeof(l_SIMD_TYPE), ptr += sizeof(l_SIMD_TYPE))
         {
-            const int mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(b)), q);
+            const int mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), q);
 
             if (MEM_UNLIKELY(mask))
-                return b + bsf(static_cast<unsigned int>(mask));
+                return ptr + bsf(static_cast<unsigned int>(mask));
         }
 
-        for (; MEM_LIKELY(b < e); ++b)
-            if (MEM_UNLIKELY(*b == c))
-                return b;
+        for (; MEM_LIKELY(num > 0); --num, ++ptr)
+            if (MEM_UNLIKELY(*ptr == value))
+                return ptr;
 
-        return e;
+        return ptr;
 
 #undef l_SIMD_TYPE
 #undef l_SIMD_FILL
 #undef l_SIMD_LOAD
 #undef l_SIMD_CMPEQ_MASK
 #else
-        if (b < e)
-        {
-            b = static_cast<const byte*>(std::memchr(b, c, e - b));
+        const byte* result = static_cast<const byte*>(std::memchr(ptr, value, num));
 
-            if (b == nullptr)
-                b = e;
-        }
+        if (MEM_UNLIKELY(result == nullptr))
+            result = ptr + num;
 
-        return b;
+        return result;
 #endif
     }
 }
