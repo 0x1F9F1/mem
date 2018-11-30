@@ -148,67 +148,74 @@ namespace mem
 
         while (input)
         {
-            size_t result = 0;
+            size_t result = SIZE_MAX;
             size_t count = 0;
 
             int current = -1;
             int temp = -1;
 
             current = input.peek();
-            if (current == '\\') { input.pop(); goto escape; }
-            else                 { input.pop(); results.push_back(static_cast<char>(current)); continue; }
 
-        escape:
-            current = input.peek();
-            if      (current == '\'')      { input.pop(); result = '\''; goto end; }
-            else if (current == '\"')      { input.pop(); result = '\"'; goto end; }
-            else if (current == '\\')      { input.pop(); result = '\\'; goto end; }
-            else if (current == '?')       { input.pop(); result = '\?'; goto end; }
-            else if (current == 'a')       { input.pop(); result = '\a'; goto end; }
-            else if (current == 'b')       { input.pop(); result = '\b'; goto end; }
-            else if (current == 'f')       { input.pop(); result = '\f'; goto end; }
-            else if (current == 'n')       { input.pop(); result = '\n'; goto end; }
-            else if (current == 'r')       { input.pop(); result = '\r'; goto end; }
-            else if (current == 't')       { input.pop(); result = '\t'; goto end; }
-            else if (current == 'v')       { input.pop(); result = '\v'; goto end; }
-            else if (current == 'x')       { input.pop(); goto hex;   }
-            else if (octoi(current) != -1) {              goto octal; }
-            else                           {              goto error; }
-
-        hex:
-            result = 0;
-            count = 0;
-
-            while (true)
+            if (current == '\\')
             {
+                input.pop();
+
                 current = input.peek();
-                if ((temp = xctoi(current)) != -1) { input.pop(); result = (result * 16) + temp; ++count; }
-                else if (count > 0)                { goto end; }
-                else                               { goto error; }
+                if      (current == '\'') { input.pop(); result = '\''; }
+                else if (current == '\"') { input.pop(); result = '\"'; }
+                else if (current == '\\') { input.pop(); result = '\\'; }
+                else if (current == '?')  { input.pop(); result = '\?'; }
+                else if (current == 'a')  { input.pop(); result = '\a'; }
+                else if (current == 'b')  { input.pop(); result = '\b'; }
+                else if (current == 'f')  { input.pop(); result = '\f'; }
+                else if (current == 'n')  { input.pop(); result = '\n'; }
+                else if (current == 'r')  { input.pop(); result = '\r'; }
+                else if (current == 't')  { input.pop(); result = '\t'; }
+                else if (current == 'v')  { input.pop(); result = '\v'; }
+                else if (current == 'x')
+                {
+                    input.pop();
+
+                    result = 0;
+                    count = 0;
+
+                    while (true)
+                    {
+                        current = input.peek();
+                        if ((temp = xctoi(current)) != -1) { input.pop(); result = (result * 16) + temp; ++count; }
+                        else { if (count == 0) { result = SIZE_MAX; } break; }
+                    }
+                }
+                else if (octoi(current) != -1)
+                {
+                    result = 0;
+                    count = 0;
+
+                    while (true)
+                    {
+                        current = input.peek();
+                        if ((temp = octoi(current)) != -1) { input.pop(); result = (result * 8) + temp; if (++count == 3) { break; } }
+                        else { if (count == 0) { result = SIZE_MAX; } break; }
+                    }
+                }
+            }
+            else
+            {
+                input.pop();
+
+                result = size_t(current);
             }
 
-        octal:
-            result = 0;
-            count = 0;
-
-            while (true)
+            if (result <= UCHAR_MAX)
             {
-                current = input.peek();
-                if ((temp = octoi(current)) != -1) { input.pop(); result = (result * 8) + temp; if (++count == 3) { goto end; } }
-                else if (count > 0)                { goto end;   }
-                else                               { goto error; }
+                results.push_back(static_cast<char>(result));
             }
+            else
+            {
+                results.clear();
 
-        end:
-            if (result <= 0xFF) { results.push_back(static_cast<char>(result)); }
-            else                { goto error; }
-
-            continue;
-
-        error:
-            results.clear();
-
-            break;
+                break;
+            }
         }
 
         return results;
