@@ -37,6 +37,8 @@ namespace mem
 
         void finalize();
 
+        bool parse_chunk(char_queue& input, const char wildcard);
+
     public:
         explicit pattern() = default;
 
@@ -68,80 +70,80 @@ namespace mem
         explicit operator bool() const noexcept;
     };
 
+    inline bool pattern::parse_chunk(char_queue& input, const char wildcard)
+    {
+        byte   value     = 0x00;
+        byte   mask      = 0x00;
+        byte   expl_mask = 0xFF;
+        size_t count     = 1;
+
+        int current = -1;
+        int temp = -1;
+
+        current = input.peek();
+        if ((temp = xctoi(current)) != -1) { input.pop(); value = byte(temp); mask = 0xFF; }
+        else if (current == wildcard)      { input.pop(); value = 0x00;       mask = 0x00; }
+        else                               { return false;                                 }
+
+        current = input.peek();
+        if ((temp = xctoi(current)) != -1) { input.pop(); value = (value << 4) | byte(temp); mask = (mask << 4) | 0x0F; }
+        else if (current == wildcard)      { input.pop(); value = (value << 4);              mask = (mask << 4);        }
+
+        if (input.peek() == '&')
+        {
+            input.pop();
+
+            if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = byte(temp); }
+            else                                    { return false; }
+
+            if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = (expl_mask << 4) | byte(temp); }
+        }
+
+        if (input.peek() == '#')
+        {
+            input.pop();
+
+            count = 0;
+
+            while (true)
+            {
+                if ((temp = dctoi(input.peek())) != -1) { input.pop(); count = (count * 10) + temp; }
+                else if (count > 0)                     { break;                                    }
+                else                                    { return false;                             }
+            }
+        }
+
+        value &= (mask &= expl_mask);
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            bytes_.push_back(value);
+            masks_.push_back(mask);
+        }
+
+        return true;
+    }
+
     inline pattern::pattern(const char* string, wildcard_t wildcard)
     {
         char_queue input(string);
 
         while (input)
         {
-            byte   value     = 0x00;
-            byte   mask      = 0x00;
-            byte   expl_mask = 0xFF;
-            size_t count     = 1;
-
-            int current = -1;
-            int temp = -1;
-
-        start:
-            current = input.peek();
-            if ((temp = xctoi(current)) != -1)  { input.pop(); value = byte(temp); mask = 0xFF; }
-            else if (current == char(wildcard)) { input.pop(); value = 0x00;       mask = 0x00; }
-            else if (current == ' ')            { input.pop(); goto start; }
-            else                                {              goto error; }
-
-            current = input.peek();
-            if ((temp = xctoi(current)) != -1)  { input.pop(); value = (value << 4) | byte(temp); mask = (mask << 4) | 0x0F; }
-            else if (current == char(wildcard)) { input.pop(); value = (value << 4);              mask = (mask << 4);        }
-            else if (current == '&')            { input.pop(); goto masks;   }
-            else if (current == '#')            { input.pop(); goto repeats; }
-            else                                {              goto end;     }
-
-            current = input.peek();
-            if (current == '&')      { input.pop(); goto masks;   }
-            else if (current == '#') { input.pop(); goto repeats; }
-            else                     {              goto end;     }
-
-        masks:
-            current = input.peek();
-            if ((temp = xctoi(current)) != -1) { input.pop(); expl_mask = byte(temp); }
-            else                               { goto error; }
-
-            current = input.peek();
-            if ((temp = xctoi(current)) != -1) { input.pop(); expl_mask = (expl_mask << 4) | byte(temp); }
-            else if (current == '#')           { input.pop(); goto repeats; }
-            else                               {              goto end;     }
-
-            current = input.peek();
-            if (current == '#') { input.pop(); goto repeats; }
-            else                {              goto end;     }
-
-        repeats:
-            count = 0;
-
-            while (true)
+            if (input.peek() == ' ')
             {
-                current = input.peek();
-                if ((temp = dctoi(current)) != -1) { input.pop(); count = (count * 10) + temp; }
-                else if (count > 0)                { goto end;   }
-                else                               { goto error; }
+                input.pop();
+
+                continue;
             }
 
-        end:
-            value &= (mask &= expl_mask);
-
-            for (size_t i = 0; i < count; ++i)
+            if (!parse_chunk(input, char(wildcard)))
             {
-                bytes_.push_back(value);
-                masks_.push_back(mask);
+                masks_.clear();
+                bytes_.clear();
+
+                break;
             }
-
-            continue;
-
-        error:
-            masks_.clear();
-            bytes_.clear();
-
-            break;
         }
 
         finalize();
