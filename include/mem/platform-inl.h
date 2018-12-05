@@ -45,15 +45,6 @@
 # include <cinttypes>
 #endif
 
-#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-# if defined(_MSC_VER)
-#  include <intrin.h>
-#  pragma intrinsic(__rdtsc)
-# else
-#  include <x86intrin.h>
-# endif
-#endif
-
 namespace mem
 {
 #if defined(_WIN32) || defined(__unix__)
@@ -477,11 +468,4 @@ namespace mem
         std::free(reinterpret_cast<void**>(address)[-1]);
 #endif
     }
-
-#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-    uint64_t rdtsc() noexcept
-    {
-        return __rdtsc();
-    }
-#endif
 }

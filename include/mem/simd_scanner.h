@@ -36,10 +36,7 @@
 #endif
 
 #if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
-# if defined(_MSC_VER)
-#  include <intrin.h>
-#  pragma intrinsic(_BitScanForward)
-# endif
+# include "arch.h"
 #endif
 
 namespace mem
@@ -187,29 +184,6 @@ namespace mem
             return nullptr;
         }
     }
-
-#if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
-# if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
-    MEM_STRONG_INLINE int bsf(unsigned int x) noexcept
-    {
-        return __builtin_ctz(x);
-    }
-# elif defined(_MSC_VER)
-    MEM_STRONG_INLINE int bsf(unsigned int x) noexcept
-    {
-        unsigned long result;
-        _BitScanForward(&result, static_cast<unsigned long>(x));
-        return static_cast<int>(result);
-    }
-# else
-    MEM_STRONG_INLINE int bsf(unsigned int x) noexcept
-    {
-        int result;
-        asm("bsf %1, %0" : "=r" (result) : "rm" (x));
-        return result;
-    }
-# endif
-#endif
 
     MEM_STRONG_INLINE const byte* find_byte(const byte* ptr, byte value, size_t num)
     {

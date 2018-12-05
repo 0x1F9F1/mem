@@ -141,10 +141,6 @@ namespace mem
             aligned_free(p);
         }
     };
-
-#if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-    uint64_t rdtsc() noexcept;
-#endif
 }
 
 #endif // MEM_PLATFORM_BRICK_H
