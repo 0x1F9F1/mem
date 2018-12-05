@@ -233,26 +233,38 @@ namespace mem
 #  error Sorry, No Potatoes
 # endif
 
-        const l_SIMD_TYPE q = l_SIMD_FILL(value);
 
-        for (; MEM_LIKELY(num >= sizeof(l_SIMD_TYPE)); num -= sizeof(l_SIMD_TYPE), ptr += sizeof(l_SIMD_TYPE))
+        if (MEM_LIKELY(num >= sizeof(l_SIMD_TYPE)))
         {
-            const int mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), q);
+            const l_SIMD_TYPE simd_value = l_SIMD_FILL(value);
 
-            if (MEM_UNLIKELY(mask))
-                return ptr + bsf(static_cast<unsigned int>(mask));
+            do
+            {
+                const int mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value);
+
+                if (MEM_UNLIKELY(mask))
+                    return ptr + bsf(static_cast<unsigned int>(mask));
+
+                num -= sizeof(l_SIMD_TYPE);
+                ptr += sizeof(l_SIMD_TYPE);
+            } while (MEM_LIKELY(num >= sizeof(l_SIMD_TYPE)));
         }
 
-        for (; MEM_LIKELY(num > 0); --num, ++ptr)
+        while (MEM_LIKELY(num != 0))
+        {
             if (MEM_UNLIKELY(*ptr == value))
                 return ptr;
 
+            --num;
+            ++ptr;
+        }
+
         return ptr;
 
-#undef l_SIMD_TYPE
-#undef l_SIMD_FILL
-#undef l_SIMD_LOAD
-#undef l_SIMD_CMPEQ_MASK
+# undef l_SIMD_TYPE
+# undef l_SIMD_FILL
+# undef l_SIMD_LOAD
+# undef l_SIMD_CMPEQ_MASK
 #else
         const byte* result = static_cast<const byte*>(std::memchr(ptr, value, num));
 
