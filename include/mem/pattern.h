@@ -37,7 +37,7 @@ namespace mem
 
         void finalize();
 
-        bool parse_chunk(char_queue& input, const char wildcard);
+        bool parse_chunk(char_queue& input, char wildcard);
 
     public:
         explicit pattern() = default;
@@ -70,7 +70,7 @@ namespace mem
         explicit operator bool() const noexcept;
     };
 
-    inline bool pattern::parse_chunk(char_queue& input, const char wildcard)
+    inline bool pattern::parse_chunk(char_queue& input, char wildcard)
     {
         byte   value     = 0x00;
         byte   mask      = 0x00;
