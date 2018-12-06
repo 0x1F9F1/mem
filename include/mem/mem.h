@@ -108,8 +108,13 @@ namespace mem
         template <typename T>
         typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type as() const noexcept;
 
+        template <typename T>
+        typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type rcast() & noexcept;
+
         MEM_CONSTEXPR any_pointer any() const noexcept;
     };
+
+    static_assert((sizeof(pointer) == sizeof(void*)) && (alignof(pointer) == alignof(void*)), "Hmm...");
 
     class any_pointer
     {
@@ -353,6 +358,14 @@ namespace mem
     MEM_STRONG_INLINE typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::as() const noexcept
     {
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
+    }
+
+    template <typename T>
+    MEM_STRONG_INLINE typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::rcast() & noexcept
+    {
+        static_assert(sizeof(T) == sizeof(pointer), "That's no pointer. It's a space station.");
+
+        return *reinterpret_cast<typename std::add_pointer<T>::type>(this);
     }
 
     MEM_CONSTEXPR MEM_STRONG_INLINE any_pointer pointer::any() const noexcept
