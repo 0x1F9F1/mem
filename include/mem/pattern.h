@@ -24,6 +24,7 @@
 #include "char_queue.h"
 
 #include <vector>
+#include <string>
 
 namespace mem
 {
@@ -68,6 +69,8 @@ namespace mem
         size_t get_skip_pos() const noexcept;
 
         explicit operator bool() const noexcept;
+
+        std::string to_string() const;
     };
 
     inline bool pattern::parse_chunk(char_queue& input, char wildcard)
@@ -401,6 +404,43 @@ namespace mem
     MEM_STRONG_INLINE pattern::operator bool() const noexcept
     {
         return !bytes_.empty() && !masks_.empty();
+    }
+
+    inline std::string pattern::to_string() const
+    {
+        const char* const hex_chars = "0123456789ABCDEF";
+
+        std::string result;
+
+        for (size_t i = 0; i < size(); ++i)
+        {
+            if (i)
+            {
+                result += " ";
+            }
+
+            byte mask = masks_[i];
+            byte value = bytes_[i];
+
+            if (mask != 0x00)
+            {
+                result += hex_chars[size_t(value >> 4)];
+                result += hex_chars[size_t(value & 0xF)];
+
+                if (mask != 0xFF)
+                {
+                    result += "&";
+                    result += hex_chars[size_t(mask >> 4)];
+                    result += hex_chars[size_t(mask & 0xF)];
+                }
+            }
+            else
+            {
+                result += "?";
+            }
+        }
+
+        return result;
     }
 }
 
