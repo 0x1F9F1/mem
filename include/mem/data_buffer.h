@@ -159,14 +159,22 @@ namespace mem
     inline size_t data_buffer<T>::calculate_growth(size_t new_size) const noexcept
     {
         size_t old_capacity = capacity();
-        size_t new_capacity = old_capacity + (old_capacity >> 1);
 
-        if (new_capacity < new_size)
+        if (new_size > old_capacity)
         {
-            new_capacity = new_size;
-        }
+            size_t new_capacity = old_capacity + (old_capacity >> 1);
 
-        return new_capacity;
+            if (new_capacity < new_size)
+            {
+                new_capacity = new_size;
+            }
+
+            return new_capacity;
+        }
+        else
+        {
+            return old_capacity;
+        }
     }
 
     template <typename T>
