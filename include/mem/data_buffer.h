@@ -59,7 +59,7 @@ namespace mem
 
         void reserve(size_t length);
         void resize(size_t length);
-        void reset(size_t length);
+        void reset(size_t length = 0);
 
         void assign(const T* source, size_t length);
         void append(const T* source, size_t length);
