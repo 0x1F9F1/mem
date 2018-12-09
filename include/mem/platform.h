@@ -118,6 +118,9 @@ namespace mem
     public:
         scoped_seh();
         ~scoped_seh();
+
+        scoped_seh(const scoped_seh&) = delete;
+        scoped_seh(scoped_seh&&) = delete;
     };
 #endif
 
