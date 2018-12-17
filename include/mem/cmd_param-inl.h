@@ -105,7 +105,8 @@ namespace mem
 
             if (cmd_is_option(arg))
             {
-                ++arg;
+                while (arg[0] == '-')
+                    ++arg;
 
                 done_positionals = true;
 
