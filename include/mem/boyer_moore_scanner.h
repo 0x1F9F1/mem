@@ -42,45 +42,44 @@ namespace mem
 
     public:
         boyer_moore_scanner(const pattern& pattern);
+        boyer_moore_scanner(const pattern& pattern, size_t min_bad_char_skip, size_t min_good_suffix_skip);
 
         template <typename UnaryPredicate>
         pointer operator()(region range, UnaryPredicate pred) const;
     };
 
+    static MEM_CONSTEXPR const size_t default_min_bad_char_skip
+    {
+        5
+    };
+
+    static MEM_CONSTEXPR const size_t default_min_good_suffix_skip
+    {
+        25
+    };
+
     inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern)
+        : boyer_moore_scanner(_pattern, default_min_bad_char_skip, default_min_good_suffix_skip)
+    { }
+
+    inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern, size_t min_bad_char_skip, size_t min_good_suffix_skip)
         : pattern_(&_pattern)
     {
-        constexpr const size_t min_bad_char_skip
-        {
-#if defined(MEM_ARCH_X86)
-            10
-#elif defined(MEM_ARCH_X86_64)
-            4
-#else
-            8
-#endif
-        };
-
-        constexpr const size_t min_good_suffix_skip {min_bad_char_skip};
-
         size_t max_skip = 0;
         size_t skip_pos = get_longest_run(max_skip);
 
         const byte* const bytes = pattern_->bytes();
         const size_t trimmed_size = pattern_->trimmed_size();
 
-        if (max_skip > min_bad_char_skip)
+        if ((min_bad_char_skip > 0) && (max_skip >= min_bad_char_skip))
         {
             bad_char_skips_.resize(256, max_skip);
             skip_pos_ = skip_pos + max_skip - 1;
 
             for (size_t i = skip_pos, last = skip_pos + max_skip - 1; i < last; ++i)
                 bad_char_skips_[bytes[i]] = last - i;
-        }
 
-        if ((skip_pos == 0) && (max_skip == trimmed_size))
-        {
-            if (!bad_char_skips_.empty() && (max_skip > min_good_suffix_skip))
+            if ((skip_pos == 0) && (max_skip == trimmed_size) && (min_good_suffix_skip > 0) && (max_skip >= min_good_suffix_skip))
             {
                 good_suffix_skips_.resize(trimmed_size);
 
