@@ -48,12 +48,12 @@ namespace mem
         pointer operator()(region range, UnaryPredicate pred) const;
     };
 
-    static MEM_CONSTEXPR const size_t default_min_bad_char_skip
+    static constexpr const size_t default_min_bad_char_skip
     {
         5
     };
 
-    static MEM_CONSTEXPR const size_t default_min_good_suffix_skip
+    static constexpr const size_t default_min_good_suffix_skip
     {
         25
     };

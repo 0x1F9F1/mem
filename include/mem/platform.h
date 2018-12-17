@@ -462,7 +462,7 @@ namespace mem
 
     namespace internal
     {
-        static MEM_CONSTEXPR const char* translate_exception_code(uint32_t code) noexcept
+        static MEM_CONSTEXPR_14 const char* translate_exception_code(uint32_t code) noexcept
         {
             switch (code)
             {

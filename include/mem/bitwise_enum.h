@@ -25,12 +25,12 @@
 #include <type_traits>
 
 #define MEM_DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE) \
-MEM_STRONG_INLINE MEM_CONSTEXPR    ENUMTYPE  operator | (ENUMTYPE  a, ENUMTYPE b) noexcept { return static_cast<ENUMTYPE>(static_cast<std::underlying_type<ENUMTYPE>::type>(a) | static_cast<std::underlying_type<ENUMTYPE>::type>(b)); } \
+MEM_STRONG_INLINE constexpr        ENUMTYPE  operator | (ENUMTYPE  a, ENUMTYPE b) noexcept { return static_cast<ENUMTYPE>(static_cast<std::underlying_type<ENUMTYPE>::type>(a) | static_cast<std::underlying_type<ENUMTYPE>::type>(b)); } \
 MEM_STRONG_INLINE MEM_CONSTEXPR_14 ENUMTYPE &operator |=(ENUMTYPE &a, ENUMTYPE b) noexcept { return a = a | b; }                                                                                                                          \
-MEM_STRONG_INLINE MEM_CONSTEXPR    ENUMTYPE  operator & (ENUMTYPE  a, ENUMTYPE b) noexcept { return static_cast<ENUMTYPE>(static_cast<std::underlying_type<ENUMTYPE>::type>(a) & static_cast<std::underlying_type<ENUMTYPE>::type>(b)); } \
+MEM_STRONG_INLINE constexpr        ENUMTYPE  operator & (ENUMTYPE  a, ENUMTYPE b) noexcept { return static_cast<ENUMTYPE>(static_cast<std::underlying_type<ENUMTYPE>::type>(a) & static_cast<std::underlying_type<ENUMTYPE>::type>(b)); } \
 MEM_STRONG_INLINE MEM_CONSTEXPR_14 ENUMTYPE &operator &=(ENUMTYPE &a, ENUMTYPE b) noexcept { return a = a & b; }                                                                                                                          \
-MEM_STRONG_INLINE MEM_CONSTEXPR    ENUMTYPE  operator ^ (ENUMTYPE  a, ENUMTYPE b) noexcept { return static_cast<ENUMTYPE>(static_cast<std::underlying_type<ENUMTYPE>::type>(a) ^ static_cast<std::underlying_type<ENUMTYPE>::type>(b)); } \
+MEM_STRONG_INLINE constexpr        ENUMTYPE  operator ^ (ENUMTYPE  a, ENUMTYPE b) noexcept { return static_cast<ENUMTYPE>(static_cast<std::underlying_type<ENUMTYPE>::type>(a) ^ static_cast<std::underlying_type<ENUMTYPE>::type>(b)); } \
 MEM_STRONG_INLINE MEM_CONSTEXPR_14 ENUMTYPE &operator ^=(ENUMTYPE &a, ENUMTYPE b) noexcept { return a = a ^ b; }                                                                                                                          \
-MEM_STRONG_INLINE MEM_CONSTEXPR    ENUMTYPE  operator ~ (ENUMTYPE  a)             noexcept { return static_cast<ENUMTYPE>(~static_cast<std::underlying_type<ENUMTYPE>::type>(a)); }
+MEM_STRONG_INLINE constexpr        ENUMTYPE  operator ~ (ENUMTYPE  a)             noexcept { return static_cast<ENUMTYPE>(~static_cast<std::underlying_type<ENUMTYPE>::type>(a)); }
 
 #endif // MEM_BITWISE_ENUM_BRICK_H

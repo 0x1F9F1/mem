@@ -46,14 +46,6 @@
 # define MEM_SIMD_SSE
 #endif
 
-#if !defined(MEM_CONSTEXPR)
-# if (defined(__cpp_constexpr) && (__cpp_constexpr >= 200704)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 190024210))
-#  define MEM_CONSTEXPR constexpr
-# else
-#  define MEM_CONSTEXPR
-# endif
-#endif
-
 #if !defined(MEM_CONSTEXPR_14)
 # if (defined(__cpp_constexpr) && (__cpp_constexpr >= 201304)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 191426433))
 #  define MEM_CONSTEXPR_14 constexpr

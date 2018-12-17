@@ -35,31 +35,31 @@ namespace mem
 
     public:
         char_queue(const char* string);
-        MEM_CONSTEXPR char_queue(const char* string, size_t length);
+        constexpr char_queue(const char* string, size_t length);
 
-        MEM_CONSTEXPR int peek() const noexcept;
+        constexpr int peek() const noexcept;
 
         MEM_CONSTEXPR_14 void pop() noexcept;
-        MEM_CONSTEXPR size_t pos() const noexcept;
+        constexpr size_t pos() const noexcept;
 
-        MEM_CONSTEXPR explicit operator bool() const noexcept;
+        constexpr explicit operator bool() const noexcept;
     };
 
-    MEM_CONSTEXPR int xctoi(int value) noexcept;
-    MEM_CONSTEXPR int dctoi(int value) noexcept;
-    MEM_CONSTEXPR int octoi(int value) noexcept;
+    constexpr int xctoi(int value) noexcept;
+    constexpr int dctoi(int value) noexcept;
+    constexpr int octoi(int value) noexcept;
 
     MEM_STRONG_INLINE char_queue::char_queue(const char* string)
         : char_queue(string, std::strlen(string))
     { }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
+    constexpr MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
         : start(string)
         , end(start + length)
         , current(start)
     { }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int char_queue::peek() const noexcept
+    constexpr MEM_STRONG_INLINE int char_queue::peek() const noexcept
     {
         return (current < end) ? byte(*current) : -1;
     }
@@ -72,17 +72,17 @@ namespace mem
         }
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE size_t char_queue::pos() const noexcept
+    constexpr MEM_STRONG_INLINE size_t char_queue::pos() const noexcept
     {
         return current - start;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE char_queue::operator bool() const noexcept
+    constexpr MEM_STRONG_INLINE char_queue::operator bool() const noexcept
     {
         return current < end;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int xctoi(int value) noexcept
+    constexpr MEM_STRONG_INLINE int xctoi(int value) noexcept
     {
         return (value >= '0' && value <= '9') ? (value - '0')
              : (value >= 'a' && value <= 'f') ? (value - 'a' + 10)
@@ -90,12 +90,12 @@ namespace mem
              : -1;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int dctoi(int value) noexcept
+    constexpr MEM_STRONG_INLINE int dctoi(int value) noexcept
     {
         return (value >= '0' && value <= '9') ? (value - '0') : -1;
     }
 
-    MEM_CONSTEXPR MEM_STRONG_INLINE int octoi(int value) noexcept
+    constexpr MEM_STRONG_INLINE int octoi(int value) noexcept
     {
         return (value >= '0' && value <= '7') ? (value - '0') : -1;
     }
