@@ -22,7 +22,6 @@
 #include <mem/utils.h>
 
 #include <mem/platform.h>
-#include <mem/platform-inl.h>
 
 #include <mem/init_function.h>
 #include <mem/pattern_cache.h>
