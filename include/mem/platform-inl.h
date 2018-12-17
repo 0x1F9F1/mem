@@ -29,16 +29,17 @@
 #include <cstdlib>
 
 #if defined(_WIN32)
-# if defined(WIN32_LEAN_AND_MEAN)
-#  include <Windows.h>
-# else
-#  define WIN32_LEAN_AND_MEAN
-#  include <Windows.h>
-#  undef WIN32_LEAN_AND_MEAN
-# endif
+# define WIN32_LEAN_AND_MEAN
+# include <Windows.h>
 # include <malloc.h>
 # include <eh.h>
 # include <stdexcept>
+# include <intrin.h>
+# if defined(_WIN64)
+#  pragma intrinsic(__readgsqword)
+# else
+#  pragma intrinsic(__readfsdword)
+# endif
 #elif defined(__unix__)
 # include <unistd.h>
 # include <sys/mman.h>
@@ -276,6 +277,28 @@ namespace mem
         IMAGE_DOS_HEADER __ImageBase;
     }
 
+    namespace internal
+    {
+        struct PEB
+        {
+            UCHAR InheritedAddressSpace;
+            UCHAR ReadImageFileExecOptions;
+            UCHAR BeingDebugged;
+            UCHAR Spare;
+            PVOID Mutant;
+            PVOID ImageBaseAddress;
+        };
+
+        static MEM_STRONG_INLINE PEB* get_peb() noexcept
+        {
+#if defined(_WIN64)
+            return reinterpret_cast<PEB*>(__readgsqword(0x60));
+#else
+            return reinterpret_cast<PEB*>(__readfsdword(0x30));
+#endif
+        }
+    }
+
     module module::nt(pointer address)
     {
         if (!address)
@@ -312,7 +335,7 @@ namespace mem
 
     module module::main()
     {
-        return nt(GetModuleHandleA(nullptr));
+        return nt(internal::get_peb()->ImageBaseAddress);
     }
 
     module module::self()
