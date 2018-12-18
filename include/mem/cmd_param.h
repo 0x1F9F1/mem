@@ -43,6 +43,9 @@ namespace mem
         cmd_param(const char* name, int pos = 0);
         ~cmd_param();
 
+        cmd_param(const cmd_param&) = delete;
+        cmd_param(cmd_param&&) = delete;
+
         template <typename T = const char*>
         T get();
 
