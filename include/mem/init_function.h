@@ -41,7 +41,7 @@ namespace mem
         init_function(callback_t callback) noexcept;
         init_function(init_function& parent, callback_t callback) noexcept;
 
-        init_function::~init_function() noexcept;
+        init_function::~init_function();
 
         init_function(const init_function&) = delete;
         init_function(init_function&&) = delete;
@@ -64,7 +64,7 @@ namespace mem
         : init_function(parent.next_, callback)
     { }
 
-    MEM_STRONG_INLINE init_function::~init_function() noexcept
+    MEM_STRONG_INLINE init_function::~init_function()
     {
         for (init_function** i = &ROOT; *i; i = &(*i)->next_)
         {
