@@ -40,8 +40,8 @@ namespace mem
         cmd_param* next_ {nullptr};
 
     public:
-        cmd_param(const char* name, int pos = 0);
-        ~cmd_param();
+        cmd_param(const char* name, int pos = 0) noexcept;
+        ~cmd_param() noexcept;
 
         cmd_param(const cmd_param&) = delete;
         cmd_param(cmd_param&&) = delete;
@@ -59,7 +59,7 @@ namespace mem
         static void init(int argc, char** argv);
     };
 
-    MEM_STRONG_INLINE cmd_param::cmd_param(const char* name, int pos)
+    MEM_STRONG_INLINE cmd_param::cmd_param(const char* name, int pos) noexcept
         : name_(name)
         , pos_(pos)
         , next_(ROOT)
@@ -67,7 +67,7 @@ namespace mem
         ROOT = this;
     }
 
-    MEM_STRONG_INLINE cmd_param::~cmd_param()
+    MEM_STRONG_INLINE cmd_param::~cmd_param() noexcept
     {
         for (cmd_param** i = &ROOT; *i; i = &(*i)->next_)
         {

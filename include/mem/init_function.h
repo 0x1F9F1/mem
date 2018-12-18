@@ -35,29 +35,47 @@ namespace mem
         init_function* next_ {nullptr};
         callback_t callback_ {nullptr};
 
-        init_function(init_function*& parent, callback_t callback);
+        init_function(init_function*& parent, callback_t callback) noexcept;
 
     public:
-        init_function(callback_t callback);
-        init_function(init_function& parent, callback_t callback);
+        init_function(callback_t callback) noexcept;
+        init_function(init_function& parent, callback_t callback) noexcept;
+
+        init_function::~init_function() noexcept;
+
+        init_function(const init_function&) = delete;
+        init_function(init_function&&) = delete;
 
         static void init();
     };
 
-    MEM_STRONG_INLINE init_function::init_function(init_function*& parent, callback_t callback)
+    MEM_STRONG_INLINE init_function::init_function(init_function*& parent, callback_t callback) noexcept
         : next_(parent)
         , callback_(callback)
     {
         parent = this;
     }
 
-    MEM_STRONG_INLINE init_function::init_function(callback_t callback)
+    MEM_STRONG_INLINE init_function::init_function(callback_t callback) noexcept
         : init_function(ROOT, callback)
     { }
 
-    MEM_STRONG_INLINE init_function::init_function(init_function& parent, callback_t callback)
+    MEM_STRONG_INLINE init_function::init_function(init_function& parent, callback_t callback) noexcept
         : init_function(parent.next_, callback)
     { }
+
+    MEM_STRONG_INLINE init_function::~init_function() noexcept
+    {
+        for (init_function** i = &ROOT; *i; i = &(*i)->next_)
+        {
+            if (*i == this)
+            {
+                *i = next_;
+
+                break;
+            }
+        }
+    }
 
     MEM_STRONG_INLINE void init_function::init()
     {
