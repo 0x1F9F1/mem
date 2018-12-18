@@ -41,6 +41,7 @@ namespace mem
 
     public:
         cmd_param(const char* name, int pos = 0);
+        ~cmd_param();
 
         template <typename T = const char*>
         T get();
@@ -61,6 +62,19 @@ namespace mem
         , next_(ROOT)
     {
         ROOT = this;
+    }
+
+    MEM_STRONG_INLINE cmd_param::~cmd_param()
+    {
+        for (cmd_param** i = &ROOT; *i; i = &(*i)->next_)
+        {
+            if (*i == this)
+            {
+                *i = next_;
+
+                break;
+            }
+        }
     }
 
     namespace internal
