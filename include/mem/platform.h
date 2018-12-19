@@ -22,6 +22,7 @@
 
 #include "mem.h"
 #include "bitwise_enum.h"
+#include "iter_pair.h"
 
 #include <memory>
 #include <cstdio>
@@ -40,9 +41,19 @@
 #  pragma intrinsic(__readfsdword)
 # endif
 #elif defined(__unix__)
+# ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+# endif
+# include <cstring>
+# include <cinttypes>
 # include <unistd.h>
 # include <sys/mman.h>
-# include <cinttypes>
+# include <link.h>
+# if defined(MEM_USE_DLFCN) // Requires -ldl linker flag
+#  include <dlfcn.h>
+# endif
+#else
+# error Unknown Platform
 #endif
 
 namespace mem
@@ -115,21 +126,37 @@ namespace mem
         }
     };
 
-#if defined(_WIN32)
     class module
         : public region
     {
     public:
         using region::region;
 
+#if defined(_WIN32)
         static module nt(pointer address);
-        static module named(const char* name);
         static module named(const wchar_t* name);
+
+        const IMAGE_DOS_HEADER& dos_header();
+        const IMAGE_NT_HEADERS& nt_headers();
+        iter_pair<const IMAGE_SECTION_HEADER*> section_headers();
+#elif defined(__unix__)
+        static module elf(pointer address);
+
+        const ElfW(Ehdr)& elf_header();
+        iter_pair<const ElfW(Phdr)*> program_headers();
+        iter_pair<const ElfW(Shdr)*> section_headers();
+#endif
+
+        static module named(const char* name);
 
         static module main();
         static module self();
+
+        template <typename Func>
+        void enum_segments(Func func);
     };
 
+#if defined(_WIN32)
     class scoped_seh
     {
     private:
@@ -258,7 +285,7 @@ namespace mem
         GetSystemInfo(&si);
         return static_cast<size_t>(si.dwPageSize);
 #elif defined(__unix__)
-        return static_cast<size_t>(getpagesize());
+        return static_cast<size_t>(sysconf(_SC_PAGESIZE));
 #endif
     }
 
@@ -460,6 +487,50 @@ namespace mem
         return nt(&internal::__ImageBase);
     }
 
+    MEM_STRONG_INLINE const IMAGE_DOS_HEADER& module::dos_header()
+    {
+        return start.at<const IMAGE_DOS_HEADER>(0);
+    }
+
+    MEM_STRONG_INLINE const IMAGE_NT_HEADERS& module::nt_headers()
+    {
+        return start.at<const IMAGE_NT_HEADERS>(dos_header().e_lfanew);
+    }
+
+    MEM_STRONG_INLINE iter_pair<const IMAGE_SECTION_HEADER*> module::section_headers()
+    {
+        const IMAGE_NT_HEADERS& nt = nt_headers();
+        const IMAGE_SECTION_HEADER* sections = IMAGE_FIRST_SECTION(&nt);
+
+        return { sections, sections + nt.FileHeader.NumberOfSections };
+    }
+
+    template <typename Func>
+    MEM_STRONG_INLINE void module::enum_segments(Func func)
+    {
+        for (const IMAGE_SECTION_HEADER& section : section_headers())
+        {
+            mem::region range(start.add(section.VirtualAddress), section.Misc.VirtualSize);
+
+            if (!range.size)
+                continue;
+
+            prot_flags prot = prot_flags::NONE;
+
+            if (section.Characteristics & IMAGE_SCN_MEM_READ)
+                prot |= prot_flags::R;
+
+            if (section.Characteristics & IMAGE_SCN_MEM_WRITE)
+                prot |= prot_flags::W;
+
+            if (section.Characteristics & IMAGE_SCN_MEM_EXECUTE)
+                prot |= prot_flags::X;
+
+            if (func(range, prot))
+                return;
+        }
+    }
+
     namespace internal
     {
         static MEM_CONSTEXPR_14 const char* translate_exception_code(uint32_t code) noexcept
@@ -545,10 +616,209 @@ namespace mem
         }
     }
 
-#if defined(_MSC_VER)
-# pragma warning(push)
-# pragma warning(disable: 4535) // warning C4535: calling _set_se_translator() requires /EHa
+#elif defined(__unix__)
+    namespace internal
+    {
+        // https://github.com/torvalds/linux/blob/master/fs/binfmt_elf.c
+        static size_t total_mapping_size(const ElfW(Phdr)* cmds, size_t count)
+        {
+            size_t first_idx = SIZE_MAX, last_idx = SIZE_MAX;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                if (cmds[i].p_type == PT_LOAD)
+                {
+                    last_idx = i;
+
+                    if (first_idx == SIZE_MAX)
+                        first_idx = i;
+                }
+            }
+
+            if (first_idx == SIZE_MAX)
+                return 0;
+
+            return cmds[last_idx].p_vaddr + cmds[last_idx].p_memsz - (cmds[first_idx].p_vaddr & ~(cmds[first_idx].p_align - 1));
+        }
+    }
+
+    MEM_STRONG_INLINE module module::elf(pointer address)
+    {
+        if (!address)
+            return module();
+
+        const ElfW(Ehdr)& ehdr = address.at<const ElfW(Ehdr)&>(0);
+
+        if (ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
+            ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
+            ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
+            ehdr.e_ident[EI_MAG3] != ELFMAG3)
+            return module();
+
+        const ElfW(Phdr)* phdr = address.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
+        const size_t mapping_size = internal::total_mapping_size(phdr, ehdr.e_phnum);
+
+        return module(address, mapping_size);
+    }
+
+    MEM_STRONG_INLINE const ElfW(Ehdr)& module::elf_header()
+    {
+        return start.at<const ElfW(Ehdr)>(0);
+    }
+
+    MEM_STRONG_INLINE iter_pair<const ElfW(Phdr)*> module::program_headers()
+    {
+        const ElfW(Ehdr)& ehdr = elf_header();
+        const ElfW(Phdr)* phdr = start.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
+
+        return { phdr, phdr + ehdr.e_phnum };
+    }
+
+    MEM_STRONG_INLINE iter_pair<const ElfW(Shdr)*> module::section_headers()
+    {
+        const ElfW(Ehdr)& ehdr = elf_header();
+        const ElfW(Shdr)* shdr = start.at<const ElfW(Shdr)[ ]>(ehdr.e_shoff);
+
+        return { shdr, shdr + ehdr.e_shnum };
+    }
+
+    template <typename Func>
+    MEM_STRONG_INLINE void module::enum_segments(Func func)
+    {
+        for (const ElfW(Phdr)& section : program_headers())
+        {
+            if (section.p_type != PT_LOAD)
+                continue;
+
+            mem::region range(start.add(section.p_vaddr), section.p_memsz);
+
+            if (!range.size)
+                continue;
+
+            prot_flags prot = prot_flags::NONE;
+
+            if (section.p_flags & PF_R)
+                prot |= prot_flags::R;
+
+            if (section.p_flags & PF_W)
+                prot |= prot_flags::W;
+
+            if (section.p_flags & PF_X)
+                prot |= prot_flags::X;
+
+            if (func(range, prot))
+                return;
+        }
+    }
+
+    MEM_STRONG_INLINE module module::main()
+    {
+        return named(nullptr);
+    }
+
+    extern "C" namespace internal
+    {
+#if defined(MEM_USE_EHDR_START)
+        ElfW(Ehdr) __ehdr_start;
+#else
+        char __executable_start;
 #endif
+    }
+
+    MEM_STRONG_INLINE module module::self()
+    {
+#if defined(MEM_USE_EHDR_START)
+        return elf(&internal::__ehdr_start);
+#else
+        return elf(&internal::__executable_start);
+#endif
+    }
+
+#if defined(MEM_USE_DLFCN)
+    MEM_STRONG_INLINE module module::named(const char* name)
+    {
+        const link_map* lm = static_cast<const link_map*>(dlopen(name, RTLD_LAZY | RTLD_NOLOAD));
+
+        if (lm)
+        {
+#if defined(MEM_USE_STRICT_DLFCN)
+            if (lm->l_ld)
+            {
+                Dl_info info;
+
+                if (dladdr(lm->l_ld, &info))
+                {
+                    return elf(info.dli_fbase);
+                }
+            }
+#else
+            // Difference between the address in the ELF file and the address in memory.
+            // Usually ends up being the actual base address, but not always.
+            return elf(lm->l_addr);
+#endif
+        }
+
+        return module();
+    }
+#else
+    namespace internal
+    {
+        struct dl_search_info
+        {
+            const char* name {nullptr};
+            void* result {nullptr};
+        };
+
+        static int dl_iterate_callback(struct dl_phdr_info* info, size_t size, void* data)
+        {
+            (void) size;
+
+            dl_search_info* search_info = static_cast<dl_search_info*>(data);
+
+            const char* file_path = info->dlpi_name;
+            const char* file_name = std::strrchr(file_path, '/');
+
+            if (file_name)
+            {
+                ++file_name;
+            }
+            else
+            {
+                file_name = file_path;
+            }
+
+            if (!std::strcmp(search_info->name, file_name))
+            {
+                search_info->result = reinterpret_cast<void*>(info->dlpi_addr);
+
+                return 1;
+            }
+
+            return 0;
+        }
+    }
+
+    MEM_STRONG_INLINE module module::named(const char* name)
+    {
+        internal::dl_search_info search;
+
+        search.name = name ? name : "";
+
+        if (dl_iterate_phdr(&internal::dl_iterate_callback, &search))
+        {
+            return elf(search.result);
+        }
+
+        return module();
+    }
+#endif
+#endif
+
+#if defined(_WIN32)
+# if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4535) // warning C4535: calling _set_se_translator() requires /EHa
+# endif
 
     inline scoped_seh::scoped_seh()
         : context_(_set_se_translator(&internal::translate_seh))
@@ -559,11 +829,10 @@ namespace mem
         _set_se_translator(static_cast<_se_translator_function>(context_));
     }
 
-#if defined(_MSC_VER)
-# pragma warning(pop)
+# if defined(_MSC_VER)
+#  pragma warning(pop)
+# endif
 #endif
-
-#endif // _WIN32
 
     MEM_STRONG_INLINE void* aligned_alloc(size_t size, size_t alignment)
     {
