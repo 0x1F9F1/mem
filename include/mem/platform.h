@@ -446,23 +446,20 @@ namespace mem
     MEM_STRONG_INLINE module module::nt(pointer address)
     {
         if (!address)
-        {
             return module();
-        }
 
         const IMAGE_DOS_HEADER& dos = address.at<const IMAGE_DOS_HEADER>(0);
 
         if (dos.e_magic != IMAGE_DOS_SIGNATURE)
-        {
             return module();
-        }
 
         const IMAGE_NT_HEADERS& nt = address.at<const IMAGE_NT_HEADERS>(dos.e_lfanew);
 
         if (nt.Signature != IMAGE_NT_SIGNATURE)
-        {
             return module();
-        }
+
+        if (nt.FileHeader.SizeOfOptionalHeader != sizeof(IMAGE_OPTIONAL_HEADER))
+            return module();
 
         return module(address, nt.OptionalHeader.SizeOfImage);
     }
@@ -653,6 +650,10 @@ namespace mem
             ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
             ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
             ehdr.e_ident[EI_MAG3] != ELFMAG3)
+            return module();
+
+        if (ehdr.e_phentsize != sizeof(ElfW(Phdr)) ||
+            ehdr.e_shentsize != sizeof(ElfW(Shdr)))
             return module();
 
         const ElfW(Phdr)* phdr = address.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
