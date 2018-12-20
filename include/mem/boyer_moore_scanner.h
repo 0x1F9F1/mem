@@ -34,6 +34,7 @@ namespace mem
         std::vector<size_t> good_suffix_skips_ {};
 
         size_t skip_pos_ {SIZE_MAX};
+        size_t max_skip_ {0};
 
         size_t get_longest_run(size_t& length) const;
 
@@ -75,6 +76,7 @@ namespace mem
         {
             bad_char_skips_.resize(256, max_skip);
             skip_pos_ = skip_pos + max_skip - 1;
+            max_skip_ = max_skip;
 
             for (size_t i = skip_pos, last = skip_pos + max_skip - 1; i < last; ++i)
                 bad_char_skips_[bytes[i]] = last - i;
@@ -103,6 +105,10 @@ namespace mem
                     if (bytes[i - suffix_length] != bytes[pos])
                         good_suffix_skips_[pos] = suffix_length + (last - i);
                 }
+            }
+            else
+            {
+                bad_char_skips_[bytes[skip_pos_]] = 0;
             }
         }
     }
@@ -207,6 +213,13 @@ namespace mem
 
                 while (MEM_LIKELY(current < end))
                 {
+                    size_t skip = pat_skips[current[pat_skip_pos]];
+
+                    current += skip;
+
+                    if (MEM_LIKELY(skip))
+                        continue;
+
                     size_t i = last;
 
                     do
@@ -227,7 +240,7 @@ namespace mem
                         break;
                     } while (true);
 
-                    current += pat_skips[current[pat_skip_pos]];
+                    ++current;
                 }
 
                 return nullptr;
@@ -306,6 +319,13 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
+                    size_t skip = pat_skips[current[last]];
+
+                    current += skip;
+
+                    if (MEM_LIKELY(skip))
+                        continue;
+
                     size_t i = last;
 
                     do
@@ -326,7 +346,7 @@ namespace mem
                         break;
                     } while (true);
 
-                    current += pat_skips[current[last]];
+                    ++current;
                 }
 
                 return nullptr;
