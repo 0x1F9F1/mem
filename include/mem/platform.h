@@ -719,20 +719,12 @@ namespace mem
 
     extern "C" namespace internal
     {
-#if defined(MEM_USE_EHDR_START)
-        ElfW(Ehdr) __ehdr_start;
-#else
-        char __executable_start;
-#endif
+        ElfW(Ehdr) __attribute__((weak)) __ehdr_start;
     }
 
     MEM_STRONG_INLINE module module::self()
     {
-#if defined(MEM_USE_EHDR_START)
         return elf(&internal::__ehdr_start);
-#else
-        return elf(&internal::__executable_start);
-#endif
     }
 
 #if defined(MEM_USE_DLFCN)
@@ -746,7 +738,6 @@ namespace mem
 
             void* base_addr = nullptr;
 
-#if defined(MEM_USE_STRICT_DLFCN)
             if (lm->l_ld)
             {
                 Dl_info info;
@@ -756,11 +747,6 @@ namespace mem
                     base_addr = info.dli_fbase;
                 }
             }
-#else
-            // Difference between the address in the ELF file and the address in memory.
-            // Usually ends up being the actual base address, but not always.
-            base_addr = reinterpret_cast<void*>(lm->l_addr);
-#endif
 
             dlclose(handle);
 
@@ -798,7 +784,15 @@ namespace mem
 
             if (!std::strcmp(search_info->name, file_name))
             {
-                search_info->result = reinterpret_cast<void*>(info->dlpi_addr);
+                for (int i = 0; i < info->dlpi_phnum; ++i)
+                {
+                    if (info->dlpi_phdr[i].p_type == PT_LOAD)
+                    {
+                        search_info->result = reinterpret_cast<void*>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr);
+
+                        break;
+                    }
+                }
 
                 return 1;
             }
