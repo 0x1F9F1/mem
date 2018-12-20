@@ -738,10 +738,14 @@ namespace mem
 #if defined(MEM_USE_DLFCN)
     MEM_STRONG_INLINE module module::named(const char* name)
     {
-        const link_map* lm = static_cast<const link_map*>(dlopen(name, RTLD_LAZY | RTLD_NOLOAD));
+        void* handle = dlopen(name, RTLD_LAZY | RTLD_NOLOAD);
 
-        if (lm)
+        if (handle)
         {
+            const link_map* lm = static_cast<const link_map*>(handle);
+
+            void* base_addr = nullptr;
+
 #if defined(MEM_USE_STRICT_DLFCN)
             if (lm->l_ld)
             {
@@ -749,14 +753,18 @@ namespace mem
 
                 if (dladdr(lm->l_ld, &info))
                 {
-                    return elf(info.dli_fbase);
+                    base_addr = info.dli_fbase;
                 }
             }
 #else
             // Difference between the address in the ELF file and the address in memory.
             // Usually ends up being the actual base address, but not always.
-            return elf(lm->l_addr);
+            base_addr = reinterpret_cast<void*>(lm->l_addr);
 #endif
+
+            dlclose(handle);
+
+            return elf(base_addr);
         }
 
         return module();
