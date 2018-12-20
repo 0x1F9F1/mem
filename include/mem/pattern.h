@@ -251,7 +251,7 @@ namespace mem
 
         needs_masks_ = false;
 
-        for (size_t i = bytes_.size(); i--;)
+        for (size_t i = trimmed_size_; i--;)
         {
             if (masks_[i] != 0xFF)
             {
