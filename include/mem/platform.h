@@ -734,11 +734,18 @@ namespace mem
 
         if (handle)
         {
+#if defined(MEM_USE_DLINFO)
+            const link_map* lm = nullptr;
+
+            if (dlinfo(handle, RTLD_DI_LINKMAP, &lm))
+                lm = nullptr;
+#else
             const link_map* lm = static_cast<const link_map*>(handle);
+#endif
 
             void* base_addr = nullptr;
 
-            if (lm->l_ld)
+            if (lm && lm->l_ld)
             {
                 Dl_info info;
 
@@ -790,11 +797,11 @@ namespace mem
                     {
                         search_info->result = reinterpret_cast<void*>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr);
 
-                        break;
+                        return 1;
                     }
                 }
 
-                return 1;
+                return 2;
             }
 
             return 0;
@@ -807,7 +814,7 @@ namespace mem
 
         search.name = name ? name : "";
 
-        if (dl_iterate_phdr(&internal::dl_iterate_callback, &search))
+        if (dl_iterate_phdr(&internal::dl_iterate_callback, &search) == 1)
         {
             return elf(search.result);
         }
