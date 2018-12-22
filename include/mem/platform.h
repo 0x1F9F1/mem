@@ -22,7 +22,7 @@
 
 #include "mem.h"
 #include "bitwise_enum.h"
-#include "iter_pair.h"
+#include "slice.h"
 
 #include <memory>
 #include <cstdio>
@@ -138,13 +138,13 @@ namespace mem
 
         const IMAGE_DOS_HEADER& dos_header();
         const IMAGE_NT_HEADERS& nt_headers();
-        iter_pair<const IMAGE_SECTION_HEADER*> section_headers();
+        slice<const IMAGE_SECTION_HEADER> section_headers();
 #elif defined(__unix__)
         static module elf(pointer address);
 
         const ElfW(Ehdr)& elf_header();
-        iter_pair<const ElfW(Phdr)*> program_headers();
-        iter_pair<const ElfW(Shdr)*> section_headers();
+        slice<const ElfW(Phdr)> program_headers();
+        slice<const ElfW(Shdr)> section_headers();
 #endif
 
         static module named(const char* name);
@@ -494,12 +494,12 @@ namespace mem
         return start.at<const IMAGE_NT_HEADERS>(dos_header().e_lfanew);
     }
 
-    MEM_STRONG_INLINE iter_pair<const IMAGE_SECTION_HEADER*> module::section_headers()
+    MEM_STRONG_INLINE slice<const IMAGE_SECTION_HEADER> module::section_headers()
     {
         const IMAGE_NT_HEADERS& nt = nt_headers();
         const IMAGE_SECTION_HEADER* sections = IMAGE_FIRST_SECTION(&nt);
 
-        return { sections, sections + nt.FileHeader.NumberOfSections };
+        return { sections, nt.FileHeader.NumberOfSections };
     }
 
     template <typename Func>
@@ -667,20 +667,20 @@ namespace mem
         return start.at<const ElfW(Ehdr)>(0);
     }
 
-    MEM_STRONG_INLINE iter_pair<const ElfW(Phdr)*> module::program_headers()
+    MEM_STRONG_INLINE slice<const ElfW(Phdr)> module::program_headers()
     {
         const ElfW(Ehdr)& ehdr = elf_header();
         const ElfW(Phdr)* phdr = start.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
 
-        return { phdr, phdr + ehdr.e_phnum };
+        return { phdr, ehdr.e_phnum };
     }
 
-    MEM_STRONG_INLINE iter_pair<const ElfW(Shdr)*> module::section_headers()
+    MEM_STRONG_INLINE slice<const ElfW(Shdr)> module::section_headers()
     {
         const ElfW(Ehdr)& ehdr = elf_header();
         const ElfW(Shdr)* shdr = start.at<const ElfW(Shdr)[ ]>(ehdr.e_shoff);
 
-        return { shdr, shdr + ehdr.e_shnum };
+        return { shdr, ehdr.e_shnum };
     }
 
     template <typename Func>

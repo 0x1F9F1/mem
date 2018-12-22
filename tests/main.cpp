@@ -53,6 +53,7 @@ void check_pattern(const mem::pattern& pattern, size_t original_size, size_t tri
 TEST(pattern, parse)
 {
     check_pattern(mem::pattern("01 02 03 04 05"), 5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
+    check_pattern(mem::pattern("01 02 03 04 ?"), 5, 4, false, "\x01\x02\x03\x04\x00", "\xFF\xFF\xFF\xFF\x00");
     check_pattern(mem::pattern(" 01    02        03 04 05 "), 5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
     check_pattern(mem::pattern("1 2 3 4 5"),      5, 5, false, "\x01\x02\x03\x04\x05", "\xFF\xFF\xFF\xFF\xFF");
     check_pattern(mem::pattern("1 ?2 3 4? 5"),    5, 5, true,  "\x01\x02\x03\x40\x05", "\xFF\x0F\xFF\xF0\xFF");
