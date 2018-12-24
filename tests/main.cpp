@@ -31,6 +31,8 @@
 
 #include <mem/data_buffer.h>
 
+#include <mem/macros.h>
+
 #include <string>
 #include <unordered_set>
 
