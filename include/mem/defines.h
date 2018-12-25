@@ -87,6 +87,35 @@
 namespace mem
 {
     using byte = unsigned char;
+
+    inline namespace conventions
+    {
+        template <typename Result, typename... Args>
+        using func_t = Result(*)(Args...);
+
+        template <typename Result, typename Class, typename... Args>
+        using thiscall_t = Result(Class::*)(Args...);
+
+#if defined(__GNUC__) || defined(__clang__)
+        template <typename Result, typename... Args>
+        using cdecl_t = __attribute__((cdecl)) Result(*)(Args...);
+
+        template <typename Result, typename... Args>
+        using stdcall_t = __attribute__((stdcall)) Result(*)(Args...);
+
+        template <typename Result, typename... Args>
+        using fastcall_t = __attribute__((fastcall)) Result(*)(Args...);
+#elif defined(_MSC_VER)
+        template <typename Result, typename... Args>
+        using cdecl_t = Result(__cdecl*)(Args...);
+
+        template <typename Result, typename... Args>
+        using stdcall_t = Result(__stdcall*)(Args...);
+
+        template <typename Result, typename... Args>
+        using fastcall_t = Result(__fastcall*)(Args...);
+#endif
+    }
 }
 
 #include <stdint.h>
