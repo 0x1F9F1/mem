@@ -51,13 +51,14 @@ namespace mem
     template <typename T>
     class slice
     {
-    public:
-        T* start {nullptr};
-        size_t size {0};
+    private:
+        T* start_ {nullptr};
+        size_t size_ {0};
 
+    public:
         constexpr slice() noexcept = default;
         constexpr slice(T* begin, T* end) noexcept;
-        constexpr slice(T* start, size_t size) noexcept;
+        constexpr slice(T* start_, size_t size_) noexcept;
 
         constexpr T& operator[](size_t index) const noexcept;
 
@@ -65,57 +66,78 @@ namespace mem
         constexpr T* begin() const noexcept;
         constexpr T* end() const noexcept;
 
+        constexpr size_t size() const noexcept;
         constexpr bool empty() const noexcept;
 
         slice<typename copy_cv<T, byte>::type> as_bytes() const noexcept;
+
+        using value_type = T;
+
+        using size_type = size_t;
+        using difference_type = ptrdiff_t;
+
+        using reference = value_type&;
+        using const_reference = const value_type&;
+
+        using pointer = value_type*;
+        using const_pointer = const value_type*;
+
+        using iterator = value_type*;
+        using const_iterator = const value_type*;
     };
 
     template <typename T>
     constexpr MEM_STRONG_INLINE slice<T>::slice(T* begin, T* end) noexcept
-        : start(begin)
-        , size(end - begin)
+        : start_(begin)
+        , size_(end - begin)
     { }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE slice<T>::slice(T* start_, size_t size_) noexcept
-        : start(start_)
-        , size(size_)
+    constexpr MEM_STRONG_INLINE slice<T>::slice(T* start, size_t size) noexcept
+        : start_(start)
+        , size_(size)
     { }
 
     template <typename T>
     constexpr MEM_STRONG_INLINE T& slice<T>::operator[](size_t index) const noexcept
     {
-        return start[index];
+        return start_[index];
     }
 
     template <typename T>
     constexpr MEM_STRONG_INLINE T* slice<T>::data() const noexcept
     {
-        return start;
+        return start_;
     }
 
     template <typename T>
     constexpr MEM_STRONG_INLINE T* slice<T>::begin() const noexcept
     {
-        return start;
+        return start_;
     }
 
     template <typename T>
     constexpr MEM_STRONG_INLINE T* slice<T>::end() const noexcept
     {
-        return start + size;
+        return start_ + size_;
+    }
+
+    template <typename T>
+    constexpr MEM_STRONG_INLINE size_t slice<T>::size() const noexcept
+    {
+        return size_;
     }
 
     template <typename T>
     constexpr MEM_STRONG_INLINE bool slice<T>::empty() const noexcept
     {
-        return size == 0;
+        return size_ == 0;
     }
 
     template <typename T>
     MEM_STRONG_INLINE slice<typename copy_cv<T, byte>::type> slice<T>::as_bytes() const noexcept
     {
-        return { reinterpret_cast<typename copy_cv<T, byte>::type*>(start), size * sizeof(T) };
+        return { reinterpret_cast<typename copy_cv<T, byte>::type*>(start_), size_ * sizeof(T) };
     }
 }
 
