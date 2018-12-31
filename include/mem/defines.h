@@ -98,18 +98,22 @@ namespace mem
         using func_t = Result(*)(Args...);
 
         template <typename Result, typename Class, typename... Args>
-        using thiscall_t = Result(Class::*)(Args...);
+        using member_func_t = Result(Class::*)(Args...);
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(MEM_ARCH_X86)
+# if defined(__GNUC__) || defined(__clang__)
         template <typename Result, typename... Args>
-        using cdecl_t = __attribute__((cdecl)) Result(*)(Args...);
-
-        template <typename Result, typename... Args>
-        using stdcall_t = __attribute__((stdcall)) Result(*)(Args...);
+        using cdecl_t = Result(__attribute__((cdecl))*)(Args...);
 
         template <typename Result, typename... Args>
-        using fastcall_t = __attribute__((fastcall)) Result(*)(Args...);
-#elif defined(_MSC_VER)
+        using stdcall_t = Result(__attribute__((stdcall))*)(Args...);
+
+        template <typename Result, typename... Args>
+        using fastcall_t = Result(__attribute__((fastcall))*)(Args...);
+
+        template <typename Result, typename... Args>
+        using thiscall_t = Result(__attribute__((thiscall))*)(Args...);
+# elif defined(_MSC_VER)
         template <typename Result, typename... Args>
         using cdecl_t = Result(__cdecl*)(Args...);
 
@@ -118,6 +122,10 @@ namespace mem
 
         template <typename Result, typename... Args>
         using fastcall_t = Result(__fastcall*)(Args...);
+
+        template <typename Result, typename... Args>
+        using thiscall_t = Result(__thiscall*)(Args...);
+# endif
 #endif
     }
 }
