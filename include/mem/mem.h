@@ -163,6 +163,12 @@ namespace mem
         constexpr region sub_region(pointer address) const noexcept;
     };
 
+    template <typename T>
+    typename std::add_lvalue_reference<T>::type field(pointer base, ptrdiff_t offset = 0) noexcept;
+
+    template <typename F>
+    typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table = 0) noexcept;
+
     constexpr MEM_STRONG_INLINE pointer::pointer(nullptr_t) noexcept
         : value_(0)
     { }
@@ -455,6 +461,18 @@ namespace mem
     constexpr MEM_STRONG_INLINE region region::sub_region(pointer address) const noexcept
     {
         return region(address, size - static_cast<size_t>(address - start));
+    }
+
+    template <typename T>
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(pointer base, ptrdiff_t offset) noexcept
+    {
+        return base.at<T>(offset);
+    }
+
+    template <typename F>
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table) noexcept
+    {
+        return inst.as<pointer**>()[table][index].rcast<F>();
     }
 }
 #endif // !MEM_BRICK_H

@@ -28,12 +28,6 @@
 
 namespace mem
 {
-    template <typename T>
-    typename std::add_lvalue_reference<T>::type field(pointer base, ptrdiff_t offset = 0) noexcept;
-
-    template <typename F>
-    typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table = 0) noexcept;
-
     bool is_ascii(region range) noexcept;
     bool is_utf8(region range) noexcept;
 
@@ -41,18 +35,6 @@ namespace mem
     std::string as_hex(region range, bool upper_case = true, bool padded = true);
 
     std::string unescape(const char* string, size_t length);
-
-    template <typename T>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(pointer base, ptrdiff_t offset) noexcept
-    {
-        return base.at<T>(offset);
-    }
-
-    template <typename F>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table) noexcept
-    {
-        return inst.as<pointer**>()[table][index].rcast<F>();
-    }
 
     MEM_STRONG_INLINE bool is_ascii(region range) noexcept
     {
