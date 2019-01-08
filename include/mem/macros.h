@@ -44,12 +44,8 @@
 #define run_once(body) static mem::init_function mem_paste(run_once_, __LINE__)(body);
 
 #if defined(_MSC_VER)
-# define define_dummy_symbol(NAME) extern "C" void mem_paste(dummy_symbol_, NAME)() {}
-# if defined(MEM_ARCH_X86_64)
-#  define include_dummy_symbol(NAME) __pragma(comment(linker, "/INCLUDE:" mem_str(mem_paste(dummy_symbol_, NAME))))
-# else
-#  define include_dummy_symbol(NAME) __pragma(comment(linker, "/INCLUDE:" mem_str(mem_paste(_dummy_symbol_, NAME))))
-# endif
+# define define_dummy_symbol(NAME) namespace dummy { void __cdecl mem_paste(dummy_symbol_, NAME)() { } }
+# define include_dummy_symbol(NAME) __pragma(comment(linker, "/INCLUDE:?" mem_str(mem_paste(dummy_symbol_, NAME)) "@dummy@@YAXXZ"))
 #endif
 
 #endif // MEM_MACROS_BRICK_H
