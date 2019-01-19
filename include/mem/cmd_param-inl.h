@@ -32,12 +32,12 @@ namespace mem
 {
     cmd_param* cmd_param::ROOT {nullptr};
 
-    static inline bool cmd_is_digit(int c)
+    inline bool cmd_is_digit(int c)
     {
         return (static_cast<unsigned int>(c) - '0') < 10;
     }
 
-    static inline int cmd_to_lower(int c)
+    inline int cmd_to_lower(int c)
     {
         if ((static_cast<unsigned int>(c) - 'A') < 26)
         {
@@ -47,7 +47,7 @@ namespace mem
         return c;
     }
 
-    static int cmd_strcmp(const char* lhs, const char* rhs)
+    int cmd_strcmp(const char* lhs, const char* rhs)
     {
         int a, b;
 
@@ -63,12 +63,12 @@ namespace mem
         return a - b;
     }
 
-    static inline bool cmd_is_option(const char* arg)
+    inline bool cmd_is_option(const char* arg)
     {
         return (arg[0] == '-') && !cmd_is_digit(static_cast<unsigned char>(arg[1]));
     }
 
-    static inline char* cmd_unquote(char* arg)
+    inline char* cmd_unquote(char* arg)
     {
         if (arg[0] == '"')
         {

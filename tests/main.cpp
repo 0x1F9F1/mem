@@ -18,29 +18,39 @@
 */
 
 #include <mem/mem.h>
-#include <mem/pattern.h>
 #include <mem/utils.h>
+#include <mem/macros.h>
 
-#include <mem/platform.h>
+#include <mem/data_buffer.h>
+#include <mem/slice.h>
 
 #include <mem/init_function.h>
+#include <mem/init_function-inl.h>
+
+#include <mem/cmd_param.h>
+#include <mem/cmd_param-inl.h>
+
+#include <mem/pattern.h>
 #include <mem/pattern_cache.h>
 
 #include <mem/simd_scanner.h>
 #include <mem/boyer_moore_scanner.h>
 
-#include <mem/data_buffer.h>
+#include <mem/prot_flags.h>
+#include <mem/protect.h>
 
-#include <mem/macros.h>
+#include <mem/module.h>
+#include <mem/aligned_alloc.h>
+#include <mem/execution_handler.h>
+
+#if defined(_WIN32)
+# include <mem/rtti.h>
+#endif
 
 #include <string>
 #include <unordered_set>
 
 #include <gtest/gtest.h>
-
-#if defined(_WIN32)
-# include <mem/rtti.h>
-#endif
 
 void check_pattern(const mem::pattern& pattern, size_t original_size, size_t trimmed_size, bool needs_masks, const void* bytes, const void* masks)
 {

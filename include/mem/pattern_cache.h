@@ -139,7 +139,7 @@ namespace mem
     namespace stream
     {
         template <typename T>
-        static inline void write(std::ostream& output, const T& value)
+        inline void write(std::ostream& output, const T& value)
         {
             static_assert(std::is_trivial<T>::value, "Invalid Value");
 
@@ -147,7 +147,7 @@ namespace mem
         }
 
         template <typename T>
-        static inline T read(std::istream& input)
+        inline T read(std::istream& input)
         {
             static_assert(std::is_trivial<T>::value, "Invalid Value");
 

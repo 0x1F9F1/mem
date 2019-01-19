@@ -30,6 +30,8 @@
 # error mem::rtti only supports x86 and x64
 #endif
 
+#include <functional>
+
 namespace mem
 {
     namespace rtti
@@ -98,7 +100,7 @@ namespace mem
         {
             uint32_t arrayOfBaseClassDescriptors[1];
 
-            RTTIBaseClassDescriptor* get_base_class(const region& region, const uint32_t index) const;
+            RTTIBaseClassDescriptor* get_base_class(const region& region, uint32_t index) const;
         };
 
         struct RTTIBaseClassDescriptor
@@ -111,10 +113,10 @@ namespace mem
             RTTITypeDescriptor* get_type(const region& region) const;
         };
 
-        void enumerate_rtti(const region& region, const std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback);
+        void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback);
         const RTTITypeDescriptor* find_rtti_type(const region& region, const char* name);
 
-        constexpr inline bool check_rtti_signature(const uint32_t signature) noexcept
+        constexpr inline bool check_rtti_signature(uint32_t signature) noexcept
         {
 #if defined(MEM_ARCH_X86_64)
             return signature == 1;
@@ -126,7 +128,7 @@ namespace mem
         }
 
         template <typename T>
-        inline T* get_rtti_pointer(const region& region, const uint32_t address) noexcept
+        inline T* get_rtti_pointer(const region& region, uint32_t address) noexcept
         {
 #if defined(MEM_ARCH_X86_64)
             return region.start.add(address).as<T*>();
@@ -208,7 +210,7 @@ namespace mem
             return false;
         }
 
-        inline RTTIBaseClassDescriptor* RTTIBaseClassArray::get_base_class(const region& region, const uint32_t index) const
+        inline RTTIBaseClassDescriptor* RTTIBaseClassArray::get_base_class(const region& region, uint32_t index) const
         {
             return get_rtti_pointer<RTTIBaseClassDescriptor>(region, arrayOfBaseClassDescriptors[index]);
         }
@@ -218,7 +220,7 @@ namespace mem
             return get_rtti_pointer<RTTITypeDescriptor>(region, pTypeDescriptor);
         }
 
-        inline void enumerate_rtti(const region& region, const std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback)
+        inline void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback)
         {
             for (size_t i = 0; i < region.size; i += sizeof(void*))
             {
@@ -270,7 +272,7 @@ namespace mem
         {
             const RTTITypeDescriptor* result = nullptr;
 
-            enumerate_rtti(region, [&result, name](const void**, const RTTICompleteObjectLocator*, const RTTITypeDescriptor* type) -> bool
+            enumerate_rtti(region, [&result, name] (const void**, const RTTICompleteObjectLocator*, const RTTITypeDescriptor* type) -> bool
             {
                 if (type->demangle() == name)
                 {
