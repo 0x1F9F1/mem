@@ -111,11 +111,11 @@ namespace mem
         template <typename T>
         typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type rcast() & noexcept;
 
-        template <typename F>
-        constexpr pointer and_then(F func) const;
+        template <typename Func>
+        constexpr pointer and_then(Func&& func) const;
 
-        template <typename F>
-        constexpr pointer or_else(F func) const;
+        template <typename Func>
+        constexpr pointer or_else(Func&& func) const;
 
         constexpr any_pointer any() const noexcept;
     };
@@ -380,16 +380,16 @@ namespace mem
         return *reinterpret_cast<typename std::add_pointer<T>::type>(this);
     }
 
-    template <typename F>
-    constexpr MEM_STRONG_INLINE pointer pointer::and_then(F func) const
+    template <typename Func>
+    constexpr MEM_STRONG_INLINE pointer pointer::and_then(Func&& func) const
     {
-        return value_ ? func(*this) : nullptr;
+        return value_ ? std::forward<Func>(func)(*this) : nullptr;
     }
 
-    template <typename F>
-    constexpr MEM_STRONG_INLINE pointer pointer::or_else(F func) const
+    template <typename Func>
+    constexpr MEM_STRONG_INLINE pointer pointer::or_else(Func&& func) const
     {
-        return value_ ? *this : func();
+        return value_ ? *this : std::forward<Func>(func)();
     }
 
     constexpr MEM_STRONG_INLINE any_pointer pointer::any() const noexcept
