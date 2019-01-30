@@ -41,7 +41,7 @@
 #define mem_str_(X) #X
 #define mem_str(X) mem_str_(X)
 
-#define run_once(body) static mem::init_function mem_paste(run_once_, __LINE__)(body);
+#define run_once(body) static mem::init_function mem_paste(run_once_, __LINE__)(body)
 
 #if defined(_MSC_VER)
 # define define_dummy_symbol(NAME) namespace dummy { void __cdecl mem_paste(dummy_symbol_, NAME)() { } }
