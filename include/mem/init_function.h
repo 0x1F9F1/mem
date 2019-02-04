@@ -41,12 +41,14 @@ namespace mem
         init_function(callback_t callback) noexcept;
         init_function(init_function& parent, callback_t callback) noexcept;
 
+#if defined(MEM_INIT_FUNCTION_USE_DESTRUCTOR)
         ~init_function();
+#endif
 
         init_function(const init_function&) = delete;
         init_function(init_function&&) = delete;
 
-        static void init();
+        static size_t init();
     };
 
     MEM_STRONG_INLINE init_function::init_function(init_function*& parent, callback_t callback) noexcept
@@ -64,6 +66,7 @@ namespace mem
         : init_function(parent.next_, callback)
     { }
 
+#if defined(MEM_INIT_FUNCTION_USE_DESTRUCTOR)
     MEM_STRONG_INLINE init_function::~init_function()
     {
         for (init_function** i = &ROOT; *i; i = &(*i)->next_)
@@ -76,16 +79,30 @@ namespace mem
             }
         }
     }
+#endif
 
-    MEM_STRONG_INLINE void init_function::init()
+    MEM_STRONG_INLINE size_t init_function::init()
     {
-        for (init_function* i = ROOT; i; i = i->next_)
+        size_t total = 0;
+
+        for (init_function* i = ROOT; i;)
         {
             if (i->callback_)
+            {
                 i->callback_();
+                i->callback_ = nullptr;
 
-            i->callback_ = nullptr;
+                ++total;
+            }
+
+            init_function* j = i->next_;
+            i->next_ = nullptr;
+            i = j;
         }
+
+        ROOT = nullptr;
+
+        return total;
     }
 }
 
