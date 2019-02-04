@@ -25,13 +25,8 @@
 
 #define decl_static(TYPE, NAME) static typename std::add_lvalue_reference<TYPE>::type NAME
 #define defn_static(ADDRESS, NAME) decltype(NAME) NAME = mem::pointer(ADDRESS).as<decltype(NAME)>()
-#define static_var(ADDRESS, TYPE, NAME) static typename std::add_lvalue_reference<TYPE>::type NAME = mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
 
-#if __cpp_inline_variables >= 201606
-# define inline_var(ADDRESS, TYPE, NAME) inline static_var(ADDRESS, TYPE, NAME)
-#else
-# define inline_var(ADDRESS, TYPE, NAME) static_assert(false, "inline_var requires C++17 inline variables")
-#endif
+#define extern_var(ADDRESS, TYPE, NAME) typename std::add_lvalue_reference<TYPE>::type NAME = mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
 
 #define check_size(type, size) static_assert(sizeof(type) == (size), "sizeof(" #type ") != " #size)
 
