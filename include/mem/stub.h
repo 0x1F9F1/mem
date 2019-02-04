@@ -31,9 +31,7 @@
 namespace mem
 {
     template <typename Func, typename... Args>
-    MEM_STRONG_INLINE auto stub(mem::pointer address, Args&&... args)
-        noexcept(noexcept(std::invoke(address.as<Func>(), std::forward<Args>(args)...))) ->
-        decltype(std::invoke(address.as<Func>(), std::forward<Args>(args)...))
+    MEM_STRONG_INLINE decltype(auto) stub(mem::pointer address, Args&&... args)
     {
         return std::invoke(address.as<Func>(), std::forward<Args>(args)...);
     }
