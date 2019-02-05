@@ -27,30 +27,30 @@ namespace mem
     class hasher
     {
     private:
-        uint32_t hash_;
+        std::uint32_t hash_;
 
     public:
-        hasher(uint32_t seed = 0) noexcept;
+        hasher(std::uint32_t seed = 0) noexcept;
 
         void update(const void* data, std::size_t length) noexcept;
 
         template <typename T>
         void update(const T& value) noexcept;
 
-        uint32_t digest() const noexcept;
+        std::uint32_t digest() const noexcept;
     };
 
-    MEM_STRONG_INLINE hasher::hasher(uint32_t seed) noexcept
+    MEM_STRONG_INLINE hasher::hasher(std::uint32_t seed) noexcept
         : hash_(seed)
     { }
 
     MEM_STRONG_INLINE void hasher::update(const void* data, std::size_t length) noexcept
     {
-        uint32_t hash = hash_;
+        std::uint32_t hash = hash_;
 
         for (std::size_t i = 0; i < length; ++i)
         {
-            hash += static_cast<const uint8_t*>(data)[i];
+            hash += static_cast<const std::uint8_t*>(data)[i];
             hash += (hash << 10);
             hash ^= (hash >> 6);
         }
@@ -66,9 +66,9 @@ namespace mem
         update(&value, sizeof(value));
     }
 
-    MEM_STRONG_INLINE uint32_t hasher::digest() const noexcept
+    MEM_STRONG_INLINE std::uint32_t hasher::digest() const noexcept
     {
-        uint32_t hash = hash_;
+        std::uint32_t hash = hash_;
 
         hash += (hash << 3);
         hash ^= (hash >> 11);

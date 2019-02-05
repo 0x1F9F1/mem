@@ -51,7 +51,7 @@ namespace mem
 
     namespace internal
     {
-        static constexpr const int8_t utf8_length_table[256]
+        static constexpr const std::int8_t utf8_length_table[256]
         {
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,

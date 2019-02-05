@@ -40,9 +40,9 @@ namespace mem
         };
 
         region region_;
-        std::unordered_map<uint32_t, pattern_results> results_;
+        std::unordered_map<std::uint32_t, pattern_results> results_;
 
-        static uint32_t hash_pattern(const pattern& pattern);
+        static std::uint32_t hash_pattern(const pattern& pattern);
 
     public:
         pattern_cache(region range);
@@ -54,7 +54,7 @@ namespace mem
         bool load(std::istream& input);
     };
 
-    inline uint32_t pattern_cache::hash_pattern(const pattern& pattern)
+    inline std::uint32_t pattern_cache::hash_pattern(const pattern& pattern)
     {
         hasher hash;
 
@@ -97,7 +97,7 @@ namespace mem
 
     inline const std::vector<pointer>& pattern_cache::scan_all(const pattern& pattern)
     {
-        const uint32_t hash = hash_pattern(pattern);
+        const std::uint32_t hash = hash_pattern(pattern);
 
         auto find = results_.find(hash);
 
@@ -161,14 +161,14 @@ namespace mem
 
     inline void pattern_cache::save(std::ostream& output) const
     {
-        stream::write<uint32_t>(output, 0x50415443); // PATC
-        stream::write<uint32_t>(output, sizeof(std::size_t));
+        stream::write<std::uint32_t>(output, 0x50415443); // PATC
+        stream::write<std::uint32_t>(output, sizeof(std::size_t));
         stream::write<std::size_t>(output, region_.size);
         stream::write<std::size_t>(output, results_.size());
 
         for (const auto& pattern : results_)
         {
-            stream::write<uint32_t>(output, pattern.first);
+            stream::write<std::uint32_t>(output, pattern.first);
             stream::write<std::size_t>(output, pattern.second.results.size());
 
             for (const auto& result : pattern.second.results)
@@ -182,10 +182,10 @@ namespace mem
     {
         try
         {
-            if (stream::read<uint32_t>(input) == 0x50415443)
+            if (stream::read<std::uint32_t>(input) == 0x50415443)
                 return false;
 
-            if (stream::read<uint32_t>(input) != sizeof(std::size_t))
+            if (stream::read<std::uint32_t>(input) != sizeof(std::size_t))
                 return false;
 
             if (stream::read<std::size_t>(input) != region_.size)
@@ -197,7 +197,7 @@ namespace mem
 
             for (std::size_t i = 0; i < pattern_count; ++i)
             {
-                const uint32_t hash = stream::read<uint32_t>(input);
+                const std::uint32_t hash = stream::read<std::uint32_t>(input);
                 const std::size_t result_count = stream::read<std::size_t>(input);
 
                 pattern_results results;

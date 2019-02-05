@@ -33,13 +33,13 @@ namespace mem
     class pointer
     {
     private:
-        uintptr_t value_ {0};
+        std::uintptr_t value_ {0};
 
     public:
         constexpr pointer() noexcept = default;
 
         constexpr pointer(std::nullptr_t) noexcept;
-        constexpr pointer(uintptr_t address) noexcept;
+        constexpr pointer(std::uintptr_t address) noexcept;
 
         template <typename T>
         pointer(T* address) noexcept;
@@ -125,12 +125,12 @@ namespace mem
     class any_pointer
     {
     private:
-        uintptr_t value_ {0};
+        std::uintptr_t value_ {0};
 
     public:
         constexpr any_pointer(pointer value) noexcept;
 
-        constexpr operator uintptr_t() const noexcept;
+        constexpr operator std::uintptr_t() const noexcept;
 
         template <typename T>
         operator T*() const noexcept;
@@ -173,20 +173,20 @@ namespace mem
         : value_(0)
     { }
 
-    constexpr MEM_STRONG_INLINE pointer::pointer(uintptr_t address) noexcept
+    constexpr MEM_STRONG_INLINE pointer::pointer(std::uintptr_t address) noexcept
         : value_(address)
     { }
 
     template <typename T>
     MEM_STRONG_INLINE pointer::pointer(T* address) noexcept
-        : value_(reinterpret_cast<uintptr_t>(address))
+        : value_(reinterpret_cast<std::uintptr_t>(address))
     { }
 
     template <typename T, typename C>
     MEM_STRONG_INLINE pointer::pointer(T C::* address) noexcept
-        : value_(reinterpret_cast<const uintptr_t&>(address))
+        : value_(reinterpret_cast<const std::uintptr_t&>(address))
     {
-        static_assert(sizeof(address) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
+        static_assert(sizeof(address) == sizeof(std::uintptr_t), "That's no pointer. It's a space station.");
     }
 
     constexpr MEM_STRONG_INLINE pointer pointer::add(std::size_t count) const noexcept
@@ -201,7 +201,7 @@ namespace mem
 
     constexpr MEM_STRONG_INLINE pointer pointer::offset(std::ptrdiff_t count) const noexcept
     {
-        return static_cast<uintptr_t>(static_cast<intptr_t>(value_) + count);
+        return static_cast<std::uintptr_t>(static_cast<std::intptr_t>(value_) + count);
     }
 
     constexpr MEM_STRONG_INLINE pointer pointer::shift(pointer from, pointer to) const noexcept
@@ -222,7 +222,7 @@ namespace mem
 #if defined(MEM_ARCH_X86_64)
     MEM_STRONG_INLINE pointer pointer::rip(std::size_t offset) const noexcept
     {
-        return static_cast<uintptr_t>(static_cast<intptr_t>(value_ + offset) + *reinterpret_cast<const int32_t*>(value_));
+        return static_cast<std::uintptr_t>(static_cast<std::intptr_t>(value_ + offset) + *reinterpret_cast<const std::int32_t*>(value_));
     }
 #endif // MEM_ARCH_X86_64
 
@@ -243,7 +243,7 @@ namespace mem
 
     constexpr MEM_STRONG_INLINE std::ptrdiff_t pointer::operator-(pointer rhs) const noexcept
     {
-        return static_cast<std::ptrdiff_t>(static_cast<intptr_t>(value_) - static_cast<intptr_t>(rhs.value_));
+        return static_cast<std::ptrdiff_t>(static_cast<std::intptr_t>(value_) - static_cast<std::intptr_t>(rhs.value_));
     }
 
     MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator+=(std::size_t count) noexcept
@@ -335,7 +335,7 @@ namespace mem
     template <typename T>
     constexpr MEM_STRONG_INLINE typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const noexcept
     {
-        static_assert(std::is_same<typename std::make_unsigned<T>::type, uintptr_t>::value, "Invalid Integer Type");
+        static_assert(std::is_same<typename std::make_unsigned<T>::type, std::uintptr_t>::value, "Invalid Integer Type");
 
         return static_cast<T>(value_);
     }
@@ -398,10 +398,10 @@ namespace mem
     }
 
     constexpr MEM_STRONG_INLINE any_pointer::any_pointer(pointer value) noexcept
-        : value_(value.as<uintptr_t>())
+        : value_(value.as<std::uintptr_t>())
     { }
 
-    constexpr MEM_STRONG_INLINE any_pointer::operator uintptr_t() const noexcept
+    constexpr MEM_STRONG_INLINE any_pointer::operator std::uintptr_t() const noexcept
     {
         return value_;
     }

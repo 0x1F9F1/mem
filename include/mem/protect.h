@@ -55,8 +55,8 @@ namespace mem
 #if defined(__unix__)
     struct region_info
     {
-        uintptr_t start;
-        uintptr_t end;
+        std::uintptr_t start;
+        std::uintptr_t end;
         std::size_t offset;
         int prot;
         int flags;
@@ -125,7 +125,7 @@ namespace mem
     {
         struct prot_query
         {
-            uintptr_t address;
+            std::uintptr_t address;
             prot_flags result;
         };
 
@@ -156,7 +156,7 @@ namespace mem
         return prot_flags::INVALID;
 #elif defined(__unix__)
         internal::prot_query query;
-        query.address = reinterpret_cast<uintptr_t>(memory);
+        query.address = reinterpret_cast<std::uintptr_t>(memory);
 
         if (iter_proc_maps(&internal::prot_query_callback, &query))
         {

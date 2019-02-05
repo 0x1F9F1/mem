@@ -35,7 +35,7 @@
 namespace mem
 {
 #if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-    MEM_STRONG_INLINE uint64_t rdtsc() noexcept
+    MEM_STRONG_INLINE std::uint64_t rdtsc() noexcept
     {
         return __rdtsc();
     }

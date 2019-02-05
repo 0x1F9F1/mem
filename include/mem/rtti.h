@@ -45,9 +45,9 @@ namespace mem
 
         struct PMD
         {
-            int32_t mdisp; // member displacement
-            int32_t pdisp; // vbtable displacement
-            int32_t vdisp; // displacement inside vbtable
+            std::int32_t mdisp; // member displacement
+            std::int32_t pdisp; // vbtable displacement
+            std::int32_t vdisp; // displacement inside vbtable
         };
 
         struct RTTITypeDescriptor // type_info
@@ -63,14 +63,14 @@ namespace mem
 
         struct RTTICompleteObjectLocator
         {
-            uint32_t signature;        // 0 = x86, 1 = x64
-            uint32_t offset;           // offset of this vtable in the complete class
-            uint32_t cdOffset;         // constructor displacement offset
-            uint32_t pTypeDescriptor;  // TypeDescriptor of the complete class
-            uint32_t pClassDescriptor; // describes inheritance hierarchy
+            std::uint32_t signature;        // 0 = x86, 1 = x64
+            std::uint32_t offset;           // offset of this vtable in the complete class
+            std::uint32_t cdOffset;         // constructor displacement offset
+            std::uint32_t pTypeDescriptor;  // TypeDescriptor of the complete class
+            std::uint32_t pClassDescriptor; // describes inheritance hierarchy
 
 #if defined(MEM_ARCH_X86_64)
-            uint32_t pSelf;
+            std::uint32_t pSelf;
 #endif // MEM_ARCH_X86_64
 
             bool check_signature() const;
@@ -84,13 +84,13 @@ namespace mem
 
         struct RTTIClassHierarchyDescriptor
         {
-            uint32_t signature;        // 0 = x86, 1 = x64
-            uint32_t attributes;       // bit 0 set = multiple inheritance, bit 1 set = virtual inheritance
-            uint32_t numBaseClasses;   // number of base classes
-            uint32_t pBaseClassArray;
+            std::uint32_t signature;        // 0 = x86, 1 = x64
+            std::uint32_t attributes;       // bit 0 set = multiple inheritance, bit 1 set = virtual inheritance
+            std::uint32_t numBaseClasses;   // number of base classes
+            std::uint32_t pBaseClassArray;
 
             bool check_signature() const;
-            uint32_t get_base_count() const;
+            std::uint32_t get_base_count() const;
             RTTIBaseClassArray* get_base_classes(const region& region) const;
 
             bool inherits_from(const region& region, const RTTITypeDescriptor* type) const;
@@ -98,17 +98,17 @@ namespace mem
 
         struct RTTIBaseClassArray
         {
-            uint32_t arrayOfBaseClassDescriptors[1];
+            std::uint32_t arrayOfBaseClassDescriptors[1];
 
-            RTTIBaseClassDescriptor* get_base_class(const region& region, uint32_t index) const;
+            RTTIBaseClassDescriptor* get_base_class(const region& region, std::uint32_t index) const;
         };
 
         struct RTTIBaseClassDescriptor
         {
-            uint32_t pTypeDescriptor;      // type descriptor of the class
-            uint32_t numContainedBases;    // number of nested classes following in the Base Class Array
+            std::uint32_t pTypeDescriptor;      // type descriptor of the class
+            std::uint32_t numContainedBases;    // number of nested classes following in the Base Class Array
             PMD where;                     // pointer-to-member displacement info
-            uint32_t attributes;           // flags, usually 0
+            std::uint32_t attributes;           // flags, usually 0
 
             RTTITypeDescriptor* get_type(const region& region) const;
         };
@@ -116,7 +116,7 @@ namespace mem
         void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback);
         const RTTITypeDescriptor* find_rtti_type(const region& region, const char* name);
 
-        constexpr inline bool check_rtti_signature(uint32_t signature) noexcept
+        constexpr inline bool check_rtti_signature(std::uint32_t signature) noexcept
         {
 #if defined(MEM_ARCH_X86_64)
             return signature == 1;
@@ -128,7 +128,7 @@ namespace mem
         }
 
         template <typename T>
-        inline T* get_rtti_pointer(const region& region, uint32_t address) noexcept
+        inline T* get_rtti_pointer(const region& region, std::uint32_t address) noexcept
         {
 #if defined(MEM_ARCH_X86_64)
             return region.start.add(address).as<T*>();
@@ -182,7 +182,7 @@ namespace mem
             return check_rtti_signature(signature);
         }
 
-        inline uint32_t RTTIClassHierarchyDescriptor::get_base_count() const
+        inline std::uint32_t RTTIClassHierarchyDescriptor::get_base_count() const
         {
             return numBaseClasses;
         }
@@ -196,7 +196,7 @@ namespace mem
         {
             const RTTIBaseClassArray* base_classes = get_base_classes(region);
 
-            for (uint32_t i = 1; i < get_base_count(); ++i)
+            for (std::uint32_t i = 1; i < get_base_count(); ++i)
             {
                 const RTTIBaseClassDescriptor* base_class = base_classes->get_base_class(region, i);
                 const RTTITypeDescriptor* base_type = base_class->get_type(region);
@@ -210,7 +210,7 @@ namespace mem
             return false;
         }
 
-        inline RTTIBaseClassDescriptor* RTTIBaseClassArray::get_base_class(const region& region, uint32_t index) const
+        inline RTTIBaseClassDescriptor* RTTIBaseClassArray::get_base_class(const region& region, std::uint32_t index) const
         {
             return get_rtti_pointer<RTTIBaseClassDescriptor>(region, arrayOfBaseClassDescriptors[index]);
         }

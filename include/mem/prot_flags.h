@@ -38,7 +38,7 @@ namespace mem
 {
     namespace enums
     {
-        enum prot_flags : uint32_t
+        enum prot_flags : std::uint32_t
         {
             INVALID = 0, // Invalid
 
@@ -61,13 +61,13 @@ MEM_DEFINE_ENUM_FLAG_OPERATORS(mem::prot_flags)
 
 namespace mem
 {
-    MEM_CONSTEXPR_14 uint32_t from_prot_flags(prot_flags flags) noexcept;
-    MEM_CONSTEXPR_14 prot_flags to_prot_flags(uint32_t flags) noexcept;
+    MEM_CONSTEXPR_14 std::uint32_t from_prot_flags(prot_flags flags) noexcept;
+    MEM_CONSTEXPR_14 prot_flags to_prot_flags(std::uint32_t flags) noexcept;
 
-    MEM_CONSTEXPR_14 inline uint32_t from_prot_flags(prot_flags flags) noexcept
+    MEM_CONSTEXPR_14 inline std::uint32_t from_prot_flags(prot_flags flags) noexcept
     {
 #if defined(_WIN32)
-        uint32_t result = PAGE_NOACCESS;
+        std::uint32_t result = PAGE_NOACCESS;
 
         if (flags & prot_flags::X)
         {
@@ -84,7 +84,7 @@ namespace mem
 
         return result;
 #elif defined(__unix__)
-        uint32_t result = 0;
+        std::uint32_t result = 0;
 
         if (flags & prot_flags::R)
             result |= PROT_READ;
@@ -97,7 +97,7 @@ namespace mem
 #endif
     }
 
-    MEM_CONSTEXPR_14 inline prot_flags to_prot_flags(uint32_t flags) noexcept
+    MEM_CONSTEXPR_14 inline prot_flags to_prot_flags(std::uint32_t flags) noexcept
     {
 #if defined(_WIN32)
         prot_flags result = prot_flags::INVALID;

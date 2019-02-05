@@ -130,7 +130,7 @@ namespace mem
     }
 }
 
-#include <stdint.h>
+#include <cstdint>
 #include <cstddef>
 
 #endif // MEM_DEFINES_BRICK_H
