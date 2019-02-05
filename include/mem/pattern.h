@@ -33,7 +33,7 @@ namespace mem
     private:
         std::vector<byte> bytes_ {};
         std::vector<byte> masks_ {};
-        size_t trimmed_size_ {0};
+        std::size_t trimmed_size_ {0};
         bool needs_masks_ {true};
 
         void finalize();
@@ -48,7 +48,7 @@ namespace mem
         explicit pattern(const char* string, wildcard_t wildcard = wildcard_t('?'));
         explicit pattern(const void* bytes, const char* masks, wildcard_t wildcard = wildcard_t('?'));
 
-        explicit pattern(const void* bytes, const void* masks, size_t length);
+        explicit pattern(const void* bytes, const void* masks, std::size_t length);
 
         bool match(pointer address) const noexcept;
 
@@ -61,12 +61,12 @@ namespace mem
         const byte* bytes() const noexcept;
         const byte* masks() const noexcept;
 
-        size_t size() const noexcept;
-        size_t trimmed_size() const noexcept;
+        std::size_t size() const noexcept;
+        std::size_t trimmed_size() const noexcept;
 
         bool needs_masks() const noexcept;
 
-        size_t get_skip_pos() const noexcept;
+        std::size_t get_skip_pos() const noexcept;
 
         explicit operator bool() const noexcept;
 
@@ -78,7 +78,7 @@ namespace mem
         byte   value     = 0x00;
         byte   mask      = 0x00;
         byte   expl_mask = 0xFF;
-        size_t count     = 1;
+        std::size_t count     = 1;
 
         int current = -1;
         int temp = -1;
@@ -118,7 +118,7 @@ namespace mem
 
         value &= (mask &= expl_mask);
 
-        for (size_t i = 0; i < count; ++i)
+        for (std::size_t i = 0; i < count; ++i)
         {
             bytes_.push_back(value);
             masks_.push_back(mask);
@@ -156,12 +156,12 @@ namespace mem
     {
         if (mask)
         {
-            const size_t size = std::strlen(mask);
+            const std::size_t size = std::strlen(mask);
 
             bytes_.resize(size);
             masks_.resize(size);
 
-            for (size_t i = 0; i < size; ++i)
+            for (std::size_t i = 0; i < size; ++i)
             {
                 if (mask[i] == char(wildcard))
                 {
@@ -177,12 +177,12 @@ namespace mem
         }
         else
         {
-            const size_t size = std::strlen(static_cast<const char*>(bytes));
+            const std::size_t size = std::strlen(static_cast<const char*>(bytes));
 
             bytes_.resize(size);
             masks_.resize(size);
 
-            for (size_t i = 0; i < size; ++i)
+            for (std::size_t i = 0; i < size; ++i)
             {
                 bytes_[i] = static_cast<const byte*>(bytes)[i];
                 masks_[i] = 0xFF;
@@ -192,14 +192,14 @@ namespace mem
         finalize();
     }
 
-    inline pattern::pattern(const void* bytes, const void* mask, size_t length)
+    inline pattern::pattern(const void* bytes, const void* mask, std::size_t length)
     {
         if (mask)
         {
             bytes_.resize(length);
             masks_.resize(length);
 
-            for (size_t i = 0; i < length; ++i)
+            for (std::size_t i = 0; i < length; ++i)
             {
                 const byte v = static_cast<const byte*>(bytes)[i];
                 const byte m = static_cast<const byte*>(mask)[i];
@@ -213,7 +213,7 @@ namespace mem
             bytes_.resize(length);
             masks_.resize(length);
 
-            for (size_t i = 0; i < length; ++i)
+            for (std::size_t i = 0; i < length; ++i)
             {
                 bytes_[i] = static_cast<const byte*>(bytes)[i];
                 masks_[i] = 0xFF;
@@ -235,12 +235,12 @@ namespace mem
             return;
         }
 
-        for (size_t i = 0; i < bytes_.size(); ++i)
+        for (std::size_t i = 0; i < bytes_.size(); ++i)
         {
             bytes_[i] &= masks_[i];
         }
 
-        size_t trimmed_size = bytes_.size();
+        std::size_t trimmed_size = bytes_.size();
 
         while (trimmed_size && (masks_[trimmed_size - 1] == 0x00))
         {
@@ -251,7 +251,7 @@ namespace mem
 
         needs_masks_ = false;
 
-        for (size_t i = trimmed_size_; i--;)
+        for (std::size_t i = trimmed_size_; i--;)
         {
             if (masks_[i] != 0xFF)
             {
@@ -273,13 +273,13 @@ namespace mem
 
         const byte* current = address.as<const byte*>();
 
-        const size_t last = trimmed_size() - 1;
+        const std::size_t last = trimmed_size() - 1;
 
         if (needs_masks())
         {
             const byte* const pat_masks = masks();
 
-            size_t i = last;
+            std::size_t i = last;
 
             do
             {
@@ -298,7 +298,7 @@ namespace mem
         }
         else
         {
-            size_t i = last;
+            std::size_t i = last;
 
             do
             {
@@ -353,12 +353,12 @@ namespace mem
         return !masks_.empty() ? masks_.data() : nullptr;
     }
 
-    MEM_STRONG_INLINE size_t pattern::size() const noexcept
+    MEM_STRONG_INLINE std::size_t pattern::size() const noexcept
     {
         return bytes_.size();
     }
 
-    MEM_STRONG_INLINE size_t pattern::trimmed_size() const noexcept
+    MEM_STRONG_INLINE std::size_t pattern::trimmed_size() const noexcept
     {
         return trimmed_size_;
     }
@@ -391,16 +391,16 @@ namespace mem
         };
     }
 
-    MEM_STRONG_INLINE size_t pattern::get_skip_pos() const noexcept
+    MEM_STRONG_INLINE std::size_t pattern::get_skip_pos() const noexcept
     {
-        size_t min = SIZE_MAX;
-        size_t result = SIZE_MAX;
+        std::size_t min = SIZE_MAX;
+        std::size_t result = SIZE_MAX;
 
-        for (size_t i = 0; i < size(); ++i)
+        for (std::size_t i = 0; i < size(); ++i)
         {
             if (masks_[i] == 0xFF)
             {
-                size_t f = internal::frequencies[bytes_[i]];
+                std::size_t f = internal::frequencies[bytes_[i]];
 
                 if (f <= min)
                 {
@@ -424,7 +424,7 @@ namespace mem
 
         std::string result;
 
-        for (size_t i = 0; i < size(); ++i)
+        for (std::size_t i = 0; i < size(); ++i)
         {
             if (i)
             {
@@ -436,14 +436,14 @@ namespace mem
 
             if (mask != 0x00)
             {
-                result += hex_chars[size_t(value >> 4)];
-                result += hex_chars[size_t(value & 0xF)];
+                result += hex_chars[std::size_t(value >> 4)];
+                result += hex_chars[std::size_t(value & 0xF)];
 
                 if (mask != 0xFF)
                 {
                     result += "&";
-                    result += hex_chars[size_t(mask >> 4)];
-                    result += hex_chars[size_t(mask & 0xF)];
+                    result += hex_chars[std::size_t(mask >> 4)];
+                    result += hex_chars[std::size_t(mask & 0xF)];
                 }
             }
             else

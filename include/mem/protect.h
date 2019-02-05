@@ -43,21 +43,21 @@
 
 namespace mem
 {
-    size_t page_size();
+    std::size_t page_size();
 
-    void* protect_alloc(size_t length, prot_flags flags);
-    void protect_free(void* memory, size_t length);
+    void* protect_alloc(std::size_t length, prot_flags flags);
+    void protect_free(void* memory, std::size_t length);
 
     prot_flags protect_query(void* memory);
 
-    bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
+    bool protect_modify(void* memory, std::size_t length, prot_flags flags, prot_flags* old_flags = nullptr);
 
 #if defined(__unix__)
     struct region_info
     {
         uintptr_t start;
         uintptr_t end;
-        size_t offset;
+        std::size_t offset;
         int prot;
         int flags;
         const char* path_name;
@@ -84,18 +84,18 @@ namespace mem
         prot_flags release() noexcept;
     };
 
-    inline size_t page_size()
+    inline std::size_t page_size()
     {
 #if defined(_WIN32)
         SYSTEM_INFO si;
         GetSystemInfo(&si);
-        return static_cast<size_t>(si.dwPageSize);
+        return static_cast<std::size_t>(si.dwPageSize);
 #elif defined(__unix__)
-        return static_cast<size_t>(sysconf(_SC_PAGESIZE));
+        return static_cast<std::size_t>(sysconf(_SC_PAGESIZE));
 #endif
     }
 
-    inline void* protect_alloc(size_t length, prot_flags flags)
+    inline void* protect_alloc(std::size_t length, prot_flags flags)
     {
 #if defined(_WIN32)
         return VirtualAlloc(nullptr, length, MEM_RESERVE | MEM_COMMIT, from_prot_flags(flags));
@@ -107,7 +107,7 @@ namespace mem
 #endif
     }
 
-    inline void protect_free(void* memory, size_t length)
+    inline void protect_free(void* memory, std::size_t length)
     {
         if (memory != nullptr)
         {
@@ -167,7 +167,7 @@ namespace mem
 #endif
     }
 
-    inline bool protect_modify(void* memory, size_t length, prot_flags flags, prot_flags* old_flags)
+    inline bool protect_modify(void* memory, std::size_t length, prot_flags flags, prot_flags* old_flags)
     {
         if (flags == prot_flags::INVALID)
             return false;

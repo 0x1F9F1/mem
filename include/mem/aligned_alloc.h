@@ -32,10 +32,10 @@
 
 namespace mem
 {
-    void* aligned_alloc(size_t size, size_t alignment);
+    void* aligned_alloc(std::size_t size, std::size_t alignment);
     void aligned_free(void* address);
 
-    MEM_STRONG_INLINE void* aligned_alloc(size_t size, size_t alignment)
+    MEM_STRONG_INLINE void* aligned_alloc(std::size_t size, std::size_t alignment)
     {
 #if defined(_WIN32)
         return _aligned_malloc(size, alignment);
@@ -49,7 +49,7 @@ namespace mem
 
         return result;
 #else
-        const size_t max_offset = alignment - 1 + sizeof(void*);
+        const std::size_t max_offset = alignment - 1 + sizeof(void*);
         void* result = std::malloc(size + max_offset);
 
         if (result)

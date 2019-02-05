@@ -195,11 +195,11 @@ namespace mem
 
 #elif defined(__unix__)
     // https://github.com/torvalds/linux/blob/master/fs/binfmt_elf.c
-    inline size_t total_mapping_size(const ElfW(Phdr)* cmds, size_t count)
+    inline std::size_t total_mapping_size(const ElfW(Phdr)* cmds, std::size_t count)
     {
-        size_t first_idx = SIZE_MAX, last_idx = SIZE_MAX;
+        std::size_t first_idx = SIZE_MAX, last_idx = SIZE_MAX;
 
-        for (size_t i = 0; i < count; ++i)
+        for (std::size_t i = 0; i < count; ++i)
         {
             if (cmds[i].p_type == PT_LOAD)
             {
@@ -234,7 +234,7 @@ namespace mem
             return module();
 
         const ElfW(Phdr)* phdr = address.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
-        const size_t mapping_size = total_mapping_size(phdr, ehdr.e_phnum);
+        const std::size_t mapping_size = total_mapping_size(phdr, ehdr.e_phnum);
 
         return module(address, mapping_size);
     }
@@ -348,7 +348,7 @@ namespace mem
             void* result {nullptr};
         };
 
-        inline int dl_iterate_callback(struct dl_phdr_info* info, size_t size, void* data)
+        inline int dl_iterate_callback(struct dl_phdr_info* info, std::size_t size, void* data)
         {
             (void) size;
 

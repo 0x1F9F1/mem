@@ -222,7 +222,7 @@ namespace mem
 
         inline void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback)
         {
-            for (size_t i = 0; i < region.size; i += sizeof(void*))
+            for (std::size_t i = 0; i < region.size; i += sizeof(void*))
             {
                 const RTTICompleteObjectLocator*& locator = region.start.at<const RTTICompleteObjectLocator*>(i);
 

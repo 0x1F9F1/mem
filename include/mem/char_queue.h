@@ -35,12 +35,12 @@ namespace mem
 
     public:
         char_queue(const char* string);
-        constexpr char_queue(const char* string, size_t length);
+        constexpr char_queue(const char* string, std::size_t length);
 
         constexpr int peek() const noexcept;
 
         MEM_CONSTEXPR_14 void pop() noexcept;
-        constexpr size_t pos() const noexcept;
+        constexpr std::size_t pos() const noexcept;
 
         constexpr explicit operator bool() const noexcept;
     };
@@ -53,7 +53,7 @@ namespace mem
         : char_queue(string, std::strlen(string))
     { }
 
-    constexpr MEM_STRONG_INLINE char_queue::char_queue(const char* string, size_t length)
+    constexpr MEM_STRONG_INLINE char_queue::char_queue(const char* string, std::size_t length)
         : start(string)
         , end(start + length)
         , current(start)
@@ -72,7 +72,7 @@ namespace mem
         }
     }
 
-    constexpr MEM_STRONG_INLINE size_t char_queue::pos() const noexcept
+    constexpr MEM_STRONG_INLINE std::size_t char_queue::pos() const noexcept
     {
         return current - start;
     }

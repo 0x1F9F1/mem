@@ -34,11 +34,11 @@ namespace mem
     std::string as_string(region range);
     std::string as_hex(region range, bool upper_case = true, bool padded = true);
 
-    std::string unescape(const char* string, size_t length);
+    std::string unescape(const char* string, std::size_t length);
 
     MEM_STRONG_INLINE bool is_ascii(region range) noexcept
     {
-        for (size_t i = 0; i < range.size; ++i)
+        for (std::size_t i = 0; i < range.size; ++i)
         {
             if (range.start.at<const byte>(i) >= 0x80)
             {
@@ -74,9 +74,9 @@ namespace mem
 
     inline bool is_utf8(region range) noexcept
     {
-        for (size_t i = 0; i < range.size;)
+        for (std::size_t i = 0; i < range.size;)
         {
-            const size_t length = internal::utf8_length_table[range.start.at<const byte>(i)];
+            const std::size_t length = internal::utf8_length_table[range.start.at<const byte>(i)];
 
             if (length == 0)
             {
@@ -88,7 +88,7 @@ namespace mem
                 return false;
             }
 
-            for (size_t j = 1; j < length; ++j)
+            for (std::size_t j = 1; j < length; ++j)
             {
                 if ((range.start.at<const byte>(i + j) & 0xC0) != 0x80)
                 {
@@ -115,7 +115,7 @@ namespace mem
 
         result.reserve(range.size * (padded ? 3 : 2));
 
-        for (size_t i = 0; i < range.size; ++i)
+        for (std::size_t i = 0; i < range.size; ++i)
         {
             if (i && padded)
             {
@@ -131,7 +131,7 @@ namespace mem
         return result;
     }
 
-    inline std::string unescape(const char* string, size_t length)
+    inline std::string unescape(const char* string, std::size_t length)
     {
         std::string results;
 
@@ -139,8 +139,8 @@ namespace mem
 
         while (input)
         {
-            size_t result = SIZE_MAX;
-            size_t count = 0;
+            std::size_t result = SIZE_MAX;
+            std::size_t count = 0;
 
             int current = -1;
             int temp = -1;
@@ -194,7 +194,7 @@ namespace mem
             {
                 input.pop();
 
-                result = size_t(current);
+                result = std::size_t(current);
             }
 
             if (result <= UCHAR_MAX)

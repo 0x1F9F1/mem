@@ -32,7 +32,7 @@ namespace mem
     public:
         hasher(uint32_t seed = 0) noexcept;
 
-        void update(const void* data, size_t length) noexcept;
+        void update(const void* data, std::size_t length) noexcept;
 
         template <typename T>
         void update(const T& value) noexcept;
@@ -44,11 +44,11 @@ namespace mem
         : hash_(seed)
     { }
 
-    MEM_STRONG_INLINE void hasher::update(const void* data, size_t length) noexcept
+    MEM_STRONG_INLINE void hasher::update(const void* data, std::size_t length) noexcept
     {
         uint32_t hash = hash_;
 
-        for (size_t i = 0; i < length; ++i)
+        for (std::size_t i = 0; i < length; ++i)
         {
             hash += static_cast<const uint8_t*>(data)[i];
             hash += (hash << 10);

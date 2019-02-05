@@ -48,7 +48,7 @@ namespace mem
         init_function(const init_function&) = delete;
         init_function(init_function&&) = delete;
 
-        static size_t init();
+        static std::size_t init();
     };
 
     MEM_STRONG_INLINE init_function::init_function(init_function*& parent, callback_t callback) noexcept
@@ -81,9 +81,9 @@ namespace mem
     }
 #endif
 
-    MEM_STRONG_INLINE size_t init_function::init()
+    MEM_STRONG_INLINE std::size_t init_function::init()
     {
-        size_t total = 0;
+        std::size_t total = 0;
 
         for (init_function* i = ROOT; i;)
         {

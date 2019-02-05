@@ -47,7 +47,7 @@ namespace mem
     public:
         pattern_cache(region range);
 
-        pointer scan(const pattern& pattern, size_t index = 0, size_t expected = 1);
+        pointer scan(const pattern& pattern, std::size_t index = 0, std::size_t expected = 1);
         const std::vector<pointer>& scan_all(const pattern& pattern);
 
         void save(std::ostream& output) const;
@@ -58,7 +58,7 @@ namespace mem
     {
         hasher hash;
 
-        size_t length = pattern.size();
+        std::size_t length = pattern.size();
 
         hash.update(length);
 
@@ -78,7 +78,7 @@ namespace mem
         : region_(range)
     { }
 
-    inline pointer pattern_cache::scan(const pattern& pattern, size_t index, size_t expected)
+    inline pointer pattern_cache::scan(const pattern& pattern, std::size_t index, std::size_t expected)
     {
         const auto& results = scan_all(pattern);
 
@@ -162,18 +162,18 @@ namespace mem
     inline void pattern_cache::save(std::ostream& output) const
     {
         stream::write<uint32_t>(output, 0x50415443); // PATC
-        stream::write<uint32_t>(output, sizeof(size_t));
-        stream::write<size_t>(output, region_.size);
-        stream::write<size_t>(output, results_.size());
+        stream::write<uint32_t>(output, sizeof(std::size_t));
+        stream::write<std::size_t>(output, region_.size);
+        stream::write<std::size_t>(output, results_.size());
 
         for (const auto& pattern : results_)
         {
             stream::write<uint32_t>(output, pattern.first);
-            stream::write<size_t>(output, pattern.second.results.size());
+            stream::write<std::size_t>(output, pattern.second.results.size());
 
             for (const auto& result : pattern.second.results)
             {
-                stream::write<size_t>(output, result - region_.start);
+                stream::write<std::size_t>(output, result - region_.start);
             }
         }
     }
@@ -185,28 +185,28 @@ namespace mem
             if (stream::read<uint32_t>(input) == 0x50415443)
                 return false;
 
-            if (stream::read<uint32_t>(input) != sizeof(size_t))
+            if (stream::read<uint32_t>(input) != sizeof(std::size_t))
                 return false;
 
-            if (stream::read<size_t>(input) != region_.size)
+            if (stream::read<std::size_t>(input) != region_.size)
                 return false;
 
-            const size_t pattern_count = stream::read<size_t>(input);
+            const std::size_t pattern_count = stream::read<std::size_t>(input);
 
             results_.clear();
 
-            for (size_t i = 0; i < pattern_count; ++i)
+            for (std::size_t i = 0; i < pattern_count; ++i)
             {
                 const uint32_t hash = stream::read<uint32_t>(input);
-                const size_t result_count = stream::read<size_t>(input);
+                const std::size_t result_count = stream::read<std::size_t>(input);
 
                 pattern_results results;
                 results.checked = false;
                 results.results.reserve(result_count);
 
-                for (size_t j = 0; j < result_count; ++j)
+                for (std::size_t j = 0; j < result_count; ++j)
                 {
-                    results.results.push_back(region_.start + stream::read<size_t>(input));
+                    results.results.push_back(region_.start + stream::read<std::size_t>(input));
                 }
 
                 results_.emplace(hash, std::move(results));

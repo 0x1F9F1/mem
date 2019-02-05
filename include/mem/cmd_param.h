@@ -87,7 +87,7 @@ namespace mem
             : public std::basic_streambuf<T>
         {
         public:
-            fixed_basic_streambuf(const T* ptr, size_t num)
+            fixed_basic_streambuf(const T* ptr, std::size_t num)
             {
                 T* source = const_cast<T*>(ptr);
 

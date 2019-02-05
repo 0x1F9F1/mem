@@ -45,7 +45,7 @@ namespace mem
     {
     private:
         const pattern* pattern_ {nullptr};
-        size_t skip_pos_ {SIZE_MAX};
+        std::size_t skip_pos_ {SIZE_MAX};
 
     public:
         simd_scanner(const pattern& pattern);
@@ -54,7 +54,7 @@ namespace mem
         pointer operator()(region range, UnaryPredicate pred) const;
     };
 
-    const byte* find_byte(const byte* ptr, byte value, size_t num);
+    const byte* find_byte(const byte* ptr, byte value, std::size_t num);
 
     inline simd_scanner::simd_scanner(const pattern& _pattern)
         : pattern_(&_pattern)
@@ -64,13 +64,13 @@ namespace mem
     template <typename UnaryPredicate>
     inline pointer simd_scanner::operator()(region range, UnaryPredicate pred) const
     {
-        const size_t trimmed_size = pattern_->trimmed_size();
+        const std::size_t trimmed_size = pattern_->trimmed_size();
 
         if (!trimmed_size)
             return nullptr;
 
-        const size_t original_size = pattern_->size();
-        const size_t region_size = range.size;
+        const std::size_t original_size = pattern_->size();
+        const std::size_t region_size = range.size;
 
         if (original_size > region_size)
             return nullptr;
@@ -81,11 +81,11 @@ namespace mem
         const byte* current = region_base;
         const byte* const end = region_end - original_size + 1;
 
-        const size_t last = trimmed_size - 1;
+        const std::size_t last = trimmed_size - 1;
 
         const byte* const pat_bytes = pattern_->bytes();
 
-        const size_t skip_pos = skip_pos_;
+        const std::size_t skip_pos = skip_pos_;
 
         if (skip_pos != SIZE_MAX)
         {
@@ -95,7 +95,7 @@ namespace mem
 
                 while (MEM_LIKELY(current < end))
                 {
-                    size_t i = last;
+                    std::size_t i = last;
 
                     do
                     {
@@ -125,7 +125,7 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
-                    size_t i = last;
+                    std::size_t i = last;
 
                     do
                     {
@@ -158,7 +158,7 @@ namespace mem
 
             while (MEM_LIKELY(current < end))
             {
-                size_t i = last;
+                std::size_t i = last;
 
                 do
                 {
@@ -185,7 +185,7 @@ namespace mem
         }
     }
 
-    MEM_STRONG_INLINE const byte* find_byte(const byte* ptr, byte value, size_t num)
+    MEM_STRONG_INLINE const byte* find_byte(const byte* ptr, byte value, std::size_t num)
     {
 #if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
 # if defined(MEM_SIMD_AVX2)

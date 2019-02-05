@@ -53,28 +53,28 @@ namespace mem
     {
     private:
         T* start_ {nullptr};
-        size_t size_ {0};
+        std::size_t size_ {0};
 
     public:
         constexpr slice() noexcept = default;
         constexpr slice(T* begin, T* end) noexcept;
-        constexpr slice(T* start_, size_t size_) noexcept;
+        constexpr slice(T* start_, std::size_t size_) noexcept;
 
-        constexpr T& operator[](size_t index) const noexcept;
+        constexpr T& operator[](std::size_t index) const noexcept;
 
         constexpr T* data() const noexcept;
         constexpr T* begin() const noexcept;
         constexpr T* end() const noexcept;
 
-        constexpr size_t size() const noexcept;
+        constexpr std::size_t size() const noexcept;
         constexpr bool empty() const noexcept;
 
         slice<typename copy_cv<T, byte>::type> as_bytes() const noexcept;
 
         using value_type = T;
 
-        using size_type = size_t;
-        using difference_type = ptrdiff_t;
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
 
         using reference = value_type&;
         using const_reference = const value_type&;
@@ -93,13 +93,13 @@ namespace mem
     { }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE slice<T>::slice(T* start, size_t size) noexcept
+    constexpr MEM_STRONG_INLINE slice<T>::slice(T* start, std::size_t size) noexcept
         : start_(start)
         , size_(size)
     { }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE T& slice<T>::operator[](size_t index) const noexcept
+    constexpr MEM_STRONG_INLINE T& slice<T>::operator[](std::size_t index) const noexcept
     {
         return start_[index];
     }
@@ -123,7 +123,7 @@ namespace mem
     }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE size_t slice<T>::size() const noexcept
+    constexpr MEM_STRONG_INLINE std::size_t slice<T>::size() const noexcept
     {
         return size_;
     }

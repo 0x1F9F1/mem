@@ -36,16 +36,16 @@ namespace mem
         static_assert(std::is_trivial<T>::value, "Type is not trivially copyable");
 
         T* data_ {nullptr};
-        size_t size_ {0};
-        size_t capacity_ {0};
+        std::size_t size_ {0};
+        std::size_t capacity_ {0};
 
-        size_t calculate_growth(size_t new_size) const noexcept;
-        void reallocate(size_t length);
+        std::size_t calculate_growth(std::size_t new_size) const noexcept;
+        void reallocate(std::size_t length);
 
     public:
         data_buffer() noexcept = default;
 
-        data_buffer(size_t length);
+        data_buffer(std::size_t length);
 
         data_buffer(const data_buffer& other);
         data_buffer(data_buffer&& other) noexcept;
@@ -57,20 +57,20 @@ namespace mem
 
         void swap(data_buffer& other) noexcept;
 
-        void reserve(size_t length);
-        void resize(size_t length);
-        void reset(size_t length = 0);
+        void reserve(std::size_t length);
+        void resize(std::size_t length);
+        void reset(std::size_t length = 0);
 
-        void assign(const T* source, size_t length);
-        void append(const T* source, size_t length);
+        void assign(const T* source, std::size_t length);
+        void append(const T* source, std::size_t length);
 
         void push_back(const T& value);
 
         void clear() noexcept;
         void shrink_to_fit();
 
-        T& operator[](size_t index) noexcept;
-        const T& operator[](size_t index) const noexcept;
+        T& operator[](std::size_t index) noexcept;
+        const T& operator[](std::size_t index) const noexcept;
 
         T* data() noexcept;
         T* begin() noexcept;
@@ -80,14 +80,14 @@ namespace mem
         const T* begin() const noexcept;
         const T* end() const noexcept;
 
-        size_t size() const noexcept;
-        size_t capacity() const noexcept;
+        std::size_t size() const noexcept;
+        std::size_t capacity() const noexcept;
         bool empty() const noexcept;
 
         using value_type = T;
 
-        using size_type = size_t;
-        using difference_type = ptrdiff_t;
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
 
         using reference = value_type&;
         using const_reference = const value_type&;
@@ -102,7 +102,7 @@ namespace mem
     using byte_buffer = data_buffer<byte>;
 
     template <typename T>
-    inline data_buffer<T>::data_buffer(size_t length)
+    inline data_buffer<T>::data_buffer(std::size_t length)
     {
         resize(length);
     }
@@ -156,13 +156,13 @@ namespace mem
     }
 
     template <typename T>
-    inline size_t data_buffer<T>::calculate_growth(size_t new_size) const noexcept
+    inline std::size_t data_buffer<T>::calculate_growth(std::size_t new_size) const noexcept
     {
-        size_t old_capacity = capacity();
+        std::size_t old_capacity = capacity();
 
         if (new_size > old_capacity)
         {
-            size_t new_capacity = old_capacity + (old_capacity >> 1);
+            std::size_t new_capacity = old_capacity + (old_capacity >> 1);
 
             if (new_capacity < new_size)
             {
@@ -178,7 +178,7 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::reallocate(size_t length)
+    inline void data_buffer<T>::reallocate(std::size_t length)
     {
         if (length != capacity_)
         {
@@ -214,8 +214,8 @@ namespace mem
         if (this != &other)
         {
             T* temp_data = data_;
-            size_t temp_size = size_;
-            size_t temp_capacity = capacity_;
+            std::size_t temp_size = size_;
+            std::size_t temp_capacity = capacity_;
 
             data_ = other.data_;
             size_ = other.size_;
@@ -228,7 +228,7 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::reserve(size_t length)
+    inline void data_buffer<T>::reserve(std::size_t length)
     {
         if (length > capacity_)
         {
@@ -237,7 +237,7 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::resize(size_t length)
+    inline void data_buffer<T>::resize(std::size_t length)
     {
         reallocate(length);
 
@@ -245,7 +245,7 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::reset(size_t length)
+    inline void data_buffer<T>::reset(std::size_t length)
     {
         clear();
 
@@ -253,7 +253,7 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::assign(const T* source, size_t length)
+    inline void data_buffer<T>::assign(const T* source, std::size_t length)
     {
         clear();
 
@@ -261,10 +261,10 @@ namespace mem
     }
 
     template <typename T>
-    inline void data_buffer<T>::append(const T* source, size_t length)
+    inline void data_buffer<T>::append(const T* source, std::size_t length)
     {
-        size_t old_size = size_;
-        size_t new_size = old_size + length;
+        std::size_t old_size = size_;
+        std::size_t new_size = old_size + length;
 
         reserve(calculate_growth(new_size));
         std::memcpy(data_ + old_size, source, length * sizeof(T));
@@ -291,13 +291,13 @@ namespace mem
     }
 
     template <typename T>
-    inline T& data_buffer<T>::operator[](size_t index) noexcept
+    inline T& data_buffer<T>::operator[](std::size_t index) noexcept
     {
         return data_[index];
     }
 
     template <typename T>
-    inline const T& data_buffer<T>::operator[](size_t index) const noexcept
+    inline const T& data_buffer<T>::operator[](std::size_t index) const noexcept
     {
         return data_[index];
     }
@@ -339,13 +339,13 @@ namespace mem
     }
 
     template <typename T>
-    inline size_t data_buffer<T>::size() const noexcept
+    inline std::size_t data_buffer<T>::size() const noexcept
     {
         return size_;
     }
 
     template <typename T>
-    inline size_t data_buffer<T>::capacity() const noexcept
+    inline std::size_t data_buffer<T>::capacity() const noexcept
     {
         return capacity_;
     }

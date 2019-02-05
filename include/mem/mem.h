@@ -47,29 +47,29 @@ namespace mem
         template <typename T, typename C>
         pointer(T C::* address) noexcept;
 
-        constexpr pointer add(size_t count) const noexcept;
-        constexpr pointer sub(size_t count) const noexcept;
+        constexpr pointer add(std::size_t count) const noexcept;
+        constexpr pointer sub(std::size_t count) const noexcept;
 
-        constexpr pointer offset(ptrdiff_t count) const noexcept;
+        constexpr pointer offset(std::ptrdiff_t count) const noexcept;
 
         constexpr pointer shift(pointer from, pointer to) const noexcept;
 
-        constexpr pointer align_up(size_t align) const noexcept;
-        constexpr pointer align_down(size_t align) const noexcept;
+        constexpr pointer align_up(std::size_t align) const noexcept;
+        constexpr pointer align_down(std::size_t align) const noexcept;
 
 #if defined(MEM_ARCH_X86_64)
-        pointer rip(size_t offset) const noexcept;
+        pointer rip(std::size_t offset) const noexcept;
 #endif // MEM_ARCH_X86_64
 
         pointer& deref() const noexcept;
 
-        constexpr pointer operator+(size_t count) const noexcept;
-        constexpr pointer operator-(size_t count) const noexcept;
+        constexpr pointer operator+(std::size_t count) const noexcept;
+        constexpr pointer operator-(std::size_t count) const noexcept;
 
-        constexpr ptrdiff_t operator-(pointer rhs) const noexcept;
+        constexpr std::ptrdiff_t operator-(pointer rhs) const noexcept;
 
-        MEM_CONSTEXPR_14 pointer& operator+=(size_t count) noexcept;
-        MEM_CONSTEXPR_14 pointer& operator-=(size_t count) noexcept;
+        MEM_CONSTEXPR_14 pointer& operator+=(std::size_t count) noexcept;
+        MEM_CONSTEXPR_14 pointer& operator-=(std::size_t count) noexcept;
 
         MEM_CONSTEXPR_14 pointer& operator++() noexcept;
         MEM_CONSTEXPR_14 pointer& operator--() noexcept;
@@ -91,7 +91,7 @@ namespace mem
         constexpr explicit operator bool() const noexcept;
 
         template <typename T = pointer>
-        typename std::add_lvalue_reference<T>::type at(size_t offset) const noexcept;
+        typename std::add_lvalue_reference<T>::type at(std::size_t offset) const noexcept;
 
         template <typename T>
         constexpr typename std::enable_if<std::is_integral<T>::value, T>::type as() const noexcept;
@@ -140,16 +140,16 @@ namespace mem
     {
     public:
         pointer start {nullptr};
-        size_t size {0};
+        std::size_t size {0};
 
         constexpr region() noexcept = default;
 
-        constexpr region(pointer start, size_t size) noexcept;
+        constexpr region(pointer start, std::size_t size) noexcept;
 
         constexpr bool contains(region rhs) const noexcept;
 
         constexpr bool contains(pointer address) const noexcept;
-        constexpr bool contains(pointer start, size_t size) const noexcept;
+        constexpr bool contains(pointer start, std::size_t size) const noexcept;
 
         template <typename T>
         constexpr bool contains(pointer address) const noexcept;
@@ -164,10 +164,10 @@ namespace mem
     };
 
     template <typename T>
-    typename std::add_lvalue_reference<T>::type field(pointer base, ptrdiff_t offset = 0) noexcept;
+    typename std::add_lvalue_reference<T>::type field(pointer base, std::ptrdiff_t offset = 0) noexcept;
 
     template <typename F>
-    typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table = 0) noexcept;
+    typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table = 0) noexcept;
 
     constexpr MEM_STRONG_INLINE pointer::pointer(std::nullptr_t) noexcept
         : value_(0)
@@ -189,17 +189,17 @@ namespace mem
         static_assert(sizeof(address) == sizeof(uintptr_t), "That's no pointer. It's a space station.");
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::add(size_t count) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::add(std::size_t count) const noexcept
     {
         return value_ + count;
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::sub(size_t count) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::sub(std::size_t count) const noexcept
     {
         return value_ - count;
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::offset(ptrdiff_t count) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::offset(std::ptrdiff_t count) const noexcept
     {
         return static_cast<uintptr_t>(static_cast<intptr_t>(value_) + count);
     }
@@ -209,18 +209,18 @@ namespace mem
         return (value_ - from.value_) + to.value_;
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::align_up(size_t align) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::align_up(std::size_t align) const noexcept
     {
         return (value_ + align - 1) / align * align;
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::align_down(size_t align) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::align_down(std::size_t align) const noexcept
     {
         return value_ - (value_ % align);
     }
 
 #if defined(MEM_ARCH_X86_64)
-    MEM_STRONG_INLINE pointer pointer::rip(size_t offset) const noexcept
+    MEM_STRONG_INLINE pointer pointer::rip(std::size_t offset) const noexcept
     {
         return static_cast<uintptr_t>(static_cast<intptr_t>(value_ + offset) + *reinterpret_cast<const int32_t*>(value_));
     }
@@ -231,29 +231,29 @@ namespace mem
         return *reinterpret_cast<pointer*>(value_);
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::operator+(size_t count) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::operator+(std::size_t count) const noexcept
     {
         return value_ + count;
     }
 
-    constexpr MEM_STRONG_INLINE pointer pointer::operator-(size_t count) const noexcept
+    constexpr MEM_STRONG_INLINE pointer pointer::operator-(std::size_t count) const noexcept
     {
         return value_ - count;
     }
 
-    constexpr MEM_STRONG_INLINE ptrdiff_t pointer::operator-(pointer rhs) const noexcept
+    constexpr MEM_STRONG_INLINE std::ptrdiff_t pointer::operator-(pointer rhs) const noexcept
     {
-        return static_cast<ptrdiff_t>(static_cast<intptr_t>(value_) - static_cast<intptr_t>(rhs.value_));
+        return static_cast<std::ptrdiff_t>(static_cast<intptr_t>(value_) - static_cast<intptr_t>(rhs.value_));
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator+=(size_t count) noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator+=(std::size_t count) noexcept
     {
         value_ += count;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator-=(size_t count) noexcept
+    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator-=(std::size_t count) noexcept
     {
         value_ -= count;
 
@@ -341,7 +341,7 @@ namespace mem
     }
 
     template <typename T>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type pointer::at(size_t offset) const noexcept
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type pointer::at(std::size_t offset) const noexcept
     {
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_ + offset);
     }
@@ -412,7 +412,7 @@ namespace mem
         return reinterpret_cast<T*>(value_);
     }
 
-    constexpr MEM_STRONG_INLINE region::region(pointer start_, size_t size_) noexcept
+    constexpr MEM_STRONG_INLINE region::region(pointer start_, std::size_t size_) noexcept
         : start(start_)
         , size(size_)
     { }
@@ -427,7 +427,7 @@ namespace mem
         return (address >= start) && (address < (start + size));
     }
 
-    constexpr MEM_STRONG_INLINE bool region::contains(pointer start_, size_t size_) const noexcept
+    constexpr MEM_STRONG_INLINE bool region::contains(pointer start_, std::size_t size_) const noexcept
     {
         return (start_ >= start) && ((start_ + size_) <= (start + size));
     }
@@ -460,17 +460,17 @@ namespace mem
 
     constexpr MEM_STRONG_INLINE region region::sub_region(pointer address) const noexcept
     {
-        return region(address, size - static_cast<size_t>(address - start));
+        return region(address, size - static_cast<std::size_t>(address - start));
     }
 
     template <typename T>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(pointer base, ptrdiff_t offset) noexcept
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<T>::type field(pointer base, std::ptrdiff_t offset) noexcept
     {
         return base.at<T>(offset);
     }
 
     template <typename F>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table) noexcept
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table) noexcept
     {
         return inst.as<pointer**>()[table][index].rcast<F>();
     }
