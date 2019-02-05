@@ -322,7 +322,7 @@ namespace mem
     template <typename Scanner>
     inline pointer pattern::scan(region range, const Scanner& scanner) const
     {
-        return scanner(range, [ ] (pointer result) noexcept
+        return scanner(range, [ ] (pointer) noexcept
         {
             return true;
         });
