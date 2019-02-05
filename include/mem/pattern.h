@@ -286,7 +286,7 @@ namespace mem
                 if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                     return false;
 
-                if (MEM_LIKELY(i))
+                if (MEM_LIKELY(i != 0))
                 {
                     --i;
 
@@ -305,7 +305,7 @@ namespace mem
                 if (MEM_LIKELY(current[i] != pat_bytes[i]))
                     return false;
 
-                if (MEM_LIKELY(i))
+                if (MEM_LIKELY(i != 0))
                 {
                     --i;
 

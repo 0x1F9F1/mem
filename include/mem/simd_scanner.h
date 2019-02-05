@@ -102,7 +102,7 @@ namespace mem
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --i;
 
@@ -132,7 +132,7 @@ namespace mem
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --i;
 
@@ -165,7 +165,7 @@ namespace mem
                     if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                         break;
 
-                    if (MEM_LIKELY(i))
+                    if (MEM_LIKELY(i != 0))
                     {
                         --i;
 
@@ -216,7 +216,7 @@ namespace mem
             {
                 const int mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value);
 
-                if (MEM_UNLIKELY(mask))
+                if (MEM_UNLIKELY(mask != 0))
                     return ptr + bsf(static_cast<unsigned int>(mask));
 
                 num -= sizeof(l_SIMD_TYPE);

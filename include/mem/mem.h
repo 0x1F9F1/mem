@@ -329,7 +329,7 @@ namespace mem
 
     MEM_STRONG_INLINE constexpr pointer::operator bool() const noexcept
     {
-        return value_;
+        return value_ != 0;
     }
 
     template <typename T>

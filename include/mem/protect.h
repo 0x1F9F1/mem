@@ -174,7 +174,7 @@ namespace mem
 
 #if defined(_WIN32)
         DWORD old_protect = 0;
-        BOOL success = VirtualProtect(memory, length, static_cast<DWORD>(from_prot_flags(flags)), &old_protect);
+        bool success = VirtualProtect(memory, length, static_cast<DWORD>(from_prot_flags(flags)), &old_protect) != FALSE;
 
         if (old_flags)
             *old_flags = success ? to_prot_flags(old_protect) : prot_flags::INVALID;
