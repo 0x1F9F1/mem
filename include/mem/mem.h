@@ -38,7 +38,7 @@ namespace mem
     public:
         constexpr pointer() noexcept = default;
 
-        constexpr pointer(nullptr_t) noexcept;
+        constexpr pointer(std::nullptr_t) noexcept;
         constexpr pointer(uintptr_t address) noexcept;
 
         template <typename T>
@@ -169,7 +169,7 @@ namespace mem
     template <typename F>
     typename std::add_lvalue_reference<F>::type vfunc(pointer inst, size_t index, ptrdiff_t table = 0) noexcept;
 
-    constexpr MEM_STRONG_INLINE pointer::pointer(nullptr_t) noexcept
+    constexpr MEM_STRONG_INLINE pointer::pointer(std::nullptr_t) noexcept
         : value_(0)
     { }
 
