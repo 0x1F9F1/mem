@@ -278,7 +278,6 @@ namespace mem
         rhs.success_ = false;
     }
 
-
     inline protect::operator bool() const noexcept
     {
         return success_;

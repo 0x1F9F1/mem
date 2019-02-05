@@ -40,13 +40,13 @@ namespace mem
     {
         enum prot_flags : std::uint32_t
         {
-            INVALID = 0, // Invalid
+            NONE = 0x0, // No Access
 
-            NONE = 1 << 0, // No Access
+            R = 0x1, // Read
+            W = 0x2, // Write
+            X = 0x4, // Execute
 
-            R = 1 << 1, // Read
-            W = 1 << 2, // Write
-            X = 1 << 3, // Execute
+            INVALID = 0x80000000, // Invalid
 
             RW  = R | W,
             RX  = R | X,
@@ -100,7 +100,7 @@ namespace mem
     MEM_CONSTEXPR_14 inline prot_flags to_prot_flags(std::uint32_t flags) noexcept
     {
 #if defined(_WIN32)
-        prot_flags result = prot_flags::INVALID;
+        prot_flags result = prot_flags::NONE;
 
         if (flags & PAGE_EXECUTE_READWRITE)
             result = prot_flags::RWX;
