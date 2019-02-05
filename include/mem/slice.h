@@ -87,49 +87,49 @@ namespace mem
     };
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE slice<T>::slice(T* begin, T* end) noexcept
+    MEM_STRONG_INLINE constexpr slice<T>::slice(T* begin, T* end) noexcept
         : start_(begin)
         , size_(end - begin)
     { }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE slice<T>::slice(T* start, std::size_t size) noexcept
+    MEM_STRONG_INLINE constexpr slice<T>::slice(T* start, std::size_t size) noexcept
         : start_(start)
         , size_(size)
     { }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE T& slice<T>::operator[](std::size_t index) const noexcept
+    MEM_STRONG_INLINE constexpr T& slice<T>::operator[](std::size_t index) const noexcept
     {
         return start_[index];
     }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE T* slice<T>::data() const noexcept
+    MEM_STRONG_INLINE constexpr T* slice<T>::data() const noexcept
     {
         return start_;
     }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE T* slice<T>::begin() const noexcept
+    MEM_STRONG_INLINE constexpr T* slice<T>::begin() const noexcept
     {
         return start_;
     }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE T* slice<T>::end() const noexcept
+    MEM_STRONG_INLINE constexpr T* slice<T>::end() const noexcept
     {
         return start_ + size_;
     }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE std::size_t slice<T>::size() const noexcept
+    MEM_STRONG_INLINE constexpr std::size_t slice<T>::size() const noexcept
     {
         return size_;
     }
 
     template <typename T>
-    constexpr MEM_STRONG_INLINE bool slice<T>::empty() const noexcept
+    MEM_STRONG_INLINE constexpr bool slice<T>::empty() const noexcept
     {
         return size_ == 0;
     }

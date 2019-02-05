@@ -53,13 +53,13 @@ namespace mem
         : char_queue(string, std::strlen(string))
     { }
 
-    constexpr MEM_STRONG_INLINE char_queue::char_queue(const char* string, std::size_t length)
+    MEM_STRONG_INLINE constexpr char_queue::char_queue(const char* string, std::size_t length)
         : start(string)
         , end(start + length)
         , current(start)
     { }
 
-    constexpr MEM_STRONG_INLINE int char_queue::peek() const noexcept
+    MEM_STRONG_INLINE constexpr int char_queue::peek() const noexcept
     {
         return (current < end) ? byte(*current) : -1;
     }
@@ -72,17 +72,17 @@ namespace mem
         }
     }
 
-    constexpr MEM_STRONG_INLINE std::size_t char_queue::pos() const noexcept
+    MEM_STRONG_INLINE constexpr std::size_t char_queue::pos() const noexcept
     {
         return current - start;
     }
 
-    constexpr MEM_STRONG_INLINE char_queue::operator bool() const noexcept
+    MEM_STRONG_INLINE constexpr char_queue::operator bool() const noexcept
     {
         return current < end;
     }
 
-    constexpr MEM_STRONG_INLINE int xctoi(int value) noexcept
+    MEM_STRONG_INLINE constexpr int xctoi(int value) noexcept
     {
         return (value >= '0' && value <= '9') ? (value - '0')
              : (value >= 'a' && value <= 'f') ? (value - 'a' + 10)
@@ -90,12 +90,12 @@ namespace mem
              : -1;
     }
 
-    constexpr MEM_STRONG_INLINE int dctoi(int value) noexcept
+    MEM_STRONG_INLINE constexpr int dctoi(int value) noexcept
     {
         return (value >= '0' && value <= '9') ? (value - '0') : -1;
     }
 
-    constexpr MEM_STRONG_INLINE int octoi(int value) noexcept
+    MEM_STRONG_INLINE constexpr int octoi(int value) noexcept
     {
         return (value >= '0' && value <= '7') ? (value - '0') : -1;
     }
