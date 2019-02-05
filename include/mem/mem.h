@@ -246,35 +246,35 @@ namespace mem
         return static_cast<std::ptrdiff_t>(static_cast<std::intptr_t>(value_) - static_cast<std::intptr_t>(rhs.value_));
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator+=(std::size_t count) noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 pointer& pointer::operator+=(std::size_t count) noexcept
     {
         value_ += count;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator-=(std::size_t count) noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 pointer& pointer::operator-=(std::size_t count) noexcept
     {
         value_ -= count;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator++() noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 pointer& pointer::operator++() noexcept
     {
         ++value_;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer& pointer::operator--() noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 pointer& pointer::operator--() noexcept
     {
         --value_;
 
         return *this;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer pointer::operator++(int) noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 pointer pointer::operator++(int) noexcept
     {
         pointer result = *this;
 
@@ -283,7 +283,7 @@ namespace mem
         return result;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE pointer pointer::operator--(int) noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 pointer pointer::operator--(int) noexcept
     {
         pointer result = *this;
 

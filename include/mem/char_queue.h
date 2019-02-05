@@ -64,7 +64,7 @@ namespace mem
         return (current < end) ? byte(*current) : -1;
     }
 
-    MEM_CONSTEXPR_14 MEM_STRONG_INLINE void char_queue::pop() noexcept
+    MEM_STRONG_INLINE MEM_CONSTEXPR_14 void char_queue::pop() noexcept
     {
         if (current < end)
         {
