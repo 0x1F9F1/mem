@@ -64,7 +64,7 @@ namespace mem
     MEM_CONSTEXPR_14 std::uint32_t from_prot_flags(prot_flags flags) noexcept;
     MEM_CONSTEXPR_14 prot_flags to_prot_flags(std::uint32_t flags) noexcept;
 
-    MEM_CONSTEXPR_14 inline std::uint32_t from_prot_flags(prot_flags flags) noexcept
+    inline MEM_CONSTEXPR_14 std::uint32_t from_prot_flags(prot_flags flags) noexcept
     {
 #if defined(_WIN32)
         std::uint32_t result = PAGE_NOACCESS;
@@ -97,7 +97,7 @@ namespace mem
 #endif
     }
 
-    MEM_CONSTEXPR_14 inline prot_flags to_prot_flags(std::uint32_t flags) noexcept
+    inline MEM_CONSTEXPR_14 prot_flags to_prot_flags(std::uint32_t flags) noexcept
     {
 #if defined(_WIN32)
         prot_flags result = prot_flags::NONE;

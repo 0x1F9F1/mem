@@ -116,7 +116,7 @@ namespace mem
         void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback);
         const RTTITypeDescriptor* find_rtti_type(const region& region, const char* name);
 
-        constexpr inline bool check_rtti_signature(std::uint32_t signature) noexcept
+        inline constexpr bool check_rtti_signature(std::uint32_t signature) noexcept
         {
 #if defined(MEM_ARCH_X86_64)
             return signature == 1;
