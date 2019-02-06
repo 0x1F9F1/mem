@@ -100,7 +100,7 @@ namespace mem
 #if defined(_WIN32)
         return VirtualAlloc(nullptr, length, MEM_RESERVE | MEM_COMMIT, from_prot_flags(flags));
 #elif defined(__unix__)
-        void* result = mmap(nullptr, length, (int) from_prot_flags(flags), MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        void* result = mmap(nullptr, length, static_cast<int>(from_prot_flags(flags)), MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         if (result == MAP_FAILED)
             result = nullptr;
         return result;
