@@ -255,13 +255,13 @@ namespace mem
     }
 #endif
 
-    inline protect::protect(region range, prot_flags flags)
+    MEM_STRONG_INLINE protect::protect(region range, prot_flags flags)
         : region(range)
         , old_flags_(prot_flags::INVALID)
         , success_(protect_modify(start.as<void*>(), size, flags, &old_flags_))
     { }
 
-    inline protect::~protect()
+    MEM_STRONG_INLINE protect::~protect()
     {
         if (success_)
         {
@@ -269,7 +269,7 @@ namespace mem
         }
     }
 
-    inline protect::protect(protect&& rhs) noexcept
+    MEM_STRONG_INLINE protect::protect(protect&& rhs) noexcept
         : region(rhs)
         , old_flags_(rhs.old_flags_)
         , success_(rhs.success_)
@@ -278,12 +278,12 @@ namespace mem
         rhs.success_ = false;
     }
 
-    inline protect::operator bool() const noexcept
+    MEM_STRONG_INLINE protect::operator bool() const noexcept
     {
         return success_;
     }
 
-    inline prot_flags protect::release() noexcept
+    MEM_STRONG_INLINE prot_flags protect::release() noexcept
     {
         success_ = false;
 
