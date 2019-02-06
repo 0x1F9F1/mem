@@ -52,22 +52,25 @@ namespace mem
             RX  = R | X,
             RWX = R | W | X,
         };
+
+        MEM_DEFINE_ENUM_FLAG_OPERATORS(prot_flags)
     }
 
     using enums::prot_flags;
-}
 
-MEM_DEFINE_ENUM_FLAG_OPERATORS(mem::prot_flags)
+#if defined(_WIN32)
+    using native_prot = DWORD;
+#elif defined(__unix__)
+    using native_prot = int;
+#endif
 
-namespace mem
-{
-    MEM_CONSTEXPR_14 std::uint32_t from_prot_flags(prot_flags flags) noexcept;
-    MEM_CONSTEXPR_14 prot_flags to_prot_flags(std::uint32_t flags) noexcept;
+    MEM_CONSTEXPR_14 native_prot from_prot_flags(prot_flags flags) noexcept;
+    MEM_CONSTEXPR_14 prot_flags to_prot_flags(native_prot flags) noexcept;
 
-    inline MEM_CONSTEXPR_14 std::uint32_t from_prot_flags(prot_flags flags) noexcept
+    inline MEM_CONSTEXPR_14 native_prot from_prot_flags(prot_flags flags) noexcept
     {
 #if defined(_WIN32)
-        std::uint32_t result = PAGE_NOACCESS;
+        native_prot result = PAGE_NOACCESS;
 
         if (flags & prot_flags::X)
         {
@@ -84,7 +87,7 @@ namespace mem
 
         return result;
 #elif defined(__unix__)
-        std::uint32_t result = 0;
+        native_prot result = 0;
 
         if (flags & prot_flags::R)
             result |= PROT_READ;
@@ -97,7 +100,7 @@ namespace mem
 #endif
     }
 
-    inline MEM_CONSTEXPR_14 prot_flags to_prot_flags(std::uint32_t flags) noexcept
+    inline MEM_CONSTEXPR_14 prot_flags to_prot_flags(native_prot flags) noexcept
     {
 #if defined(_WIN32)
         prot_flags result = prot_flags::NONE;

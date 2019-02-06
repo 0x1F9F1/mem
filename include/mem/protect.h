@@ -100,7 +100,7 @@ namespace mem
 #if defined(_WIN32)
         return VirtualAlloc(nullptr, length, MEM_RESERVE | MEM_COMMIT, from_prot_flags(flags));
 #elif defined(__unix__)
-        void* result = mmap(nullptr, length, static_cast<int>(from_prot_flags(flags)), MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        void* result = mmap(nullptr, length, from_prot_flags(flags), MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         if (result == MAP_FAILED)
             result = nullptr;
         return result;
@@ -174,7 +174,7 @@ namespace mem
 
 #if defined(_WIN32)
         DWORD old_protect = 0;
-        bool success = VirtualProtect(memory, length, static_cast<DWORD>(from_prot_flags(flags)), &old_protect) != FALSE;
+        bool success = VirtualProtect(memory, length, from_prot_flags(flags), &old_protect) != FALSE;
 
         if (old_flags)
             *old_flags = success ? to_prot_flags(old_protect) : prot_flags::INVALID;
@@ -183,7 +183,7 @@ namespace mem
 #elif defined(__unix__)
         prot_flags current_protect = old_flags ? protect_query(memory) : prot_flags::INVALID;
 
-        bool success = mprotect(memory, length, static_cast<int>(from_prot_flags(flags))) == 0;
+        bool success = mprotect(memory, length, from_prot_flags(flags)) == 0;
 
         if (old_flags)
             *old_flags = current_protect;
