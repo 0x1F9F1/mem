@@ -45,8 +45,8 @@ namespace mem
 
         enum class wildcard_t : char {};
 
-        explicit pattern(const char* string, wildcard_t wildcard = wildcard_t('?'));
-        explicit pattern(const void* bytes, const char* masks, wildcard_t wildcard = wildcard_t('?'));
+        explicit pattern(const char* string, wildcard_t wildcard = static_cast<wildcard_t>('?'));
+        explicit pattern(const void* bytes, const char* masks, wildcard_t wildcard = static_cast<wildcard_t>('?'));
 
         explicit pattern(const void* bytes, const void* masks, std::size_t length);
 
@@ -436,14 +436,14 @@ namespace mem
 
             if (mask != 0x00)
             {
-                result += hex_chars[std::size_t(value >> 4)];
-                result += hex_chars[std::size_t(value & 0xF)];
+                result += hex_chars[static_cast<std::size_t>(value >> 4)];
+                result += hex_chars[static_cast<std::size_t>(value & 0xF)];
 
                 if (mask != 0xFF)
                 {
                     result += "&";
-                    result += hex_chars[std::size_t(mask >> 4)];
-                    result += hex_chars[std::size_t(mask & 0xF)];
+                    result += hex_chars[static_cast<std::size_t>(mask >> 4)];
+                    result += hex_chars[static_cast<std::size_t>(mask & 0xF)];
                 }
             }
             else

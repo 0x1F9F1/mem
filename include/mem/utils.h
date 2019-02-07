@@ -194,7 +194,7 @@ namespace mem
             {
                 input.pop();
 
-                result = std::size_t(current);
+                result = static_cast<std::size_t>(current);
             }
 
             if (result <= UCHAR_MAX)
