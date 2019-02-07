@@ -48,6 +48,8 @@ namespace mem
         std::size_t skip_pos_ {SIZE_MAX};
 
     public:
+        simd_scanner() = default;
+
         simd_scanner(const pattern& pattern);
 
         template <typename UnaryPredicate>

@@ -42,6 +42,8 @@ namespace mem
         std::size_t get_suffix_length(std::size_t pos) const;
 
     public:
+        boyer_moore_scanner() = default;
+
         boyer_moore_scanner(const pattern& pattern);
         boyer_moore_scanner(const pattern& pattern, std::size_t min_bad_char_skip, std::size_t min_good_suffix_skip);
 
