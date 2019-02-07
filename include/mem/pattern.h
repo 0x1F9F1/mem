@@ -84,22 +84,22 @@ namespace mem
         int temp = -1;
 
         current = input.peek();
-        if ((temp = xctoi(current)) != -1) { input.pop(); value = byte(temp); mask = 0xFF; }
-        else if (current == wildcard)      { input.pop(); value = 0x00;       mask = 0x00; }
-        else                               { return false;                                 }
+        if ((temp = xctoi(current)) != -1) { input.pop(); value = static_cast<byte>(temp); mask = 0xFF; }
+        else if (current == wildcard)      { input.pop(); value = 0x00;                    mask = 0x00; }
+        else                               { return false;                                              }
 
         current = input.peek();
-        if ((temp = xctoi(current)) != -1) { input.pop(); value = (value << 4) | byte(temp); mask = (mask << 4) | 0x0F; }
-        else if (current == wildcard)      { input.pop(); value = (value << 4);              mask = (mask << 4);        }
+        if ((temp = xctoi(current)) != -1) { input.pop(); value = (value << 4) | static_cast<byte>(temp); mask = (mask << 4) | 0x0F; }
+        else if (current == wildcard)      { input.pop(); value = (value << 4);                           mask = (mask << 4);        }
 
         if (input.peek() == '&')
         {
             input.pop();
 
-            if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = byte(temp); }
+            if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = static_cast<byte>(temp); }
             else                                    { return false; }
 
-            if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = (expl_mask << 4) | byte(temp); }
+            if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = (expl_mask << 4) | static_cast<byte>(temp); }
         }
 
         if (input.peek() == '#')
@@ -140,7 +140,7 @@ namespace mem
                 continue;
             }
 
-            if (!parse_chunk(input, char(wildcard)))
+            if (!parse_chunk(input, static_cast<char>(wildcard)))
             {
                 masks_.clear();
                 bytes_.clear();
@@ -163,7 +163,7 @@ namespace mem
 
             for (std::size_t i = 0; i < size; ++i)
             {
-                if (mask[i] == char(wildcard))
+                if (mask[i] == static_cast<char>(wildcard))
                 {
                     bytes_[i] = 0x00;
                     masks_[i] = 0x00;
