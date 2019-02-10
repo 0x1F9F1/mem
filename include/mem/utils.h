@@ -142,6 +142,8 @@ namespace mem
             std::size_t result = SIZE_MAX;
             std::size_t count = 0;
 
+            bool output_utf8 = false;
+
             int current = -1;
             int temp = -1;
 
@@ -178,7 +180,53 @@ namespace mem
 
                     if (strict && (count == 0))
                     {
-                        result = SIZE_MAX;
+                        return "";
+                    }
+                }
+                else if (current == 'u')
+                {
+                    result = 0;
+                    count = 0;
+                    output_utf8 = true;
+
+                    while ((temp = xctoi(input.peek())) != -1)
+                    {
+                        input.pop();
+                        result = (result * 16) + temp;
+                        ++count;
+
+                        if (count == 4)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (strict && (count != 4))
+                    {
+                        return "";
+                    }
+                }
+                else if (current == 'U')
+                {
+                    result = 0;
+                    count = 0;
+                    output_utf8 = true;
+
+                    while ((temp = xctoi(input.peek())) != -1)
+                    {
+                        input.pop();
+                        result = (result * 16) + temp;
+                        ++count;
+
+                        if (count == 8)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (strict && (count != 8))
+                    {
+                        return "";
                     }
                 }
                 else if ((temp = octoi(current)) != -1)
@@ -198,8 +246,13 @@ namespace mem
                         }
                     }
                 }
-                else if (!strict)
+                else
                 {
+                    if (strict)
+                    {
+                        return "";
+                    }
+
                     result = static_cast<std::size_t>(current);
                 }
             }
@@ -208,21 +261,59 @@ namespace mem
                 result = static_cast<std::size_t>(current);
             }
 
-            if (result > UCHAR_MAX)
+            if (output_utf8)
             {
-                if (strict)
+                if ((result > 0x10FFFF) || ((result >= 0xD800) && (result <= 0xDFFF)))
                 {
-                    results.clear();
+                    if (strict)
+                    {
+                        return "";
+                    }
+                    else
+                    {
+                        result = 0xFFFD;
+                    }
+                }
 
-                    break;
+                if (result < 0x80)
+                {
+                    results.push_back(static_cast<char>(result));
+                }
+                else if (result < 0x800)
+                {
+                    results.push_back(static_cast<char>((result >> 6)   | 0xC0));
+                    results.push_back(static_cast<char>((result & 0x3F) | 0x80));
+                }
+                else if (result < 0x10000)
+                {
+                    results.push_back(static_cast<char>((result >> 12)         | 0xE0));
+                    results.push_back(static_cast<char>(((result >> 6) & 0x3F) | 0x80));
+                    results.push_back(static_cast<char>((result & 0x3F)        | 0x80));
                 }
                 else
                 {
-                    result &= UCHAR_MAX;
+                    results.push_back(static_cast<char>((result >> 18)          | 0xF0));
+                    results.push_back(static_cast<char>(((result >> 12) & 0x3F) | 0x80));
+                    results.push_back(static_cast<char>(((result >> 6) & 0x3F)  | 0x80));
+                    results.push_back(static_cast<char>((result & 0x3F)         | 0x80));
                 }
             }
+            else
+            {
+                if (result > UCHAR_MAX)
+                {
+                    if (strict)
+                    {
+                        return "";
+                    }
+                    else
+                    {
+                        result &= UCHAR_MAX;
+                    }
+                }
 
-            results.push_back(static_cast<char>(result));
+                results.push_back(static_cast<char>(result));
+            }
         }
 
         return results;

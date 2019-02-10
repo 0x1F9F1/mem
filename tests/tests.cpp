@@ -279,6 +279,8 @@ TEST_CASE("mem::unescape")
     check_unescape_string(R"(Hello\nThere)", "Hello\nThere", 11, true);
     check_unescape_string(R"(Hello \"Bob)", "Hello \"Bob", 10, true);
 
+    check_unescape_string(R"(I am a \U0001F9F1)", "I am a \xF0\x9F\xA7\xB1", 11, true);
+
     check_unescape_string(R"(\x123456!)", "V!", 2, false);
     check_unescape_string(R"(\567ABC)", "wABC", 4, false);
     check_unescape_string(R"(\xz)", "\0z", 2, false);
