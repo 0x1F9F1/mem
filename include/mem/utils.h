@@ -218,7 +218,7 @@ namespace mem
                 }
                 else
                 {
-                    result = UCHAR_MAX;
+                    result &= UCHAR_MAX;
                 }
             }
 
