@@ -34,7 +34,7 @@ namespace mem
     std::string as_string(region range);
     std::string as_hex(region range, bool upper_case = true, bool padded = true);
 
-    std::string unescape(const char* string, std::size_t length);
+    std::string unescape(const char* string, std::size_t length, bool strict = false);
 
     MEM_STRONG_INLINE bool is_ascii(region range) noexcept
     {
@@ -131,7 +131,7 @@ namespace mem
         return result;
     }
 
-    inline std::string unescape(const char* string, std::size_t length)
+    inline std::string unescape(const char* string, std::size_t length, bool strict)
     {
         std::string results;
 
@@ -146,67 +146,83 @@ namespace mem
             int temp = -1;
 
             current = input.peek();
+            input.pop();
 
             if (current == '\\')
             {
+                current = input.peek();
                 input.pop();
 
-                current = input.peek();
-                if      (current == '\'') { input.pop(); result = '\''; }
-                else if (current == '\"') { input.pop(); result = '\"'; }
-                else if (current == '\\') { input.pop(); result = '\\'; }
-                else if (current == '?')  { input.pop(); result = '\?'; }
-                else if (current == 'a')  { input.pop(); result = '\a'; }
-                else if (current == 'b')  { input.pop(); result = '\b'; }
-                else if (current == 'f')  { input.pop(); result = '\f'; }
-                else if (current == 'n')  { input.pop(); result = '\n'; }
-                else if (current == 'r')  { input.pop(); result = '\r'; }
-                else if (current == 't')  { input.pop(); result = '\t'; }
-                else if (current == 'v')  { input.pop(); result = '\v'; }
+                if      (current == '\'') { result = '\''; }
+                else if (current == '\"') { result = '\"'; }
+                else if (current == '\\') { result = '\\'; }
+                else if (current == '?')  { result = '\?'; }
+                else if (current == 'a')  { result = '\a'; }
+                else if (current == 'b')  { result = '\b'; }
+                else if (current == 'f')  { result = '\f'; }
+                else if (current == 'n')  { result = '\n'; }
+                else if (current == 'r')  { result = '\r'; }
+                else if (current == 't')  { result = '\t'; }
+                else if (current == 'v')  { result = '\v'; }
                 else if (current == 'x')
                 {
-                    input.pop();
-
                     result = 0;
                     count = 0;
 
-                    while (true)
+                    while ((temp = xctoi(input.peek())) != -1)
                     {
-                        current = input.peek();
-                        if ((temp = xctoi(current)) != -1) { input.pop(); result = (result * 16) + temp; ++count; }
-                        else { if (count == 0) { result = SIZE_MAX; } break; }
+                        input.pop();
+                        result = (result * 16) + temp;
+                        ++count;
+                    }
+
+                    if (strict && (count == 0))
+                    {
+                        result = SIZE_MAX;
                     }
                 }
-                else if (octoi(current) != -1)
+                else if ((temp = octoi(current)) != -1)
                 {
-                    result = 0;
-                    count = 0;
+                    result = temp;
+                    count = 1;
 
-                    while (true)
+                    while ((temp = octoi(input.peek())) != -1)
                     {
-                        current = input.peek();
-                        if ((temp = octoi(current)) != -1) { input.pop(); result = (result * 8) + temp; if (++count == 3) { break; } }
-                        else { if (count == 0) { result = SIZE_MAX; } break; }
+                        input.pop();
+                        result = (result * 8) + temp;
+                        ++count;
+
+                        if (count == 3)
+                        {
+                            break;
+                        }
                     }
+                }
+                else if (!strict)
+                {
+                    result = static_cast<std::size_t>(current);
                 }
             }
             else
             {
-                input.pop();
-
                 result = static_cast<std::size_t>(current);
             }
 
-            if (result <= UCHAR_MAX)
+            if (result > UCHAR_MAX)
             {
-                results.push_back(static_cast<char>(result));
-            }
-            else
-            {
-                results.clear();
+                if (strict)
+                {
+                    results.clear();
 
-                break;
+                    break;
+                }
+                else
+                {
+                    result = UCHAR_MAX;
+                }
             }
+
+            results.push_back(static_cast<char>(result));
         }
 
         return results;

@@ -256,9 +256,9 @@ TEST_CASE("mem::as_hex")
     check_hex_conversion("\x01\x23\x45\x67\x89\xAB\xCD\xEF", 8, false, false, "0123456789abcdef");
 }
 
-void check_unescape_string(const char* string, const void* data, size_t length)
+void check_unescape_string(const char* string, const void* data, size_t length, bool strict)
 {
-    std::string unescaped = mem::unescape(string, strlen(string));
+    std::string unescaped = mem::unescape(string, strlen(string), strict);
 
     REQUIRE(unescaped.size() == length);
     REQUIRE(memcmp(unescaped.data(), data, length) == 0);
@@ -271,13 +271,21 @@ void check_unescape_string(const char* string, const void* data, size_t length)
 
 TEST_CASE("mem::unescape")
 {
-    check_unescape_string(R"(\x12\x34)", "\x12\x34", 2);
-    check_unescape_string(R"(\0\1\10)", "\0\1\10", 3);
-    check_unescape_string(R"(\0\1\1011)", "\0\1\1011", 4);
-    check_unescape_string(R"(\1\2\3)", "\1\2\3", 3);
-    check_unescape_string(R"(Hello There)", "Hello There", 11);
-    check_unescape_string(R"(Hello\nThere)", "Hello\nThere", 11);
-    check_unescape_string(R"(Hello \"Bob)", "Hello \"Bob", 10);
+    check_unescape_string(R"(\x12\x34)", "\x12\x34", 2, true);
+    check_unescape_string(R"(\0\1\10)", "\0\1\10", 3, true);
+    check_unescape_string(R"(\0\1\1011)", "\0\1\1011", 4, true);
+    check_unescape_string(R"(\1\2\3)", "\1\2\3", 3, true);
+    check_unescape_string(R"(Hello There)", "Hello There", 11, true);
+    check_unescape_string(R"(Hello\nThere)", "Hello\nThere", 11, true);
+    check_unescape_string(R"(Hello \"Bob)", "Hello \"Bob", 10, true);
+
+    check_unescape_string(R"(\x123456!)", "\xFF!", 2, false);
+    check_unescape_string(R"(\xz)", "\0z", 2, false);
+    check_unescape_string(R"(\yz)", "yz", 2, false);
+
+    check_unescape_string(R"(\x123456)", "", 0, true);
+    check_unescape_string(R"(\xz)", "", 0, true);
+    check_unescape_string(R"(\yz)", "", 0, true);
 }
 
 #if defined(_MSC_VER)
