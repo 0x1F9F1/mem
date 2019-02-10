@@ -75,10 +75,9 @@ namespace mem
 
     inline bool pattern::parse_chunk(char_queue& input, char wildcard)
     {
-        byte   value     = 0x00;
-        byte   mask      = 0x00;
-        byte   expl_mask = 0xFF;
-        std::size_t count     = 1;
+        byte value = 0x00;
+        byte mask  = 0x00;
+        std::size_t count = 1;
 
         int current = -1;
         int temp = -1;
@@ -96,10 +95,14 @@ namespace mem
         {
             input.pop();
 
+            byte expl_mask = 0xFF;
+
             if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = static_cast<byte>(temp); }
             else                                    { return false; }
 
             if ((temp = xctoi(input.peek())) != -1) { input.pop(); expl_mask = (expl_mask << 4) | static_cast<byte>(temp); }
+
+            mask &= expl_mask;
         }
 
         if (input.peek() == '#')
@@ -116,7 +119,7 @@ namespace mem
             }
         }
 
-        value &= (mask &= expl_mask);
+        value &= mask;
 
         for (std::size_t i = 0; i < count; ++i)
         {
@@ -428,11 +431,11 @@ namespace mem
         {
             if (i)
             {
-                result += " ";
+                result += ' ';
             }
 
-            byte mask = masks_[i];
-            byte value = bytes_[i];
+            const byte mask  = masks_[i];
+            const byte value = bytes_[i];
 
             if (mask != 0x00)
             {
@@ -441,14 +444,14 @@ namespace mem
 
                 if (mask != 0xFF)
                 {
-                    result += "&";
+                    result += '&';
                     result += hex_chars[static_cast<std::size_t>(mask >> 4)];
                     result += hex_chars[static_cast<std::size_t>(mask & 0xF)];
                 }
             }
             else
             {
-                result += "?";
+                result += '?';
             }
         }
 
