@@ -103,16 +103,10 @@ namespace mem
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i != 0))
-                        {
-                            --i;
+                        if (MEM_UNLIKELY(i == 0))
+                            return current;
 
-                            continue;
-                        }
-
-                        return current;
-
-                        break;
+                        --i;
                     } while (true);
 
                     ++current;
@@ -132,16 +126,10 @@ namespace mem
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i != 0))
-                        {
-                            --i;
+                        if (MEM_UNLIKELY(i == 0))
+                            return current;
 
-                            continue;
-                        }
-
-                        return current;
-
-                        break;
+                        --i;
                     } while (true);
 
                     ++current;
@@ -164,15 +152,10 @@ namespace mem
                     if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                         break;
 
-                    if (MEM_LIKELY(i != 0))
-                    {
-                        --i;
+                    if (MEM_UNLIKELY(i == 0))
+                        return current;
 
-                        continue;
-                    }
-
-                    return current;
-
+                    --i;
                     break;
                 } while (true);
 

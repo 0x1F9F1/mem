@@ -283,14 +283,10 @@ namespace mem
                 if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                     return false;
 
-                if (MEM_LIKELY(i != 0))
-                {
-                    --i;
+                if (MEM_UNLIKELY(i == 0))
+                    return true;
 
-                    continue;
-                }
-
-                return true;
+                --i;
             } while (true);
         }
         else
@@ -302,17 +298,11 @@ namespace mem
                 if (MEM_LIKELY(current[i] != pat_bytes[i]))
                     return false;
 
-                if (MEM_LIKELY(i != 0))
-                {
-                    --i;
+                if (MEM_UNLIKELY(i == 0))
+                    return true;
 
-                    continue;
-                }
-
-                return true;
+                --i;
             } while (true);
-
-            return true;
         }
     }
 
