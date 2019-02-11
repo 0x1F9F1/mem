@@ -74,7 +74,7 @@ namespace mem
 
     MEM_STRONG_INLINE constexpr std::size_t char_queue::pos() const noexcept
     {
-        return current - start;
+        return static_cast<std::size_t>(current - start);
     }
 
     MEM_STRONG_INLINE constexpr char_queue::operator bool() const noexcept

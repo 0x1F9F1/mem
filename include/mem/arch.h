@@ -43,7 +43,7 @@ namespace mem
     MEM_STRONG_INLINE unsigned int bsf(unsigned int x) noexcept
     {
 # if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
-        return __builtin_ctz(x);
+        return static_cast<unsigned int>(__builtin_ctz(x));
 # elif defined(_MSC_VER)
         unsigned long result;
         _BitScanForward(&result, static_cast<unsigned long>(x));

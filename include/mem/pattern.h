@@ -107,9 +107,9 @@ namespace mem
 
             while (true)
             {
-                if ((temp = dctoi(input.peek())) != -1) { input.pop(); count = (count * 10) + temp; }
-                else if (count > 0)                     { break;                                    }
-                else                                    { return false;                             }
+                if ((temp = dctoi(input.peek())) != -1) { input.pop(); count = (count * 10) + static_cast<std::size_t>(temp); }
+                else if (count > 0)                     { break;                                                              }
+                else                                    { return false;                                                       }
             }
         }
 

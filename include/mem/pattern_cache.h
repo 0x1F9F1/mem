@@ -177,7 +177,7 @@ namespace mem
 
             for (const auto& result : pattern.second.results)
             {
-                stream::write<std::size_t>(output, result - region_.start);
+                stream::write<std::size_t>(output, static_cast<std::size_t>(result - region_.start));
             }
         }
     }

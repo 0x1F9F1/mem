@@ -52,7 +52,7 @@ namespace mem
 
     namespace internal
     {
-        static constexpr const std::int8_t utf8_length_table[256]
+        static constexpr const std::uint8_t utf8_length_table[256]
         {
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -175,7 +175,7 @@ namespace mem
                     while ((temp = xctoi(input.peek())) != -1)
                     {
                         input.pop();
-                        result = (result * 16) + temp;
+                        result = (result * 16) + static_cast<std::size_t>(temp);
                         ++count;
                     }
 
@@ -193,7 +193,7 @@ namespace mem
                     while ((temp = xctoi(input.peek())) != -1)
                     {
                         input.pop();
-                        result = (result * 16) + temp;
+                        result = (result * 16) + static_cast<std::size_t>(temp);
                         ++count;
 
                         if (count == 4)
@@ -216,7 +216,7 @@ namespace mem
                     while ((temp = xctoi(input.peek())) != -1)
                     {
                         input.pop();
-                        result = (result * 16) + temp;
+                        result = (result * 16) + static_cast<std::size_t>(temp);
                         ++count;
 
                         if (count == 8)
@@ -232,13 +232,13 @@ namespace mem
                 }
                 else if ((temp = octoi(current)) != -1)
                 {
-                    result = temp;
+                    result = static_cast<std::size_t>(temp);
                     count = 1;
 
                     while ((temp = octoi(input.peek())) != -1)
                     {
                         input.pop();
-                        result = (result * 8) + temp;
+                        result = (result * 8) + static_cast<std::size_t>(temp);
                         ++count;
 
                         if (count == 3)

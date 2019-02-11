@@ -136,7 +136,7 @@ namespace mem
     template <>
     MEM_STRONG_INLINE bool parse_cmd<unsigned int>(const char* value, unsigned int& out)
     {
-        out = static_cast<int>(std::strtoul(value, nullptr, 0));
+        out = static_cast<unsigned int>(std::strtoul(value, nullptr, 0));
 
         return true;
     }
