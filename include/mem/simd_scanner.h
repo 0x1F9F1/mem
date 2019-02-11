@@ -42,6 +42,7 @@
 namespace mem
 {
     class simd_scanner
+        : public scanner_base<simd_scanner>
     {
     private:
         const pattern* pattern_ {nullptr};
@@ -52,8 +53,7 @@ namespace mem
 
         simd_scanner(const pattern& pattern);
 
-        template <typename UnaryPredicate>
-        pointer operator()(region range, UnaryPredicate pred) const;
+        pointer scan(region range) const;
     };
 
     const byte* find_byte(const byte* ptr, byte value, std::size_t num);
@@ -63,8 +63,7 @@ namespace mem
         , skip_pos_(_pattern.get_skip_pos())
     { }
 
-    template <typename UnaryPredicate>
-    inline pointer simd_scanner::operator()(region range, UnaryPredicate pred) const
+    inline pointer simd_scanner::scan(region range) const
     {
         const std::size_t trimmed_size = pattern_->trimmed_size();
 
@@ -111,8 +110,7 @@ namespace mem
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);
@@ -141,8 +139,7 @@ namespace mem
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);
@@ -174,8 +171,7 @@ namespace mem
                         continue;
                     }
 
-                    if (MEM_UNLIKELY(pred(current)))
-                        return current;
+                    return current;
 
                     break;
                 } while (true);

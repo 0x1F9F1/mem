@@ -105,7 +105,9 @@ void check_pattern_results(mem::region whole_region, const mem::pattern& pattern
 
     scan_region.copy(scan_data.data());
 
-    auto scan_results = pattern.scan_all(whole_region, mem::default_scanner(pattern));
+    mem::default_scanner scanner(pattern);
+
+    auto scan_results = scanner.scan_all(whole_region);
 
     REQUIRE(scan_results.size() == offsets.size());
 

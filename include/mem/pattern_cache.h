@@ -119,19 +119,23 @@ namespace mem
 
                 if (changed)
                 {
-                    find->second.results = pattern.scan_all(region_, default_scanner(pattern));
-                    find->second.checked = true;
+                    default_scanner scanner(pattern);
+
+                    find->second.results = scanner.scan_all(region_);
                 }
             }
         }
         else
         {
             pattern_results results;
-            results.checked = true;
-            results.results = pattern.scan_all(region_, default_scanner(pattern));
+
+            default_scanner scanner(pattern);
+            results.results = scanner.scan_all(region_);
 
             find = results_.emplace(hash, std::move(results)).first;
         }
+
+        find->second.checked = true;
 
         return find->second.results;
     }

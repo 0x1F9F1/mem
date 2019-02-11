@@ -25,6 +25,7 @@
 namespace mem
 {
     class boyer_moore_scanner
+        : public scanner_base<boyer_moore_scanner>
     {
     private:
         const pattern* pattern_ {nullptr};
@@ -47,19 +48,11 @@ namespace mem
         boyer_moore_scanner(const pattern& pattern);
         boyer_moore_scanner(const pattern& pattern, std::size_t min_bad_char_skip, std::size_t min_good_suffix_skip);
 
-        template <typename UnaryPredicate>
-        pointer operator()(region range, UnaryPredicate pred) const;
+        pointer scan(region range) const;
     };
 
-    static constexpr const std::size_t default_min_bad_char_skip
-    {
-        5
-    };
-
-    static constexpr const std::size_t default_min_good_suffix_skip
-    {
-        25
-    };
+    static constexpr const std::size_t default_min_bad_char_skip {5};
+    static constexpr const std::size_t default_min_good_suffix_skip {25};
 
     inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern)
         : boyer_moore_scanner(_pattern, default_min_bad_char_skip, default_min_good_suffix_skip)
@@ -180,8 +173,7 @@ namespace mem
         return i;
     }
 
-    template <typename UnaryPredicate>
-    inline pointer boyer_moore_scanner::operator()(region range, UnaryPredicate pred) const
+    inline pointer boyer_moore_scanner::scan(region range) const
     {
         const std::size_t trimmed_size = pattern_->trimmed_size();
 
@@ -219,7 +211,7 @@ namespace mem
 
                     current += skip;
 
-                    if (MEM_LIKELY(skip))
+                    if (MEM_LIKELY(skip != 0))
                         continue;
 
                     std::size_t i = last;
@@ -229,15 +221,14 @@ namespace mem
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --i;
 
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);
@@ -258,15 +249,14 @@ namespace mem
                         if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --i;
 
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);
@@ -295,7 +285,7 @@ namespace mem
                         if (MEM_LIKELY(*current != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --current;
                             --i;
@@ -303,8 +293,7 @@ namespace mem
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);
@@ -325,7 +314,7 @@ namespace mem
 
                     current += skip;
 
-                    if (MEM_LIKELY(skip))
+                    if (MEM_LIKELY(skip != 0))
                         continue;
 
                     std::size_t i = last;
@@ -335,15 +324,14 @@ namespace mem
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --i;
 
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);
@@ -364,15 +352,14 @@ namespace mem
                         if (MEM_LIKELY(current[i] != pat_bytes[i]))
                             break;
 
-                        if (MEM_LIKELY(i))
+                        if (MEM_LIKELY(i != 0))
                         {
                             --i;
 
                             continue;
                         }
 
-                        if (MEM_UNLIKELY(pred(current)))
-                            return current;
+                        return current;
 
                         break;
                     } while (true);

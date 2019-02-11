@@ -52,12 +52,6 @@ namespace mem
 
         bool match(pointer address) const noexcept;
 
-        template <typename Scanner>
-        pointer scan(region range, const Scanner& scanner) const;
-
-        template <typename Scanner>
-        std::vector<pointer> scan_all(region range, const Scanner& scanner) const;
-
         const byte* bytes() const noexcept;
         const byte* masks() const noexcept;
 
@@ -322,30 +316,6 @@ namespace mem
         }
     }
 
-    template <typename Scanner>
-    inline pointer pattern::scan(region range, const Scanner& scanner) const
-    {
-        return scanner(range, [ ] (pointer) noexcept
-        {
-            return true;
-        });
-    }
-
-    template <typename Scanner>
-    inline std::vector<pointer> pattern::scan_all(region range, const Scanner& scanner) const
-    {
-        std::vector<pointer> results;
-
-        scanner(range, [&results] (pointer result)
-        {
-            results.emplace_back(result);
-
-            return false;
-        });
-
-        return results;
-    }
-
     MEM_STRONG_INLINE const byte* pattern::bytes() const noexcept
     {
         return !bytes_.empty() ? bytes_.data() : nullptr;
@@ -456,6 +426,65 @@ namespace mem
         }
 
         return result;
+    }
+
+    template <typename Scanner>
+    class scanner_base
+    {
+    public:
+        pointer operator()(region range) const;
+
+        template <typename Func>
+        pointer operator()(region range, Func func) const;
+
+        std::vector<pointer> scan_all(region range) const;
+    };
+
+    template <typename Scanner>
+    MEM_STRONG_INLINE pointer scanner_base<Scanner>::operator()(region range) const
+    {
+        return static_cast<const Scanner*>(this)->scan(range);
+    }
+
+    template <typename Scanner>
+    template <typename Func>
+    inline pointer scanner_base<Scanner>::operator()(region range, Func func) const
+    {
+        while (true)
+        {
+            const pointer result = static_cast<const Scanner*>(this)->scan(range);
+
+            if (result)
+            {
+                if (func(result))
+                {
+                    return result;
+                }
+
+                range = range.sub_region(result + 1);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return nullptr;
+    }
+
+    template <typename Scanner>
+    inline std::vector<pointer> scanner_base<Scanner>::scan_all(region range) const
+    {
+        std::vector<pointer> results;
+
+        (*this)(range, [&results] (pointer result)
+        {
+            results.emplace_back(result);
+
+            return false;
+        });
+
+        return results;
     }
 }
 
