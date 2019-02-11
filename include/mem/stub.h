@@ -17,15 +17,15 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_STUB_BRICK_H)
+#ifndef MEM_STUB_BRICK_H
 #define MEM_STUB_BRICK_H
 
 #include "mem.h"
 
 #if defined(__cpp_lib_invoke) && (__cpp_lib_invoke >= 201411)
-# include <functional>
+#    include <functional>
 #else
-# error mem::stub requires std::invoke
+#    error mem::stub requires std::invoke
 #endif
 
 namespace mem
@@ -35,6 +35,6 @@ namespace mem
     {
         return std::invoke(address.as<Func>(), std::forward<Args>(args)...);
     }
-}
+} // namespace mem
 
 #endif // MEM_STUB_BRICK_H

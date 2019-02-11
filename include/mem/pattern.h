@@ -17,14 +17,14 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_PATTERN_BRICK_H)
+#ifndef MEM_PATTERN_BRICK_H
 #define MEM_PATTERN_BRICK_H
 
-#include "mem.h"
 #include "char_queue.h"
+#include "mem.h"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace mem
 {
@@ -43,7 +43,9 @@ namespace mem
     public:
         explicit pattern() = default;
 
-        enum class wildcard_t : char {};
+        enum class wildcard_t : char
+        {
+        };
 
         explicit pattern(const char* string, wildcard_t wildcard = static_cast<wildcard_t>('?'));
         explicit pattern(const void* bytes, const char* masks, wildcard_t wildcard = static_cast<wildcard_t>('?'));
@@ -70,12 +72,14 @@ namespace mem
     inline bool pattern::parse_chunk(char_queue& input, char wildcard)
     {
         byte value = 0x00;
-        byte mask  = 0x00;
+        byte mask = 0x00;
+
         std::size_t count = 1;
 
         int current = -1;
         int temp = -1;
 
+        // clang-format off
         current = input.peek();
         if ((temp = xctoi(current)) != -1) { input.pop(); value = static_cast<byte>(temp); mask = 0xFF; }
         else if (current == wildcard)      { input.pop(); value = 0x00;                    mask = 0x00; }
@@ -112,6 +116,7 @@ namespace mem
                 else                                    { return false;                                                       }
             }
         }
+        // clang-format on
 
         value &= mask;
 
@@ -332,7 +337,7 @@ namespace mem
     }
 
     namespace internal
-    {
+    { // clang-format off
         static constexpr const byte frequencies[256]
         {
             0xFF,0xFB,0xF2,0xEE,0xEC,0xE7,0xDC,0xC8,0xED,0xB7,0xCC,0xC0,0xD3,0xCD,0x89,0xFA,
@@ -352,7 +357,7 @@ namespace mem
             0xAE,0x5E,0x3F,0x38,0x31,0x22,0x0A,0x14,0xF4,0xD9,0x20,0xB0,0xB2,0x1A,0x0C,0x15,
             0xB3,0x47,0x5D,0xEA,0x4A,0x1B,0x99,0xBC,0xD7,0xA6,0x62,0x4E,0xA8,0x96,0xA7,0xFD,
         };
-    }
+    } // clang-format on
 
     MEM_STRONG_INLINE std::size_t pattern::get_skip_pos() const noexcept
     {
@@ -394,7 +399,7 @@ namespace mem
                 result += ' ';
             }
 
-            const byte mask  = masks_[i];
+            const byte mask = masks_[i];
             const byte value = bytes_[i];
 
             if (mask != 0x00)
@@ -467,8 +472,7 @@ namespace mem
     {
         std::vector<pointer> results;
 
-        (*this)(range, [&results] (pointer result)
-        {
+        (*this)(range, [&results](pointer result) {
             results.emplace_back(result);
 
             return false;
@@ -476,7 +480,7 @@ namespace mem
 
         return results;
     }
-}
+} // namespace mem
 
 #include "simd_scanner.h"
 

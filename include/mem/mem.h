@@ -17,14 +17,14 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_BRICK_H)
+#ifndef MEM_BRICK_H
 #define MEM_BRICK_H
 
 #include "defines.h"
 
+#include <cstring>
 #include <type_traits>
 #include <utility>
-#include <cstring>
 
 namespace mem
 {
@@ -45,7 +45,7 @@ namespace mem
         pointer(T* address) noexcept;
 
         template <typename T, typename C>
-        pointer(T C::* address) noexcept;
+        pointer(T C::*address) noexcept;
 
         constexpr pointer add(std::size_t count) const noexcept;
         constexpr pointer sub(std::size_t count) const noexcept;
@@ -109,7 +109,7 @@ namespace mem
         typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type as() const noexcept;
 
         template <typename T>
-        typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type rcast() & noexcept;
+            typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type rcast() & noexcept;
 
         template <typename Func>
         constexpr pointer and_then(Func&& func) const;
@@ -171,19 +171,19 @@ namespace mem
 
     MEM_STRONG_INLINE constexpr pointer::pointer(std::nullptr_t) noexcept
         : value_(0)
-    { }
+    {}
 
     MEM_STRONG_INLINE constexpr pointer::pointer(std::uintptr_t address) noexcept
         : value_(address)
-    { }
+    {}
 
     template <typename T>
     MEM_STRONG_INLINE pointer::pointer(T* address) noexcept
         : value_(reinterpret_cast<std::uintptr_t>(address))
-    { }
+    {}
 
     template <typename T, typename C>
-    MEM_STRONG_INLINE pointer::pointer(T C::* address) noexcept
+    MEM_STRONG_INLINE pointer::pointer(T C::*address) noexcept
         : value_(reinterpret_cast<const std::uintptr_t&>(address))
     {
         static_assert(sizeof(address) == sizeof(std::uintptr_t), "That's no pointer. It's a space station.");
@@ -373,7 +373,7 @@ namespace mem
     }
 
     template <typename T>
-    MEM_STRONG_INLINE typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::rcast() & noexcept
+        MEM_STRONG_INLINE typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::rcast() & noexcept
     {
         static_assert(sizeof(T) == sizeof(pointer), "That's no pointer. It's a space station.");
 
@@ -399,7 +399,7 @@ namespace mem
 
     MEM_STRONG_INLINE constexpr any_pointer::any_pointer(pointer value) noexcept
         : value_(value.as<std::uintptr_t>())
-    { }
+    {}
 
     MEM_STRONG_INLINE constexpr any_pointer::operator std::uintptr_t() const noexcept
     {
@@ -415,7 +415,7 @@ namespace mem
     MEM_STRONG_INLINE constexpr region::region(pointer start_, std::size_t size_) noexcept
         : start(start_)
         , size(size_)
-    { }
+    {}
 
     MEM_STRONG_INLINE constexpr bool region::contains(region rhs) const noexcept
     {
@@ -474,5 +474,5 @@ namespace mem
     {
         return inst.as<pointer**>()[table][index].rcast<F>();
     }
-}
+} // namespace mem
 #endif // !MEM_BRICK_H

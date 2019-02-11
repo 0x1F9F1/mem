@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_CHAR_QUEUE_BRICK_H)
+#ifndef MEM_CHAR_QUEUE_BRICK_H
 #define MEM_CHAR_QUEUE_BRICK_H
 
 #include "defines.h"
@@ -51,13 +51,13 @@ namespace mem
 
     MEM_STRONG_INLINE char_queue::char_queue(const char* string)
         : char_queue(string, std::strlen(string))
-    { }
+    {}
 
     MEM_STRONG_INLINE constexpr char_queue::char_queue(const char* string, std::size_t length)
         : start(string)
         , end(start + length)
         , current(start)
-    { }
+    {}
 
     MEM_STRONG_INLINE constexpr int char_queue::peek() const noexcept
     {
@@ -83,12 +83,12 @@ namespace mem
     }
 
     MEM_STRONG_INLINE constexpr int xctoi(int value) noexcept
-    {
+    { // clang-format off
         return (value >= '0' && value <= '9') ? (value - '0')
              : (value >= 'a' && value <= 'f') ? (value - 'a' + 10)
              : (value >= 'A' && value <= 'F') ? (value - 'A' + 10)
              : -1;
-    }
+    } // clang-format on
 
     MEM_STRONG_INLINE constexpr int dctoi(int value) noexcept
     {
@@ -99,6 +99,6 @@ namespace mem
     {
         return (value >= '0' && value <= '7') ? (value - '0') : -1;
     }
-}
+} // namespace mem
 
 #endif // MEM_CHAR_QUEUE_BRICK_H

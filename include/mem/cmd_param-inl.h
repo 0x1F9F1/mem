@@ -18,7 +18,7 @@
 */
 
 #if defined(MEM_CMD_PARAM_INL_BRICK_H)
-# error mem/cmd_param-inl.h should only be included once
+#    error mem/cmd_param-inl.h should only be included once
 #endif // MEM_CMD_PARAM_INL_BRICK_H
 
 #define MEM_CMD_PARAM_INL_BRICK_H
@@ -146,7 +146,7 @@ namespace mem
                     for (cmd_param* j = ROOT; j; j = j->next_)
                     {
                         if (j->name_)
-                        {
+                        { // clang-format off
                             if ((!std::strncmp(arg,      "no", 2) && !cmd_strcmp(j->name_, arg + 2)) ||
                                 (!std::strncmp(j->name_, "no", 2) && !cmd_strcmp(j->name_ + 2, arg)))
                             {
@@ -154,7 +154,7 @@ namespace mem
 
                                 used = true;
                             }
-                        }
+                        } // clang-format on
                     }
                 }
             }
@@ -172,4 +172,4 @@ namespace mem
             }
         }
     }
-}
+} // namespace mem

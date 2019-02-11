@@ -17,16 +17,16 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_PATTERN_CACHE_BRICK_H)
+#ifndef MEM_PATTERN_CACHE_BRICK_H
 #define MEM_PATTERN_CACHE_BRICK_H
 
-#include "pattern.h"
 #include "hasher.h"
+#include "pattern.h"
 
 #include <unordered_map>
 
-#include <ostream>
 #include <istream>
+#include <ostream>
 
 namespace mem
 {
@@ -76,7 +76,7 @@ namespace mem
 
     inline pattern_cache::pattern_cache(region range)
         : region_(range)
-    { }
+    {}
 
     inline pointer pattern_cache::scan(const pattern& pattern, std::size_t index, std::size_t expected)
     {
@@ -161,7 +161,7 @@ namespace mem
 
             return result;
         }
-    }
+    } // namespace stream
 
     inline void pattern_cache::save(std::ostream& output) const
     {
@@ -223,6 +223,6 @@ namespace mem
             return false;
         }
     }
-}
+} // namespace mem
 
 #endif // MEM_PATTERN_CACHE_BRICK_H

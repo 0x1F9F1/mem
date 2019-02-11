@@ -17,32 +17,31 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_SIMD_SCANNER_BRICK_H)
+#ifndef MEM_SIMD_SCANNER_BRICK_H
 #define MEM_SIMD_SCANNER_BRICK_H
 
 #include "pattern.h"
 
 #if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
-# if defined(MEM_SIMD_AVX2)
-#  include <immintrin.h>
-# elif defined(MEM_SIMD_SSE3)
-#  include <emmintrin.h>
-#  include <pmmintrin.h>
-# elif defined(MEM_SIMD_SSE2)
-#  include <emmintrin.h>
-# else
-#  define MEM_SIMD_SCANNER_USE_MEMCHR
-# endif
+#    if defined(MEM_SIMD_AVX2)
+#        include <immintrin.h>
+#    elif defined(MEM_SIMD_SSE3)
+#        include <emmintrin.h>
+#        include <pmmintrin.h>
+#    elif defined(MEM_SIMD_SSE2)
+#        include <emmintrin.h>
+#    else
+#        define MEM_SIMD_SCANNER_USE_MEMCHR
+#    endif
 #endif
 
 #if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
-# include "arch.h"
+#    include "arch.h"
 #endif
 
 namespace mem
 {
-    class simd_scanner
-        : public scanner_base<simd_scanner>
+    class simd_scanner : public scanner_base<simd_scanner>
     {
     private:
         const pattern* pattern_ {nullptr};
@@ -61,7 +60,7 @@ namespace mem
     inline simd_scanner::simd_scanner(const pattern& _pattern)
         : pattern_(&_pattern)
         , skip_pos_(_pattern.get_skip_pos())
-    { }
+    {}
 
     inline pointer simd_scanner::scan(region range) const
     {
@@ -169,25 +168,24 @@ namespace mem
     MEM_STRONG_INLINE const byte* find_byte(const byte* ptr, byte value, std::size_t num)
     {
 #if !defined(MEM_SIMD_SCANNER_USE_MEMCHR)
-# if defined(MEM_SIMD_AVX2)
-#  define l_SIMD_TYPE __m256i
-#  define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
-#  define l_SIMD_LOAD(x) _mm256_lddqu_si256(x)
-#  define l_SIMD_CMPEQ_MASK(x, y) _mm256_movemask_epi8(_mm256_cmpeq_epi8(x, y))
-# elif defined(MEM_SIMD_SSE3)
-#  define l_SIMD_TYPE __m128i
-#  define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
-#  define l_SIMD_LOAD(x) _mm_lddqu_si128(x)
-#  define l_SIMD_CMPEQ_MASK(x, y) _mm_movemask_epi8(_mm_cmpeq_epi8(x, y))
-# elif defined(MEM_SIMD_SSE2)
-#  define l_SIMD_TYPE __m128i
-#  define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
-#  define l_SIMD_LOAD(x) _mm_loadu_si128(x)
-#  define l_SIMD_CMPEQ_MASK(x, y) _mm_movemask_epi8(_mm_cmpeq_epi8(x, y))
-# else
-#  error Sorry, No Potatoes
-# endif
-
+#    if defined(MEM_SIMD_AVX2)
+#        define l_SIMD_TYPE __m256i
+#        define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_LOAD(x) _mm256_lddqu_si256(x)
+#        define l_SIMD_CMPEQ_MASK(x, y) _mm256_movemask_epi8(_mm256_cmpeq_epi8(x, y))
+#    elif defined(MEM_SIMD_SSE3)
+#        define l_SIMD_TYPE __m128i
+#        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_LOAD(x) _mm_lddqu_si128(x)
+#        define l_SIMD_CMPEQ_MASK(x, y) _mm_movemask_epi8(_mm_cmpeq_epi8(x, y))
+#    elif defined(MEM_SIMD_SSE2)
+#        define l_SIMD_TYPE __m128i
+#        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_LOAD(x) _mm_loadu_si128(x)
+#        define l_SIMD_CMPEQ_MASK(x, y) _mm_movemask_epi8(_mm_cmpeq_epi8(x, y))
+#    else
+#        error Sorry, No Potatoes
+#    endif
 
         if (MEM_LIKELY(num >= sizeof(l_SIMD_TYPE)))
         {
@@ -216,10 +214,10 @@ namespace mem
 
         return ptr;
 
-# undef l_SIMD_TYPE
-# undef l_SIMD_FILL
-# undef l_SIMD_LOAD
-# undef l_SIMD_CMPEQ_MASK
+#    undef l_SIMD_TYPE
+#    undef l_SIMD_FILL
+#    undef l_SIMD_LOAD
+#    undef l_SIMD_CMPEQ_MASK
 #else
         const byte* result = static_cast<const byte*>(std::memchr(ptr, value, num));
 
@@ -229,6 +227,6 @@ namespace mem
         return result;
 #endif
     }
-}
+} // namespace mem
 
 #endif // MEM_SIMD_SCANNER_BRICK_H

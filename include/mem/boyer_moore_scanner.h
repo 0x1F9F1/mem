@@ -17,15 +17,14 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_BOYER_MOORE_SCANNER_BRICK_H)
+#ifndef MEM_BOYER_MOORE_SCANNER_BRICK_H
 #define MEM_BOYER_MOORE_SCANNER_BRICK_H
 
 #include "pattern.h"
 
 namespace mem
 {
-    class boyer_moore_scanner
-        : public scanner_base<boyer_moore_scanner>
+    class boyer_moore_scanner : public scanner_base<boyer_moore_scanner>
     {
     private:
         const pattern* pattern_ {nullptr};
@@ -56,7 +55,7 @@ namespace mem
 
     inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern)
         : boyer_moore_scanner(_pattern, default_min_bad_char_skip, default_min_good_suffix_skip)
-    { }
+    {}
 
     inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern, std::size_t min_bad_char_skip, std::size_t min_good_suffix_skip)
         : pattern_(&_pattern)
@@ -341,6 +340,6 @@ namespace mem
             }
         }
     }
-}
+} // namespace mem
 
 #endif // MEM_BOYER_MOORE_SCANNER_BRICK_H

@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_EXECUTION_HANDLER_BRICK_H)
+#ifndef MEM_EXECUTION_HANDLER_BRICK_H
 #define MEM_EXECUTION_HANDLER_BRICK_H
 
 #include "defines.h"
@@ -26,16 +26,16 @@
 #include <stdexcept>
 
 #if defined(_WIN32)
-# if !defined(WIN32_LEAN_AND_MEAN)
-#  define WIN32_LEAN_AND_MEAN
-# endif
-# include <Windows.h>
-# include <eh.h>
+#    if !defined(WIN32_LEAN_AND_MEAN)
+#        define WIN32_LEAN_AND_MEAN
+#    endif
+#    include <Windows.h>
+#    include <eh.h>
 #elif defined(__unix__)
-# include <setjmp.h>
-# include <signal.h>
+#    include <setjmp.h>
+#    include <signal.h>
 #else
-# error Unknown Platform
+#    error Unknown Platform
 #endif
 
 namespace mem
@@ -65,7 +65,7 @@ namespace mem
     class signal_handler
     {
     private:
-        std::unique_ptr<char[ ]> sig_stack_;
+        std::unique_ptr<char[]> sig_stack_;
         stack_t old_stack_;
         struct sigaction old_actions_[3];
         sigjmp_buf jmp_buffer_;
@@ -168,7 +168,7 @@ namespace mem
 
             char buffer[2048];
 
-            std::snprintf(buffer, sizeof(buffer),
+            std::snprintf(buffer, sizeof(buffer), // clang-format off
 #if defined(MEM_ARCH_X86_64)
                 "%s (0x%08X) at 0x%016llX\n"
                 "RAX = 0x%016llX RBX = 0x%016llX RCX = 0x%016llX RDX = 0x%016llX\n"
@@ -190,29 +190,29 @@ namespace mem
                 ep->ContextRecord->Eax, ep->ContextRecord->Ebx, ep->ContextRecord->Ecx, ep->ContextRecord->Edx,
                 ep->ContextRecord->Esp, ep->ContextRecord->Ebp, ep->ContextRecord->Esi, ep->ContextRecord->Edi
 #endif
-            );
+            ); // clang-format on
 
             throw std::runtime_error(buffer);
         }
-    }
+    } // namespace internal
 
-# if defined(_MSC_VER)
-#  pragma warning(push)
-#  pragma warning(disable: 4535) // warning C4535: calling _set_se_translator() requires /EHa
-# endif
+#    if defined(_MSC_VER)
+#        pragma warning(push)
+#        pragma warning(disable : 4535) // warning C4535: calling _set_se_translator() requires /EHa
+#    endif
 
     inline scoped_seh::scoped_seh()
         : old_handler_(_set_se_translator(&internal::translate_seh))
-    { }
+    {}
 
     inline scoped_seh::~scoped_seh()
     {
         _set_se_translator(old_handler_);
     }
 
-# if defined(_MSC_VER)
-#  pragma warning(pop)
-# endif
+#    if defined(_MSC_VER)
+#        pragma warning(pop)
+#    endif
 
 #elif defined(__unix__)
     inline signal_handler::signal_handler()
@@ -225,22 +225,22 @@ namespace mem
         new_stack.ss_flags = 0;
         sigaltstack(&new_stack, &old_stack_);
 
-        struct sigaction sa {};
+        struct sigaction sa;
 
         sa.sa_sigaction = &sig_handler;
         sa.sa_flags = SA_ONSTACK | SA_SIGINFO;
         sigemptyset(&sa.sa_mask);
 
         sigaction(SIGSEGV, &sa, &old_actions_[0]);
-        sigaction(SIGILL,  &sa, &old_actions_[1]);
-        sigaction(SIGFPE,  &sa, &old_actions_[2]);
+        sigaction(SIGILL, &sa, &old_actions_[1]);
+        sigaction(SIGFPE, &sa, &old_actions_[2]);
     }
 
     inline signal_handler::~signal_handler()
     {
         sigaction(SIGSEGV, &old_actions_[0], nullptr);
-        sigaction(SIGILL,  &old_actions_[1], nullptr);
-        sigaction(SIGFPE,  &old_actions_[2], nullptr);
+        sigaction(SIGILL, &old_actions_[1], nullptr);
+        sigaction(SIGFPE, &old_actions_[2], nullptr);
 
         sigaltstack(&old_stack_, nullptr);
     }
@@ -275,6 +275,6 @@ namespace mem
         current_handler() = prev_;
     }
 #endif
-}
+} // namespace mem
 
 #endif // MEM_EXECUTION_HANDLER_BRICK_H

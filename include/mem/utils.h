@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_UTILS_BRICK_H)
+#ifndef MEM_UTILS_BRICK_H
 #define MEM_UTILS_BRICK_H
 
 #include "mem.h"
@@ -51,7 +51,7 @@ namespace mem
     }
 
     namespace internal
-    {
+    { // clang-format off
         static constexpr const std::uint8_t utf8_length_table[256]
         {
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -71,7 +71,7 @@ namespace mem
             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
             4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,
         };
-    }
+    } // clang-format on
 
     inline bool is_utf8(region range) noexcept
     {
@@ -152,7 +152,7 @@ namespace mem
             input.pop();
 
             if (current == '\\')
-            {
+            { // clang-format off
                 current = input.peek();
                 input.pop();
 
@@ -256,14 +256,14 @@ namespace mem
 
                     result = static_cast<std::size_t>(current);
                 }
-            }
+            } // clang-format on
             else
             {
                 result = static_cast<std::size_t>(current);
             }
 
             if (output_utf8)
-            {
+            { // clang-format off
                 if ((result > 0x10FFFF) || ((result >= 0xD800) && (result <= 0xDFFF)))
                 {
                     if (strict)
@@ -298,7 +298,7 @@ namespace mem
                     results.push_back(static_cast<byte>(((result >> 6) & 0x3F)  | 0x80));
                     results.push_back(static_cast<byte>((result & 0x3F)         | 0x80));
                 }
-            }
+            } // clang-format on
             else
             {
                 if (result > UCHAR_MAX)
@@ -319,6 +319,6 @@ namespace mem
 
         return results;
     }
-}
+} // namespace mem
 
 #endif // MEM_UTILS_BRICK_H

@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_SLICE_BRICK_H)
+#ifndef MEM_SLICE_BRICK_H
 #define MEM_SLICE_BRICK_H
 
 #include "defines.h"
@@ -90,13 +90,13 @@ namespace mem
     MEM_STRONG_INLINE constexpr slice<T>::slice(T* begin, T* end) noexcept
         : start_(begin)
         , size_(end - begin)
-    { }
+    {}
 
     template <typename T>
     MEM_STRONG_INLINE constexpr slice<T>::slice(T* start, std::size_t size) noexcept
         : start_(start)
         , size_(size)
-    { }
+    {}
 
     template <typename T>
     MEM_STRONG_INLINE constexpr T& slice<T>::operator[](std::size_t index) const noexcept
@@ -137,8 +137,8 @@ namespace mem
     template <typename T>
     MEM_STRONG_INLINE slice<typename copy_cv<T, byte>::type> slice<T>::as_bytes() const noexcept
     {
-        return { reinterpret_cast<typename copy_cv<T, byte>::type*>(start_), size_ * sizeof(T) };
+        return {reinterpret_cast<typename copy_cv<T, byte>::type*>(start_), size_ * sizeof(T)};
     }
-}
+} // namespace mem
 
 #endif // MEM_SLICE_BRICK_H

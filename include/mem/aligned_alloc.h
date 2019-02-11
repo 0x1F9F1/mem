@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_ALIGNED_ALLOC_BRICK_H)
+#ifndef MEM_ALIGNED_ALLOC_BRICK_H
 #define MEM_ALIGNED_ALLOC_BRICK_H
 
 #include "defines.h"
@@ -25,9 +25,9 @@
 #include <memory>
 
 #if defined(_WIN32)
-# include <malloc.h>
+#    include <malloc.h>
 #else
-# include <cstdlib>
+#    include <cstdlib>
 #endif
 
 namespace mem
@@ -78,6 +78,6 @@ namespace mem
         std::free(reinterpret_cast<void**>(address)[-1]);
 #endif
     }
-}
+} // namespace mem
 
 #endif // MEM_ALIGNED_ALLOC_BRICK_H

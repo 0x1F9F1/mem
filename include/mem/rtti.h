@@ -17,17 +17,17 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_RTTI_BRICK_H)
+#ifndef MEM_RTTI_BRICK_H
 #define MEM_RTTI_BRICK_H
 
 #include "mem.h"
 
 #if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-# if !defined(_WIN32)
-#  error mem::rtti only supports windows
-# endif // !_WIN32
+#    if !defined(_WIN32)
+#        error mem::rtti only supports windows
+#    endif // !_WIN32
 #else
-# error mem::rtti only supports x86 and x64
+#    error mem::rtti only supports x86 and x64
 #endif
 
 #include <functional>
@@ -84,9 +84,9 @@ namespace mem
 
         struct RTTIClassHierarchyDescriptor
         {
-            std::uint32_t signature;        // 0 = x86, 1 = x64
-            std::uint32_t attributes;       // bit 0 set = multiple inheritance, bit 1 set = virtual inheritance
-            std::uint32_t numBaseClasses;   // number of base classes
+            std::uint32_t signature;      // 0 = x86, 1 = x64
+            std::uint32_t attributes;     // bit 0 set = multiple inheritance, bit 1 set = virtual inheritance
+            std::uint32_t numBaseClasses; // number of base classes
             std::uint32_t pBaseClassArray;
 
             bool check_signature() const;
@@ -105,15 +105,16 @@ namespace mem
 
         struct RTTIBaseClassDescriptor
         {
-            std::uint32_t pTypeDescriptor;      // type descriptor of the class
-            std::uint32_t numContainedBases;    // number of nested classes following in the Base Class Array
-            PMD where;                     // pointer-to-member displacement info
-            std::uint32_t attributes;           // flags, usually 0
+            std::uint32_t pTypeDescriptor;   // type descriptor of the class
+            std::uint32_t numContainedBases; // number of nested classes following in the Base Class Array
+            PMD where;                       // pointer-to-member displacement info
+            std::uint32_t attributes;        // flags, usually 0
 
             RTTITypeDescriptor* get_type(const region& region) const;
         };
 
-        void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback);
+        void enumerate_rtti(
+            const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback);
         const RTTITypeDescriptor* find_rtti_type(const region& region, const char* name);
 
         inline constexpr bool check_rtti_signature(std::uint32_t signature) noexcept
@@ -123,7 +124,7 @@ namespace mem
 #elif defined(MEM_ARCH_X86)
             return signature == 0;
 #else
-# error "Invalid Architecture"
+#    error "Invalid Architecture"
 #endif
         }
 
@@ -137,7 +138,7 @@ namespace mem
 
             return region.contains(result) ? result.as<T*>() : nullptr;
 #else
-# error "Invalid Architecture"
+#    error "Invalid Architecture"
 #endif
         }
 
@@ -146,7 +147,8 @@ namespace mem
         {
             char buffer[1024];
 
-            if (DWORD symbol_size = UnDecorateSymbolName(DecoratedName + 1, buffer, 1024, UNDNAME_32_BIT_DECODE | UNDNAME_NAME_ONLY | UNDNAME_NO_ARGUMENTS | UNDNAME_NO_MS_KEYWORDS))
+            if (DWORD symbol_size = UnDecorateSymbolName(
+                    DecoratedName + 1, buffer, 1024, UNDNAME_32_BIT_DECODE | UNDNAME_NAME_ONLY | UNDNAME_NO_ARGUMENTS | UNDNAME_NO_MS_KEYWORDS))
             {
                 return std::string(buffer, symbol_size);
             }
@@ -220,7 +222,8 @@ namespace mem
             return get_rtti_pointer<RTTITypeDescriptor>(region, pTypeDescriptor);
         }
 
-        inline void enumerate_rtti(const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback)
+        inline void enumerate_rtti(
+            const region& region, std::function<bool(const void** vTable, const RTTICompleteObjectLocator* object, const RTTITypeDescriptor* type)> callback)
         {
             for (std::size_t i = 0; i < region.size; i += sizeof(void*))
             {
@@ -272,8 +275,7 @@ namespace mem
         {
             const RTTITypeDescriptor* result = nullptr;
 
-            enumerate_rtti(region, [&result, name] (const void**, const RTTICompleteObjectLocator*, const RTTITypeDescriptor* type) -> bool
-            {
+            enumerate_rtti(region, [&result, name](const void**, const RTTICompleteObjectLocator*, const RTTITypeDescriptor* type) -> bool {
                 if (type->demangle() == name)
                 {
                     result = type;
@@ -287,6 +289,6 @@ namespace mem
             return result;
         }
 #endif // MEM_RTTI_DEMANGLE
-    }
-}
+    }  // namespace rtti
+} // namespace mem
 #endif // !MEM_RTTI_BRICK_H

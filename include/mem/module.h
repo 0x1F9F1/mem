@@ -17,44 +17,43 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_MODULE_BRICK_H)
+#ifndef MEM_MODULE_BRICK_H
 #define MEM_MODULE_BRICK_H
 
 #include "mem.h"
-#include "slice.h"
 #include "prot_flags.h"
+#include "slice.h"
 
-#include <memory>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 
 #if defined(_WIN32)
-# if !defined(WIN32_LEAN_AND_MEAN)
-#  define WIN32_LEAN_AND_MEAN
-# endif
-# include <Windows.h>
-# include <intrin.h>
-# if defined(_WIN64)
-#  pragma intrinsic(__readgsqword)
-# else
-#  pragma intrinsic(__readfsdword)
-# endif
+#    if !defined(WIN32_LEAN_AND_MEAN)
+#        define WIN32_LEAN_AND_MEAN
+#    endif
+#    include <Windows.h>
+#    include <intrin.h>
+#    if defined(_WIN64)
+#        pragma intrinsic(__readgsqword)
+#    else
+#        pragma intrinsic(__readfsdword)
+#    endif
 #elif defined(__unix__)
-# ifndef _GNU_SOURCE
-#  define _GNU_SOURCE
-# endif
-# include <link.h>
-# if defined(MEM_USE_DLFCN) // Requires -ldl linker flag
-#  include <dlfcn.h>
-# endif
+#    ifndef _GNU_SOURCE
+#        define _GNU_SOURCE
+#    endif
+#    include <link.h>
+#    if defined(MEM_USE_DLFCN) // Requires -ldl linker flag
+#        include <dlfcn.h>
+#    endif
 #else
-# error Unknown Platform
+#    error Unknown Platform
 #endif
 
 namespace mem
 {
-    class module
-        : public region
+    class module : public region
     {
     public:
         using region::region;
@@ -69,7 +68,7 @@ namespace mem
 #elif defined(__unix__)
         static module elf(pointer address);
 
-        const ElfW(Ehdr)& elf_header();
+        const ElfW(Ehdr) & elf_header();
         slice<const ElfW(Phdr)> program_headers();
         slice<const ElfW(Shdr)> section_headers();
 #endif
@@ -101,11 +100,11 @@ namespace mem
 
     MEM_STRONG_INLINE PEB* get_peb() noexcept
     {
-#if defined(_WIN64)
+#    if defined(_WIN64)
         return reinterpret_cast<PEB*>(__readgsqword(0x60));
-#else
+#    else
         return reinterpret_cast<PEB*>(__readfsdword(0x30));
-#endif
+#    endif
     }
 
     MEM_STRONG_INLINE module module::nt(pointer address)
@@ -164,7 +163,7 @@ namespace mem
         const IMAGE_NT_HEADERS& nt = nt_headers();
         const IMAGE_SECTION_HEADER* sections = IMAGE_FIRST_SECTION(&nt);
 
-        return { sections, nt.FileHeader.NumberOfSections };
+        return {sections, nt.FileHeader.NumberOfSections};
     }
 
     template <typename Func>
@@ -195,7 +194,7 @@ namespace mem
 
 #elif defined(__unix__)
     // https://github.com/torvalds/linux/blob/master/fs/binfmt_elf.c
-    inline std::size_t total_mapping_size(const ElfW(Phdr)* cmds, std::size_t count)
+    inline std::size_t total_mapping_size(const ElfW(Phdr) * cmds, std::size_t count)
     {
         std::size_t first_idx = SIZE_MAX, last_idx = SIZE_MAX;
 
@@ -223,6 +222,7 @@ namespace mem
 
         const ElfW(Ehdr)& ehdr = address.at<const ElfW(Ehdr)&>(0);
 
+        // clang-format off
         if (ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
             ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
             ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
@@ -232,14 +232,15 @@ namespace mem
         if (ehdr.e_phentsize != sizeof(ElfW(Phdr)) ||
             ehdr.e_shentsize != sizeof(ElfW(Shdr)))
             return module();
+        // clang-format on
 
-        const ElfW(Phdr)* phdr = address.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
+        const ElfW(Phdr)* phdr = address.at<const ElfW(Phdr)[]>(ehdr.e_phoff);
         const std::size_t mapping_size = total_mapping_size(phdr, ehdr.e_phnum);
 
         return module(address, mapping_size);
     }
 
-    MEM_STRONG_INLINE const ElfW(Ehdr)& module::elf_header()
+    MEM_STRONG_INLINE const ElfW(Ehdr) & module::elf_header()
     {
         return start.at<const ElfW(Ehdr)>(0);
     }
@@ -247,23 +248,23 @@ namespace mem
     MEM_STRONG_INLINE slice<const ElfW(Phdr)> module::program_headers()
     {
         const ElfW(Ehdr)& ehdr = elf_header();
-        const ElfW(Phdr)* phdr = start.at<const ElfW(Phdr)[ ]>(ehdr.e_phoff);
+        const ElfW(Phdr)* phdr = start.at<const ElfW(Phdr)[]>(ehdr.e_phoff);
 
-        return { phdr, ehdr.e_phnum };
+        return {phdr, ehdr.e_phnum};
     }
 
     MEM_STRONG_INLINE slice<const ElfW(Shdr)> module::section_headers()
     {
         const ElfW(Ehdr)& ehdr = elf_header();
-        const ElfW(Shdr)* shdr = start.at<const ElfW(Shdr)[ ]>(ehdr.e_shoff);
+        const ElfW(Shdr)* shdr = start.at<const ElfW(Shdr)[]>(ehdr.e_shoff);
 
-        return { shdr, ehdr.e_shnum };
+        return {shdr, ehdr.e_shnum};
     }
 
     template <typename Func>
     MEM_STRONG_INLINE void module::enum_segments(Func func)
     {
-        for (const ElfW(Phdr)& section : program_headers())
+        for (const ElfW(Phdr) & section : program_headers())
         {
             if (section.p_type != PT_LOAD)
                 continue;
@@ -304,21 +305,21 @@ namespace mem
         return elf(&internal::__ehdr_start);
     }
 
-#if defined(MEM_USE_DLFCN)
+#    if defined(MEM_USE_DLFCN)
     MEM_STRONG_INLINE module module::named(const char* name)
     {
         void* handle = dlopen(name, RTLD_LAZY | RTLD_NOLOAD);
 
         if (handle)
         {
-#if defined(MEM_USE_DLINFO)
+#        if defined(MEM_USE_DLINFO)
             const link_map* lm = nullptr;
 
             if (dlinfo(handle, RTLD_DI_LINKMAP, &lm))
                 lm = nullptr;
-#else
+#        else
             const link_map* lm = static_cast<const link_map*>(handle);
-#endif
+#        endif
 
             void* base_addr = nullptr;
 
@@ -339,7 +340,7 @@ namespace mem
 
         return module();
     }
-#else
+#    else
     namespace internal
     {
         struct dl_iterate_query
@@ -383,7 +384,7 @@ namespace mem
 
             return 0;
         }
-    }
+    } // namespace internal
 
     MEM_STRONG_INLINE module module::named(const char* name)
     {
@@ -398,8 +399,8 @@ namespace mem
 
         return module();
     }
+#    endif
 #endif
-#endif
-}
+} // namespace mem
 
 #endif // MEM_MODULE_BRICK_H

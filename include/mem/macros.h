@@ -17,16 +17,17 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_MACROS_BRICK_H)
+#ifndef MEM_MACROS_BRICK_H
 #define MEM_MACROS_BRICK_H
 
-#include "mem.h"
 #include "init_function.h"
+#include "mem.h"
 
 #define decl_static(TYPE, NAME) static typename std::add_lvalue_reference<TYPE>::type NAME
 #define defn_static(ADDRESS, NAME) decltype(NAME) NAME = mem::pointer(ADDRESS).as<decltype(NAME)>()
 
-#define extern_var(ADDRESS, TYPE, NAME) typename std::add_lvalue_reference<TYPE>::type NAME = mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
+#define extern_var(ADDRESS, TYPE, NAME) \
+    typename std::add_lvalue_reference<TYPE>::type NAME = mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
 
 #define check_size(type, size) static_assert(sizeof(type) == (size), "sizeof(" #type ") != " #size)
 
@@ -39,13 +40,18 @@
 #define run_once(body) static mem::init_function mem_paste(run_once_, __LINE__)(body)
 
 #if defined(_MSC_VER)
-# define define_dummy_symbol(NAME) extern "C" namespace dummy { void mem_paste(dummy_symbol_, NAME)() { } }
-# if defined(MEM_ARCH_X86)
-#  define dummy_symbol_prefix "_"
-# else
-#  define dummy_symbol_prefix ""
-# endif
-# define include_dummy_symbol(NAME) __pragma(comment(linker, "/INCLUDE:" dummy_symbol_prefix mem_str(mem_paste(dummy_symbol_, NAME))))
+#    define define_dummy_symbol(NAME)             \
+        extern "C" namespace dummy                \
+        {                                         \
+            void mem_paste(dummy_symbol_, NAME)() \
+            {}                                    \
+        }
+#    if defined(MEM_ARCH_X86)
+#        define dummy_symbol_prefix "_"
+#    else
+#        define dummy_symbol_prefix ""
+#    endif
+#    define include_dummy_symbol(NAME) __pragma(comment(linker, "/INCLUDE:" dummy_symbol_prefix mem_str(mem_paste(dummy_symbol_, NAME))))
 #endif
 
 #endif // MEM_MACROS_BRICK_H

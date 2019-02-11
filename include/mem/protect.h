@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_PROTECT_BRICK_H)
+#ifndef MEM_PROTECT_BRICK_H
 #define MEM_PROTECT_BRICK_H
 
 #include "mem.h"
@@ -26,19 +26,19 @@
 #include <cstdio>
 
 #if defined(_WIN32)
-# if !defined(WIN32_LEAN_AND_MEAN)
-#  define WIN32_LEAN_AND_MEAN
-# endif
-# include <Windows.h>
+#    if !defined(WIN32_LEAN_AND_MEAN)
+#        define WIN32_LEAN_AND_MEAN
+#    endif
+#    include <Windows.h>
 #elif defined(__unix__)
-# if !defined(_GNU_SOURCE)
-#  define _GNU_SOURCE
-# endif
-# include <cinttypes>
-# include <unistd.h>
-# include <sys/mman.h>
+#    if !defined(_GNU_SOURCE)
+#        define _GNU_SOURCE
+#    endif
+#    include <cinttypes>
+#    include <sys/mman.h>
+#    include <unistd.h>
 #else
-# error Unknown Platform
+#    error Unknown Platform
 #endif
 
 namespace mem
@@ -63,11 +63,10 @@ namespace mem
         const char* path_name;
     };
 
-    int iter_proc_maps(int(*callback)(region_info*, void*), void* data);
+    int iter_proc_maps(int (*callback)(region_info*, void*), void* data);
 #endif
 
-    class protect
-        : public region
+    class protect : public region
     {
     private:
         prot_flags old_flags_ {prot_flags::INVALID};
@@ -142,7 +141,7 @@ namespace mem
 
             return 0;
         }
-    }
+    } // namespace internal
 #endif
 
     inline prot_flags protect_query(void* memory)
@@ -193,7 +192,7 @@ namespace mem
     }
 
 #if defined(__unix__)
-    inline int iter_proc_maps(int(*callback)(region_info*, void*), void* data)
+    inline int iter_proc_maps(int (*callback)(region_info*, void*), void* data)
     {
         FILE* maps = std::fopen("/proc/self/maps", "r");
 
@@ -210,7 +209,8 @@ namespace mem
 
             while (std::fgets(buffer, 256, maps))
             {
-                int count = std::sscanf(buffer, "%" SCNxPTR "-%" SCNxPTR " %4s %zx %*x:%*x %*u %255s", &region.start, &region.end, perms, &region.offset, pathname);
+                int count =
+                    std::sscanf(buffer, "%" SCNxPTR "-%" SCNxPTR " %4s %zx %*x:%*x %*u %255s", &region.start, &region.end, perms, &region.offset, pathname);
 
                 if (count < 4)
                     continue;
@@ -259,7 +259,7 @@ namespace mem
         : region(range)
         , old_flags_(prot_flags::INVALID)
         , success_(protect_modify(start.as<void*>(), size, flags, &old_flags_))
-    { }
+    {}
 
     MEM_STRONG_INLINE protect::~protect()
     {
@@ -289,6 +289,6 @@ namespace mem
 
         return old_flags_;
     }
-}
+} // namespace mem
 
 #endif // MEM_PROTECT_BRICK_H

@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_HASHER_BRICK_H)
+#ifndef MEM_HASHER_BRICK_H
 #define MEM_HASHER_BRICK_H
 
 #include "defines.h"
@@ -42,7 +42,7 @@ namespace mem
 
     MEM_STRONG_INLINE hasher::hasher(std::uint32_t seed) noexcept
         : hash_(seed)
-    { }
+    {}
 
     MEM_STRONG_INLINE void hasher::update(const void* data, std::size_t length) noexcept
     {
@@ -76,6 +76,6 @@ namespace mem
 
         return hash;
     }
-}
+} // namespace mem
 
 #endif // MEM_HASHER_BRICK_H

@@ -17,19 +17,19 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_ARCH_BRICK_H)
+#ifndef MEM_ARCH_BRICK_H
 #define MEM_ARCH_BRICK_H
 
 #include "defines.h"
 
 #if defined(MEM_ARCH_X86) || defined(MEM_ARCH_X86_64)
-# if defined(_MSC_VER)
-#  include <intrin.h>
-#  pragma intrinsic(__rdtsc)
-#  pragma intrinsic(_BitScanForward)
-# else
-#  include <x86intrin.h>
-# endif
+#    if defined(_MSC_VER)
+#        include <intrin.h>
+#        pragma intrinsic(__rdtsc)
+#        pragma intrinsic(_BitScanForward)
+#    else
+#        include <x86intrin.h>
+#    endif
 #endif
 
 namespace mem
@@ -42,19 +42,19 @@ namespace mem
 
     MEM_STRONG_INLINE unsigned int bsf(unsigned int x) noexcept
     {
-# if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
+#    if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
         return static_cast<unsigned int>(__builtin_ctz(x));
-# elif defined(_MSC_VER)
+#    elif defined(_MSC_VER)
         unsigned long result;
         _BitScanForward(&result, static_cast<unsigned long>(x));
         return static_cast<unsigned int>(result);
-# else
+#    else
         unsigned int result;
-        asm("bsf %1, %0" : "=r" (result) : "rm" (x));
+        asm("bsf %1, %0" : "=r"(result) : "rm"(x));
         return result;
-# endif
+#    endif
     }
 #endif
-}
+} // namespace mem
 
 #endif // MEM_ARCH_BRICK_H

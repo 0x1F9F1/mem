@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_INIT_FUNCTION_BRICK_H)
+#ifndef MEM_INIT_FUNCTION_BRICK_H
 #define MEM_INIT_FUNCTION_BRICK_H
 
 #include "defines.h"
@@ -27,7 +27,7 @@ namespace mem
     class init_function
     {
     public:
-        using callback_t = void(*)();
+        using callback_t = void (*)();
 
     private:
         static init_function* ROOT;
@@ -60,11 +60,11 @@ namespace mem
 
     MEM_STRONG_INLINE init_function::init_function(callback_t callback) noexcept
         : init_function(ROOT, callback)
-    { }
+    {}
 
     MEM_STRONG_INLINE init_function::init_function(init_function& parent, callback_t callback) noexcept
         : init_function(parent.next_, callback)
-    { }
+    {}
 
 #if defined(MEM_INIT_FUNCTION_USE_DESTRUCTOR)
     MEM_STRONG_INLINE init_function::~init_function()
@@ -104,6 +104,6 @@ namespace mem
 
         return total;
     }
-}
+} // namespace mem
 
 #endif // MEM_INIT_FUNCTION_BRICK_H

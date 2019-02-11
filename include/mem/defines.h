@@ -17,75 +17,77 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_DEFINES_BRICK_H)
+#ifndef MEM_DEFINES_BRICK_H
 #define MEM_DEFINES_BRICK_H
 
 #if defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-# define MEM_ARCH_X86_64
+#    define MEM_ARCH_X86_64
 #elif defined(__i386) || defined(_M_IX86)
-# define MEM_ARCH_X86
+#    define MEM_ARCH_X86
 #endif
 
 #if defined(__AVX2__)
-# define MEM_SIMD_AVX2
+#    define MEM_SIMD_AVX2
 #endif
 
-#if defined (__AVX__) || defined(MEM_SIMD_AVX2)
-# define MEM_SIMD_AVX
+#if defined(__AVX__) || defined(MEM_SIMD_AVX2)
+#    define MEM_SIMD_AVX
 #endif
 
 #if defined(__SSSE3__) || defined(MEM_SIMD_AVX)
-# define MEM_SIMD_SSSE3
+#    define MEM_SIMD_SSSE3
 #endif
 
 #if defined(__SSE3__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || defined(MEM_SIMD_SSSE3)
-# define MEM_SIMD_SSE3
+#    define MEM_SIMD_SSE3
 #endif
 
 #if defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || defined(MEM_SIMD_SSE3)
-# define MEM_SIMD_SSE2
+#    define MEM_SIMD_SSE2
 #endif
 
 #if defined(__SSE__) || (defined(_M_IX86_FP) && (_M_IX86_FP == 1)) || defined(MEM_SIMD_SSE2)
-# define MEM_SIMD_SSE
+#    define MEM_SIMD_SSE
 #endif
 
 #if !defined(MEM_CONSTEXPR_14)
-# if (defined(__cpp_constexpr) && (__cpp_constexpr >= 201304)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 191426433))
-#  define MEM_CONSTEXPR_14 constexpr
-# else
-#  define MEM_CONSTEXPR_14
-# endif
+#    if (defined(__cpp_constexpr) && (__cpp_constexpr >= 201304)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 191426433))
+#        define MEM_CONSTEXPR_14 constexpr
+#    else
+#        define MEM_CONSTEXPR_14
+#    endif
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-# define MEM_LIKELY(x) __builtin_expect(static_cast<bool>(x), 1)
-# define MEM_UNLIKELY(x) __builtin_expect(static_cast<bool>(x), 0)
+#    define MEM_LIKELY(x) __builtin_expect(static_cast<bool>(x), 1)
+#    define MEM_UNLIKELY(x) __builtin_expect(static_cast<bool>(x), 0)
 #else
-# define MEM_LIKELY(x) static_cast<bool>(x)
-# define MEM_UNLIKELY(x) static_cast<bool>(x)
+#    define MEM_LIKELY(x) static_cast<bool>(x)
+#    define MEM_UNLIKELY(x) static_cast<bool>(x)
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-# define MEM_STRONG_INLINE __attribute__((always_inline)) inline
+#    define MEM_STRONG_INLINE __attribute__((always_inline)) inline
 #elif defined(_MSC_VER)
-# define MEM_STRONG_INLINE __pragma(warning(suppress:4714)) inline __forceinline
+#    define MEM_STRONG_INLINE __pragma(warning(suppress : 4714)) inline __forceinline
 #else
-# define MEM_STRONG_INLINE inline
+#    define MEM_STRONG_INLINE inline
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-# define MEM_NOINLINE __attribute__((noinline))
+#    define MEM_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
-# define MEM_NOINLINE __declspec(noinline)
+#    define MEM_NOINLINE __declspec(noinline)
 #else
-# define MEM_NOINLINE
+#    define MEM_NOINLINE
 #endif
 
 #include <climits>
+#include <cstddef>
+#include <cstdint>
 
 #if CHAR_BIT != 8
-# error Only 8-bit bytes are supported
+#    error Only 8-bit bytes are supported
 #endif
 
 namespace mem
@@ -95,25 +97,25 @@ namespace mem
     inline namespace conventions
     {
         template <typename Result, typename... Args>
-        using func_t = Result(*)(Args...);
+        using func_t = Result (*)(Args...);
 
         template <typename Result, typename Class, typename... Args>
-        using member_func_t = Result(Class::*)(Args...);
+        using member_func_t = Result (Class::*)(Args...);
 
 #if defined(MEM_ARCH_X86)
-# if defined(__GNUC__) || defined(__clang__)
+#    if defined(__GNUC__) || defined(__clang__)
         template <typename Result, typename... Args>
-        using cdecl_t = Result(__attribute__((cdecl))*)(Args...);
+        using cdecl_t = Result(__attribute__((cdecl)) *)(Args...);
 
         template <typename Result, typename... Args>
-        using stdcall_t = Result(__attribute__((stdcall))*)(Args...);
+        using stdcall_t = Result(__attribute__((stdcall)) *)(Args...);
 
         template <typename Result, typename... Args>
-        using fastcall_t = Result(__attribute__((fastcall))*)(Args...);
+        using fastcall_t = Result(__attribute__((fastcall)) *)(Args...);
 
         template <typename Result, typename... Args>
-        using thiscall_t = Result(__attribute__((thiscall))*)(Args...);
-# elif defined(_MSC_VER)
+        using thiscall_t = Result(__attribute__((thiscall)) *)(Args...);
+#    elif defined(_MSC_VER)
         template <typename Result, typename... Args>
         using cdecl_t = Result(__cdecl*)(Args...);
 
@@ -125,12 +127,9 @@ namespace mem
 
         template <typename Result, typename... Args>
         using thiscall_t = Result(__thiscall*)(Args...);
-# endif
+#    endif
 #endif
-    }
-}
-
-#include <cstdint>
-#include <cstddef>
+    } // namespace conventions
+} // namespace mem
 
 #endif // MEM_DEFINES_BRICK_H

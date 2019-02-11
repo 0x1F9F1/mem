@@ -17,21 +17,21 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_PROT_FLAGS_BRICK_H)
+#ifndef MEM_PROT_FLAGS_BRICK_H
 #define MEM_PROT_FLAGS_BRICK_H
 
-#include "defines.h"
 #include "bitwise_enum.h"
+#include "defines.h"
 
 #if defined(_WIN32)
-# if !defined(WIN32_LEAN_AND_MEAN)
-#  define WIN32_LEAN_AND_MEAN
-# endif
-# include <Windows.h>
+#    if !defined(WIN32_LEAN_AND_MEAN)
+#        define WIN32_LEAN_AND_MEAN
+#    endif
+#    include <Windows.h>
 #elif defined(__unix__)
-# include <sys/mman.h>
+#    include <sys/mman.h>
 #else
-# error Unknown Platform
+#    error Unknown Platform
 #endif
 
 namespace mem
@@ -48,13 +48,13 @@ namespace mem
 
             INVALID = 0x80000000, // Invalid
 
-            RW  = R | W,
-            RX  = R | X,
+            RW = R | W,
+            RX = R | X,
             RWX = R | W | X,
         };
 
         MEM_DEFINE_ENUM_FLAG_OPERATORS(prot_flags)
-    }
+    } // namespace enums
 
     using enums::prot_flags;
 
@@ -68,7 +68,7 @@ namespace mem
     MEM_CONSTEXPR_14 prot_flags to_prot_flags(native_prot flags) noexcept;
 
     inline MEM_CONSTEXPR_14 native_prot from_prot_flags(prot_flags flags) noexcept
-    {
+    { // clang-format off
 #if defined(_WIN32)
         native_prot result = PAGE_NOACCESS;
 
@@ -98,10 +98,10 @@ namespace mem
 
         return result;
 #endif
-    }
+    } // clang-format on
 
     inline MEM_CONSTEXPR_14 prot_flags to_prot_flags(native_prot flags) noexcept
-    {
+    { // clang-format off
 #if defined(_WIN32)
         prot_flags result = prot_flags::NONE;
 
@@ -133,7 +133,7 @@ namespace mem
 
         return result;
 #endif
-    }
-}
+    } // clang-format on
+} // namespace mem
 
 #endif // MEM_PROT_FLAGS_BRICK_H

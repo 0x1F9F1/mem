@@ -17,13 +17,13 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_DATA_BUFFER_BRICK_H)
+#ifndef MEM_DATA_BUFFER_BRICK_H
 #define MEM_DATA_BUFFER_BRICK_H
 
 #include "defines.h"
 
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 
 #include <type_traits>
 
@@ -355,6 +355,6 @@ namespace mem
     {
         return size_ == 0;
     }
-}
+} // namespace mem
 
 #endif // MEM_DATA_BUFFER_BRICK_H

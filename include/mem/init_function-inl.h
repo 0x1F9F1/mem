@@ -18,7 +18,7 @@
 */
 
 #if defined(MEM_INIT_FUNCTION_INL_BRICK_H)
-# error mem/init_function-inl.h should only be included once
+#    error mem/init_function-inl.h should only be included once
 #endif // MEM_INIT_FUNCTION_INL_BRICK_H
 
 #define MEM_INIT_FUNCTION_INL_BRICK_H

@@ -17,7 +17,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#if !defined(MEM_CMD_PARAM_BRICK_H)
+#ifndef MEM_CMD_PARAM_BRICK_H
 #define MEM_CMD_PARAM_BRICK_H
 
 #include "defines.h"
@@ -83,8 +83,7 @@ namespace mem
     namespace internal
     {
         template <typename T>
-        class fixed_basic_streambuf final
-            : public std::basic_streambuf<T>
+        class fixed_basic_streambuf final : public std::basic_streambuf<T>
         {
         public:
             fixed_basic_streambuf(const T* ptr, std::size_t num)
@@ -96,7 +95,7 @@ namespace mem
         };
 
         using fixed_streambuf = fixed_basic_streambuf<char>;
-    }
+    } // namespace internal
 
     template <typename T>
     MEM_STRONG_INLINE bool parse_cmd(const char* value, T& out)
@@ -237,6 +236,6 @@ namespace mem
 
         return value;
     }
-}
+} // namespace mem
 
 #endif // MEM_CMD_PARAM_BRICK_H
