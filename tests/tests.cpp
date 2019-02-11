@@ -258,7 +258,7 @@ TEST_CASE("mem::as_hex")
 
 void check_unescape_string(const char* string, const void* data, size_t length, bool strict)
 {
-    std::string unescaped = mem::unescape(string, strlen(string), strict);
+    std::vector<mem::byte> unescaped = mem::unescape(string, strlen(string), strict);
 
     REQUIRE(unescaped.size() == length);
     REQUIRE(memcmp(unescaped.data(), data, length) == 0);

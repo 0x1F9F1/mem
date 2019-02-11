@@ -23,6 +23,7 @@
 #include "mem.h"
 
 #include <string>
+#include <vector>
 
 #include "char_queue.h"
 
@@ -34,7 +35,7 @@ namespace mem
     std::string as_string(region range);
     std::string as_hex(region range, bool upper_case = true, bool padded = true);
 
-    std::string unescape(const char* string, std::size_t length, bool strict = false);
+    std::vector<byte> unescape(const char* string, std::size_t length, bool strict = false);
 
     MEM_STRONG_INLINE bool is_ascii(region range) noexcept
     {
@@ -131,9 +132,9 @@ namespace mem
         return result;
     }
 
-    inline std::string unescape(const char* string, std::size_t length, bool strict)
+    inline std::vector<byte> unescape(const char* string, std::size_t length, bool strict)
     {
-        std::string results;
+        std::vector<byte> results;
 
         char_queue input(string, length);
 
@@ -180,7 +181,7 @@ namespace mem
 
                     if (strict && (count == 0))
                     {
-                        return "";
+                        return {};
                     }
                 }
                 else if (current == 'u')
@@ -203,7 +204,7 @@ namespace mem
 
                     if (strict && (count != 4))
                     {
-                        return "";
+                        return {};
                     }
                 }
                 else if (current == 'U')
@@ -226,7 +227,7 @@ namespace mem
 
                     if (strict && (count != 8))
                     {
-                        return "";
+                        return {};
                     }
                 }
                 else if ((temp = octoi(current)) != -1)
@@ -250,7 +251,7 @@ namespace mem
                 {
                     if (strict)
                     {
-                        return "";
+                        return {};
                     }
 
                     result = static_cast<std::size_t>(current);
@@ -267,7 +268,7 @@ namespace mem
                 {
                     if (strict)
                     {
-                        return "";
+                        return {};
                     }
                     else
                     {
@@ -277,25 +278,25 @@ namespace mem
 
                 if (result < 0x80)
                 {
-                    results.push_back(static_cast<char>(result));
+                    results.push_back(static_cast<byte>(result));
                 }
                 else if (result < 0x800)
                 {
-                    results.push_back(static_cast<char>((result >> 6)   | 0xC0));
-                    results.push_back(static_cast<char>((result & 0x3F) | 0x80));
+                    results.push_back(static_cast<byte>((result >> 6)   | 0xC0));
+                    results.push_back(static_cast<byte>((result & 0x3F) | 0x80));
                 }
                 else if (result < 0x10000)
                 {
-                    results.push_back(static_cast<char>((result >> 12)         | 0xE0));
-                    results.push_back(static_cast<char>(((result >> 6) & 0x3F) | 0x80));
-                    results.push_back(static_cast<char>((result & 0x3F)        | 0x80));
+                    results.push_back(static_cast<byte>((result >> 12)         | 0xE0));
+                    results.push_back(static_cast<byte>(((result >> 6) & 0x3F) | 0x80));
+                    results.push_back(static_cast<byte>((result & 0x3F)        | 0x80));
                 }
                 else
                 {
-                    results.push_back(static_cast<char>((result >> 18)          | 0xF0));
-                    results.push_back(static_cast<char>(((result >> 12) & 0x3F) | 0x80));
-                    results.push_back(static_cast<char>(((result >> 6) & 0x3F)  | 0x80));
-                    results.push_back(static_cast<char>((result & 0x3F)         | 0x80));
+                    results.push_back(static_cast<byte>((result >> 18)          | 0xF0));
+                    results.push_back(static_cast<byte>(((result >> 12) & 0x3F) | 0x80));
+                    results.push_back(static_cast<byte>(((result >> 6) & 0x3F)  | 0x80));
+                    results.push_back(static_cast<byte>((result & 0x3F)         | 0x80));
                 }
             }
             else
@@ -304,7 +305,7 @@ namespace mem
                 {
                     if (strict)
                     {
-                        return "";
+                        return {};
                     }
                     else
                     {
@@ -312,7 +313,7 @@ namespace mem
                     }
                 }
 
-                results.push_back(static_cast<char>(result));
+                results.push_back(static_cast<byte>(result));
             }
         }
 
