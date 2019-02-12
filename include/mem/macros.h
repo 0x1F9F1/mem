@@ -23,8 +23,8 @@
 #include "init_function.h"
 #include "mem.h"
 
-#define decl_static(TYPE, NAME) static typename std::add_lvalue_reference<TYPE>::type NAME
-#define defn_static(ADDRESS, NAME) decltype(NAME) NAME = mem::pointer(ADDRESS).as<decltype(NAME)>()
+#define decl_extern(TYPE, NAME) typename std::add_lvalue_reference<TYPE>::type NAME
+#define defn_extern(ADDRESS, NAME) decltype(NAME) NAME = mem::pointer(ADDRESS).as<decltype(NAME)>()
 
 #define extern_var(ADDRESS, TYPE, NAME) \
     typename std::add_lvalue_reference<TYPE>::type NAME = mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
