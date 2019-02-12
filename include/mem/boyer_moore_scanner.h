@@ -34,7 +34,6 @@ namespace mem
         std::vector<std::size_t> good_suffix_skips_ {};
 
         std::size_t skip_pos_ {SIZE_MAX};
-        std::size_t max_skip_ {0};
 
         std::size_t get_longest_run(std::size_t& length) const;
 
@@ -70,7 +69,6 @@ namespace mem
         {
             bad_char_skips_.resize(256, max_skip);
             skip_pos_ = skip_pos + max_skip - 1;
-            max_skip_ = max_skip;
 
             for (std::size_t i = skip_pos, last = skip_pos + max_skip - 1; i < last; ++i)
                 bad_char_skips_[bytes[i]] = last - i;
