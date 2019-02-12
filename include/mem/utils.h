@@ -50,8 +50,9 @@ namespace mem
         return true;
     }
 
-    namespace internal
-    { // clang-format off
+    inline bool is_utf8(region range) noexcept
+    {
+        // clang-format off
         static constexpr const std::uint8_t utf8_length_table[256]
         {
             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -71,13 +72,11 @@ namespace mem
             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
             4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,
         };
-    } // clang-format on
+        // clang-format on
 
-    inline bool is_utf8(region range) noexcept
-    {
         for (std::size_t i = 0; i < range.size;)
         {
-            const std::size_t length = internal::utf8_length_table[range.start.at<const byte>(i)];
+            const std::size_t length = utf8_length_table[range.start.at<const byte>(i)];
 
             if (length == 0)
             {
