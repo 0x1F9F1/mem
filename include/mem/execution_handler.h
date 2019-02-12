@@ -113,7 +113,7 @@ namespace mem
 #if defined(_WIN32)
     namespace internal
     {
-        static MEM_CONSTEXPR_14 const char* translate_exception_code(std::uint32_t code) noexcept
+        inline MEM_CONSTEXPR_14 const char* translate_exception_code(std::uint32_t code) noexcept
         {
             switch (code)
             {
@@ -162,7 +162,7 @@ namespace mem
             return "UNKNOWN_EXCEPTION";
         }
 
-        static void translate_seh(unsigned int code, EXCEPTION_POINTERS* ep)
+        inline void translate_seh(unsigned int code, EXCEPTION_POINTERS* ep)
         {
             const char* code_name = translate_exception_code(code);
 
