@@ -30,7 +30,7 @@ namespace mem
         using callback_t = void (*)();
 
     private:
-        static init_function* ROOT;
+        static init_function*& ROOT() noexcept;
 
         init_function* next_ {nullptr};
         callback_t callback_ {nullptr};
@@ -59,17 +59,24 @@ namespace mem
     }
 
     MEM_STRONG_INLINE init_function::init_function(callback_t callback) noexcept
-        : init_function(ROOT, callback)
+        : init_function(ROOT(), callback)
     {}
 
     MEM_STRONG_INLINE init_function::init_function(init_function& parent, callback_t callback) noexcept
         : init_function(parent.next_, callback)
     {}
 
+    MEM_STRONG_INLINE init_function*& init_function::ROOT() noexcept
+    {
+        static init_function* root {nullptr};
+
+        return root;
+    }
+
 #if defined(MEM_INIT_FUNCTION_USE_DESTRUCTOR)
     MEM_STRONG_INLINE init_function::~init_function()
     {
-        for (init_function** i = &ROOT; *i; i = &(*i)->next_)
+        for (init_function** i = &ROOT(); *i; i = &(*i)->next_)
         {
             if (*i == this)
             {
@@ -85,7 +92,7 @@ namespace mem
     {
         std::size_t total = 0;
 
-        for (init_function* i = ROOT; i;)
+        for (init_function* i = ROOT(); i;)
         {
             if (i->callback_)
             {
@@ -100,7 +107,7 @@ namespace mem
             i = j;
         }
 
-        ROOT = nullptr;
+        ROOT() = nullptr;
 
         return total;
     }
