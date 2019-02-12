@@ -486,7 +486,7 @@ namespace mem
 
 namespace mem
 {
-    using default_scanner = simd_scanner;
+    using default_scanner = class simd_scanner;
 }
 
 #endif // MEM_PATTERN_BRICK_H
