@@ -52,7 +52,7 @@
 #include <string>
 #include <unordered_set>
 
-#include "catch.hpp"
+#include "doctest.h"
 
 void check_pattern(const mem::pattern& pattern, size_t original_size, size_t trimmed_size, bool needs_masks, const void* bytes, const void* masks)
 {
