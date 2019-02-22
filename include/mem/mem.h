@@ -169,7 +169,7 @@ namespace mem
     template <typename F>
     typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table = 0) noexcept;
 
-    template <class To, class From>
+    template <typename To, typename From>
     To bit_cast(const From& src) noexcept;
 
     MEM_STRONG_INLINE constexpr pointer::pointer() noexcept = default;
