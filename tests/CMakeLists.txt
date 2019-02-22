@@ -2,9 +2,15 @@ cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 project(mem_tests CXX)
 
+file(GLOB MEM_HEADERS ../include/mem/*.h)
+
 add_executable(${PROJECT_NAME}
     main.cpp
     tests.cpp
+
+    doctest.h
+
+    ${MEM_HEADERS}
 )
 
 target_link_libraries(${PROJECT_NAME}
