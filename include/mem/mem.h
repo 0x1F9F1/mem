@@ -169,6 +169,9 @@ namespace mem
     template <typename F>
     typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table = 0) noexcept;
 
+    template <class To, class From>
+    To bit_cast(const From& src) noexcept;
+
     MEM_STRONG_INLINE constexpr pointer::pointer() noexcept = default;
 
     MEM_STRONG_INLINE constexpr pointer::pointer(std::nullptr_t) noexcept
@@ -186,10 +189,8 @@ namespace mem
 
     template <typename T, typename C>
     MEM_STRONG_INLINE pointer::pointer(T C::*address) noexcept
-        : value_(reinterpret_cast<const std::uintptr_t&>(address))
-    {
-        static_assert(sizeof(address) == sizeof(std::uintptr_t), "That's no pointer. It's a space station.");
-    }
+        : value_(bit_cast<std::uintptr_t>(address))
+    {}
 
     MEM_STRONG_INLINE constexpr pointer pointer::add(std::size_t count) const noexcept
     {
@@ -357,9 +358,7 @@ namespace mem
     template <typename T>
     MEM_STRONG_INLINE typename std::enable_if<std::is_member_pointer<T>::value, T>::type pointer::as() const noexcept
     {
-        static_assert(sizeof(T) == sizeof(value_), "That's no pointer. It's a space station.");
-
-        return reinterpret_cast<const T&>(value_);
+        return bit_cast<T>(value_);
     }
 
     template <typename T>
@@ -475,6 +474,18 @@ namespace mem
     MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table) noexcept
     {
         return inst.as<pointer**>()[table][index].rcast<F>();
+    }
+
+    template <typename To, typename From>
+    MEM_STRONG_INLINE To bit_cast(const From& src) noexcept
+    {
+        static_assert(sizeof(To) == sizeof(From), "sizeof(To) != sizeof(From)");
+        static_assert(std::is_trivially_copyable<From>::value, "From is not trivially copyable");
+        static_assert(std::is_trivially_copyable<To>::value, "To is not trivially copyable");
+
+        typename std::aligned_storage<sizeof(To), alignof(To)>::type dst;
+        std::memcpy(&dst, &src, sizeof(To));
+        return reinterpret_cast<To&>(dst);
     }
 } // namespace mem
 #endif // !MEM_BRICK_H
