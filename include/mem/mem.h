@@ -128,7 +128,7 @@ namespace mem
         std::uintptr_t value_ {0};
 
     public:
-        constexpr any_pointer(pointer value) noexcept;
+        constexpr any_pointer(std::uintptr_t value) noexcept;
 
         constexpr operator std::uintptr_t() const noexcept;
 
@@ -395,11 +395,11 @@ namespace mem
 
     MEM_STRONG_INLINE constexpr any_pointer pointer::any() const noexcept
     {
-        return any_pointer(*this);
+        return any_pointer(value_);
     }
 
-    MEM_STRONG_INLINE constexpr any_pointer::any_pointer(pointer value) noexcept
-        : value_(value.as<std::uintptr_t>())
+    MEM_STRONG_INLINE constexpr any_pointer::any_pointer(std::uintptr_t value) noexcept
+        : value_(value)
     {}
 
     MEM_STRONG_INLINE constexpr any_pointer::operator std::uintptr_t() const noexcept
