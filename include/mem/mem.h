@@ -142,7 +142,7 @@ namespace mem
         pointer start {nullptr};
         std::size_t size {0};
 
-        constexpr region() noexcept = default;
+        constexpr region() noexcept;
 
         constexpr region(pointer start, std::size_t size) noexcept;
 
@@ -412,6 +412,8 @@ namespace mem
     {
         return reinterpret_cast<T*>(value_);
     }
+
+    MEM_STRONG_INLINE constexpr region::region() noexcept = default;
 
     MEM_STRONG_INLINE constexpr region::region(pointer start_, std::size_t size_) noexcept
         : start(start_)
