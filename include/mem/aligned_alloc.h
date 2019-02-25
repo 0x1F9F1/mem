@@ -54,7 +54,8 @@ namespace mem
 
         if (result)
         {
-            void* aligned_result = reinterpret_cast<void*>((reinterpret_cast<std::uintptr_t>(result) + max_offset) / alignment * alignment);
+            void* aligned_result = reinterpret_cast<void*>(
+                (reinterpret_cast<std::uintptr_t>(result) + max_offset) / alignment * alignment);
             reinterpret_cast<void**>(aligned_result)[-1] = result;
             result = aligned_result;
         }

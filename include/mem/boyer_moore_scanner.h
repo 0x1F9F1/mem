@@ -30,8 +30,8 @@ namespace mem
         const pattern* pattern_ {nullptr};
 
         // Boyer–Moore + Boyer–Moore–Horspool Implementation
-        std::vector<std::size_t> bad_char_skips_ {};
-        std::vector<std::size_t> good_suffix_skips_ {};
+        std::vector<std::size_t> bc_skips_ {};
+        std::vector<std::size_t> gs_skips_ {};
 
         std::size_t skip_pos_ {SIZE_MAX};
 
@@ -44,19 +44,20 @@ namespace mem
         boyer_moore_scanner() = default;
 
         boyer_moore_scanner(const pattern& pattern);
-        boyer_moore_scanner(const pattern& pattern, std::size_t min_bad_char_skip, std::size_t min_good_suffix_skip);
+        boyer_moore_scanner(const pattern& pattern, std::size_t min_bc_skip, std::size_t min_gs_skip);
 
         pointer scan(region range) const;
     };
 
-    static constexpr const std::size_t default_min_bad_char_skip {5};
-    static constexpr const std::size_t default_min_good_suffix_skip {25};
+    static constexpr const std::size_t default_min_bc_skip {5};
+    static constexpr const std::size_t default_min_gs_skip {25};
 
     inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern)
-        : boyer_moore_scanner(_pattern, default_min_bad_char_skip, default_min_good_suffix_skip)
+        : boyer_moore_scanner(_pattern, default_min_bc_skip, default_min_gs_skip)
     {}
 
-    inline boyer_moore_scanner::boyer_moore_scanner(const pattern& _pattern, std::size_t min_bad_char_skip, std::size_t min_good_suffix_skip)
+    inline boyer_moore_scanner::boyer_moore_scanner(
+        const pattern& _pattern, std::size_t min_bc_skip, std::size_t min_gs_skip)
         : pattern_(&_pattern)
     {
         std::size_t max_skip = 0;
@@ -65,17 +66,17 @@ namespace mem
         const byte* const bytes = pattern_->bytes();
         const std::size_t trimmed_size = pattern_->trimmed_size();
 
-        if ((min_bad_char_skip > 0) && (max_skip >= min_bad_char_skip))
+        if ((min_bc_skip > 0) && (max_skip >= min_bc_skip))
         {
-            bad_char_skips_.resize(256, max_skip);
+            bc_skips_.resize(256, max_skip);
             skip_pos_ = skip_pos + max_skip - 1;
 
             for (std::size_t i = skip_pos, last = skip_pos + max_skip - 1; i < last; ++i)
-                bad_char_skips_[bytes[i]] = last - i;
+                bc_skips_[bytes[i]] = last - i;
 
-            if ((skip_pos == 0) && (max_skip == trimmed_size) && (min_good_suffix_skip > 0) && (max_skip >= min_good_suffix_skip))
+            if ((skip_pos == 0) && (max_skip == trimmed_size) && (min_gs_skip > 0) && (max_skip >= min_gs_skip))
             {
-                good_suffix_skips_.resize(trimmed_size);
+                gs_skips_.resize(trimmed_size);
 
                 const std::size_t last = trimmed_size - 1;
 
@@ -86,7 +87,7 @@ namespace mem
                     if (is_prefix(i + 1))
                         last_prefix = i + 1;
 
-                    good_suffix_skips_[i] = last_prefix + (last - i);
+                    gs_skips_[i] = last_prefix + (last - i);
                 }
 
                 for (std::size_t i = 0; i < last; ++i)
@@ -95,12 +96,12 @@ namespace mem
                     std::size_t pos = last - suffix_length;
 
                     if (bytes[i - suffix_length] != bytes[pos])
-                        good_suffix_skips_[pos] = suffix_length + (last - i);
+                        gs_skips_[pos] = suffix_length + (last - i);
                 }
             }
             else
             {
-                bad_char_skips_[bytes[skip_pos_]] = 0;
+                bc_skips_[bytes[skip_pos_]] = 0;
             }
         }
     }
@@ -192,7 +193,7 @@ namespace mem
         const std::size_t last = trimmed_size - 1;
 
         const byte* const pat_bytes = pattern_->bytes();
-        const std::size_t* const pat_skips = !bad_char_skips_.empty() ? bad_char_skips_.data() : nullptr;
+        const std::size_t* const pat_skips = !bc_skips_.empty() ? bc_skips_.data() : nullptr;
 
         if (pattern_->needs_masks())
         {
@@ -254,9 +255,9 @@ namespace mem
         }
         else
         {
-            if (!good_suffix_skips_.empty())
+            if (!gs_skips_.empty())
             {
-                const std::size_t* const pat_suffixes = good_suffix_skips_.data();
+                const std::size_t* const pat_suffixes = gs_skips_.data();
 
                 current += last;
                 const byte* const end_plus_last = end + last;

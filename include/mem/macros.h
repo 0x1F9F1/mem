@@ -26,8 +26,9 @@
 #define decl_extern(TYPE, NAME) typename std::add_lvalue_reference<TYPE>::type NAME
 #define defn_extern(ADDRESS, NAME) decltype(NAME) NAME = mem::pointer(ADDRESS).as<decltype(NAME)>()
 
-#define extern_var(ADDRESS, TYPE, NAME) \
-    typename std::add_lvalue_reference<TYPE>::type NAME = mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
+#define extern_var(ADDRESS, TYPE, NAME)                   \
+    typename std::add_lvalue_reference<TYPE>::type NAME = \
+        mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
 
 #define check_size(type, size) static_assert(sizeof(type) == (size), "sizeof(" #type ") != " #size)
 
@@ -51,7 +52,8 @@
 #    else
 #        define dummy_symbol_prefix ""
 #    endif
-#    define include_dummy_symbol(NAME) __pragma(comment(linker, "/INCLUDE:" dummy_symbol_prefix mem_str(mem_paste(dummy_symbol_, NAME))))
+#    define include_dummy_symbol(NAME) \
+        __pragma(comment(linker, "/INCLUDE:" dummy_symbol_prefix mem_str(mem_paste(dummy_symbol_, NAME))))
 #endif
 
 #endif // MEM_MACROS_BRICK_H

@@ -143,7 +143,9 @@ namespace mem
                     } while (true);
 
                     ++current;
-                    current = find_byte(current + skip_pos, pat_bytes[skip_pos], static_cast<std::size_t>(end - current)) - skip_pos;
+                    current =
+                        find_byte(current + skip_pos, pat_bytes[skip_pos], static_cast<std::size_t>(end - current)) -
+                        skip_pos;
                 }
 
                 return nullptr;
@@ -166,7 +168,9 @@ namespace mem
                     } while (true);
 
                     ++current;
-                    current = find_byte(current + skip_pos, pat_bytes[skip_pos], static_cast<std::size_t>(end - current)) - skip_pos;
+                    current =
+                        find_byte(current + skip_pos, pat_bytes[skip_pos], static_cast<std::size_t>(end - current)) -
+                        skip_pos;
                 }
 
                 return nullptr;

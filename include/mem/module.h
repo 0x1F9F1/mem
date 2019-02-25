@@ -212,7 +212,8 @@ namespace mem
         if (first_idx == SIZE_MAX)
             return 0;
 
-        return cmds[last_idx].p_vaddr + cmds[last_idx].p_memsz - (cmds[first_idx].p_vaddr & ~(cmds[first_idx].p_align - 1));
+        return cmds[last_idx].p_vaddr + cmds[last_idx].p_memsz -
+            (cmds[first_idx].p_vaddr & ~(cmds[first_idx].p_align - 1));
     }
 
     MEM_STRONG_INLINE module module::elf(pointer address)

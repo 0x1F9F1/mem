@@ -38,11 +38,13 @@
 #    define MEM_SIMD_SSSE3
 #endif
 
-#if defined(__SSE3__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || defined(MEM_SIMD_SSSE3)
+#if defined(__SSE3__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || \
+    defined(MEM_SIMD_SSSE3)
 #    define MEM_SIMD_SSE3
 #endif
 
-#if defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || defined(MEM_SIMD_SSE3)
+#if defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || \
+    defined(MEM_SIMD_SSE3)
 #    define MEM_SIMD_SSE2
 #endif
 
@@ -51,7 +53,8 @@
 #endif
 
 #if !defined(MEM_CONSTEXPR_14)
-#    if (defined(__cpp_constexpr) && (__cpp_constexpr >= 201304)) || (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 191426433))
+#    if (defined(__cpp_constexpr) && (__cpp_constexpr >= 201304)) || \
+        (defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 191426433))
 #        define MEM_CONSTEXPR_14 constexpr
 #    else
 #        define MEM_CONSTEXPR_14

@@ -106,10 +106,13 @@ namespace mem
         typename std::enable_if<std::is_lvalue_reference<T>::value, T>::type as() const noexcept;
 
         template <typename T>
-        typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type as() const noexcept;
+        typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type as() const
+            noexcept;
 
         template <typename T>
-            typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type rcast() & noexcept;
+            typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type
+            rcast() &
+            noexcept;
 
         template <typename Func>
         constexpr pointer and_then(Func&& func) const;
@@ -167,7 +170,8 @@ namespace mem
     typename std::add_lvalue_reference<T>::type field(pointer base, std::ptrdiff_t offset = 0) noexcept;
 
     template <typename F>
-    typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table = 0) noexcept;
+    typename std::add_lvalue_reference<F>::type vfunc(
+        pointer inst, std::size_t index, std::ptrdiff_t table = 0) noexcept;
 
     template <typename To, typename From>
     To bit_cast(const From& src) noexcept;
@@ -225,7 +229,8 @@ namespace mem
 #if defined(MEM_ARCH_X86_64)
     MEM_STRONG_INLINE pointer pointer::rip(std::size_t offset) const noexcept
     {
-        return static_cast<std::uintptr_t>(static_cast<std::intptr_t>(value_ + offset) + *reinterpret_cast<const std::int32_t*>(value_));
+        return static_cast<std::uintptr_t>(
+            static_cast<std::intptr_t>(value_ + offset) + *reinterpret_cast<const std::int32_t*>(value_));
     }
 #endif // MEM_ARCH_X86_64
 
@@ -336,9 +341,11 @@ namespace mem
     }
 
     template <typename T>
-    MEM_STRONG_INLINE constexpr typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE constexpr typename std::enable_if<std::is_integral<T>::value, T>::type pointer::as() const
+        noexcept
     {
-        static_assert(std::is_same<typename std::make_unsigned<T>::type, std::uintptr_t>::value, "Invalid Integer Type");
+        static_assert(
+            std::is_same<typename std::make_unsigned<T>::type, std::uintptr_t>::value, "Invalid Integer Type");
 
         return static_cast<T>(value_);
     }
@@ -368,13 +375,18 @@ namespace mem
     }
 
     template <typename T>
-    MEM_STRONG_INLINE typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::as() const noexcept
+    MEM_STRONG_INLINE
+        typename std::enable_if<std::is_array<T>::value, typename std::add_lvalue_reference<T>::type>::type
+        pointer::as() const noexcept
     {
         return *reinterpret_cast<typename std::add_pointer<T>::type>(value_);
     }
 
     template <typename T>
-        MEM_STRONG_INLINE typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type pointer::rcast() & noexcept
+        MEM_STRONG_INLINE
+        typename std::enable_if<!std::is_reference<T>::value, typename std::add_lvalue_reference<T>::type>::type
+        pointer::rcast() &
+        noexcept
     {
         static_assert(sizeof(T) == sizeof(pointer), "That's no pointer. It's a space station.");
 
@@ -473,7 +485,8 @@ namespace mem
     }
 
     template <typename F>
-    MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(pointer inst, std::size_t index, std::ptrdiff_t table) noexcept
+    MEM_STRONG_INLINE typename std::add_lvalue_reference<F>::type vfunc(
+        pointer inst, std::size_t index, std::ptrdiff_t table) noexcept
     {
         return inst.as<pointer**>()[table][index].rcast<F>();
     }

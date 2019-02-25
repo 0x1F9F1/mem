@@ -25,7 +25,7 @@ BraceWrapping:
 
 BreakBeforeBinaryOperators: None
 BreakInheritanceList: BeforeComma
-ColumnLimit: 160
+ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 Cpp11BracedListStyle: true
 FixNamespaceComments: true

@@ -209,8 +209,8 @@ namespace mem
 
             while (std::fgets(buffer, 256, maps))
             {
-                int count =
-                    std::sscanf(buffer, "%" SCNxPTR "-%" SCNxPTR " %4s %zx %*x:%*x %*u %255s", &region.start, &region.end, perms, &region.offset, pathname);
+                int count = std::sscanf(buffer, "%" SCNxPTR "-%" SCNxPTR " %4s %zx %*x:%*x %*u %255s", &region.start,
+                    &region.end, perms, &region.offset, pathname);
 
                 if (count < 4)
                     continue;
