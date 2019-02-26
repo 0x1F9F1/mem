@@ -209,30 +209,52 @@ namespace mem
 #    if defined(MEM_SIMD_AVX2)
 #        define l_SIMD_TYPE __m256i
 #        define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
-#        define l_SIMD_LOAD(x) _mm256_lddqu_si256(x)
+#        define l_SIMD_LOAD(x) _mm256_load_si256(x)
+#        define l_SIMD_LOADU(x) _mm256_lddqu_si256(x)
 #        define l_SIMD_CMPEQ(x, y) _mm256_cmpeq_epi8(x, y)
-#        define l_SIMD_MOVEMASK(x) _mm256_movemask_epi8(x)
+#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm256_movemask_epi8(x))
 #    elif defined(MEM_SIMD_SSE3)
 #        define l_SIMD_TYPE __m128i
 #        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
-#        define l_SIMD_LOAD(x) _mm_lddqu_si128(x)
+#        define l_SIMD_LOAD(x) _mm_load_si128(x)
+#        define l_SIMD_LOADU(x) _mm_lddqu_si128(x)
 #        define l_SIMD_CMPEQ(x, y) _mm_cmpeq_epi8(x, y)
-#        define l_SIMD_MOVEMASK(x) _mm_movemask_epi8(x)
+#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm_movemask_epi8(x))
 #    elif defined(MEM_SIMD_SSE2)
 #        define l_SIMD_TYPE __m128i
 #        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
-#        define l_SIMD_LOAD(x) _mm_loadu_si128(x)
+#        define l_SIMD_LOAD(x) _mm_load_si128(x)
+#        define l_SIMD_LOADU(x) _mm_loadu_si128(x)
 #        define l_SIMD_CMPEQ(x, y) _mm_cmpeq_epi8(x, y)
-#        define l_SIMD_MOVEMASK(x) _mm_movemask_epi8(x)
+#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm_movemask_epi8(x))
 #    else
 #        error Sorry, No Potatoes
 #    endif
 
 #    define l_SIMD_SIZEOF(N) (sizeof(l_SIMD_TYPE) * N)
 
+        const l_SIMD_TYPE simd_value = l_SIMD_FILL(value);
+
         if (MEM_LIKELY(num >= l_SIMD_SIZEOF(1)))
         {
-            const l_SIMD_TYPE simd_value = l_SIMD_FILL(value);
+            {
+                const std::size_t n =
+                    static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(ptr) & (l_SIMD_SIZEOF(1) - 1));
+
+                if (MEM_LIKELY(n != 0))
+                {
+                    const auto mask = l_SIMD_MOVEMASK(
+                        l_SIMD_CMPEQ(l_SIMD_LOADU(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value));
+
+                    if (MEM_UNLIKELY(mask != 0))
+                        return ptr + bsf(mask);
+
+                    const std::size_t m = l_SIMD_SIZEOF(1) - n;
+
+                    num -= m;
+                    ptr += m;
+                }
+            }
 
             while (MEM_LIKELY(num >= l_SIMD_SIZEOF(4)))
             {
@@ -249,31 +271,31 @@ namespace mem
                 const l_SIMD_TYPE equal3 = l_SIMD_CMPEQ(value3, simd_value);
 
                 {
-                    const int mask = l_SIMD_MOVEMASK(equal0);
+                    const auto mask = l_SIMD_MOVEMASK(equal0);
 
                     if (MEM_UNLIKELY(mask != 0))
-                        return ptr + bsf(static_cast<unsigned int>(mask));
+                        return ptr + bsf(mask);
                 }
 
                 {
-                    const int mask = l_SIMD_MOVEMASK(equal1);
+                    const auto mask = l_SIMD_MOVEMASK(equal1);
 
                     if (MEM_UNLIKELY(mask != 0))
-                        return ptr + l_SIMD_SIZEOF(1) + bsf(static_cast<unsigned int>(mask));
+                        return ptr + l_SIMD_SIZEOF(1) + bsf(mask);
                 }
 
                 {
-                    const int mask = l_SIMD_MOVEMASK(equal2);
+                    const auto mask = l_SIMD_MOVEMASK(equal2);
 
                     if (MEM_UNLIKELY(mask != 0))
-                        return ptr + l_SIMD_SIZEOF(2) + bsf(static_cast<unsigned int>(mask));
+                        return ptr + l_SIMD_SIZEOF(2) + bsf(mask);
                 }
 
                 {
-                    const int mask = l_SIMD_MOVEMASK(equal3);
+                    const auto mask = l_SIMD_MOVEMASK(equal3);
 
                     if (MEM_UNLIKELY(mask != 0))
-                        return ptr + l_SIMD_SIZEOF(3) + bsf(static_cast<unsigned int>(mask));
+                        return ptr + l_SIMD_SIZEOF(3) + bsf(mask);
                 }
 
                 ptr += l_SIMD_SIZEOF(4);
@@ -283,14 +305,29 @@ namespace mem
             {
                 num -= l_SIMD_SIZEOF(1);
 
-                const int mask =
+                const auto mask =
                     l_SIMD_MOVEMASK(l_SIMD_CMPEQ(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value));
 
                 if (MEM_UNLIKELY(mask != 0))
-                    return ptr + bsf(static_cast<unsigned int>(mask));
+                    return ptr + bsf(mask);
 
                 ptr += l_SIMD_SIZEOF(1);
             }
+        }
+
+        if (MEM_LIKELY(num != 0))
+        {
+            const std::size_t n =
+                static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(ptr) & (l_SIMD_SIZEOF(1) - 1));
+
+            const auto mask =
+                l_SIMD_MOVEMASK(l_SIMD_CMPEQ(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr - n)), simd_value)) >>
+                n;
+
+            if (MEM_UNLIKELY(mask != 0))
+                return ptr + bsf(mask);
+
+            ptr += num;
         }
 
 #    undef l_SIMD_SIZEOF
@@ -298,18 +335,9 @@ namespace mem
 #    undef l_SIMD_TYPE
 #    undef l_SIMD_FILL
 #    undef l_SIMD_LOAD
+#    undef l_SIMD_LOADU
 #    undef l_SIMD_CMPEQ
 #    undef l_SIMD_MOVEMASK
-
-        while (MEM_LIKELY(num != 0))
-        {
-            --num;
-
-            if (MEM_UNLIKELY(*ptr == value))
-                return ptr;
-
-            ++ptr;
-        }
 
         return ptr;
 #else
