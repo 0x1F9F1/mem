@@ -194,7 +194,7 @@ namespace mem
 #if defined(__unix__)
     inline int iter_proc_maps(int (*callback)(region_info*, void*), void* data)
     {
-        FILE* maps = std::fopen("/proc/self/maps", "r");
+        std::FILE* maps = std::fopen("/proc/self/maps", "r");
 
         int result = 0;
 
