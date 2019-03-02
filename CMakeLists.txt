@@ -1,12 +1,12 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
 option(MEM_TEST "Generate the test target." OFF)
 
 project(mem CXX)
 
-add_library(${PROJECT_NAME} INTERFACE)
+add_library(mem INTERFACE)
 
-target_include_directories(${PROJECT_NAME} INTERFACE
+target_include_directories(mem INTERFACE
     include)
 
 if (MEM_TEST)
