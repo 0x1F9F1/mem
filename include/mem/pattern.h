@@ -281,33 +281,23 @@ namespace mem
         {
             const byte* const pat_masks = masks();
 
-            std::size_t i = last;
-
-            do
+            for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]); --i)
             {
-                if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                    return false;
-
                 if (MEM_UNLIKELY(i == 0))
                     return true;
+            }
 
-                --i;
-            } while (true);
+            return false;
         }
         else
         {
-            std::size_t i = last;
-
-            do
+            for (std::size_t i = last; MEM_LIKELY(current[i] != pat_bytes[i]); --i)
             {
-                if (MEM_LIKELY(current[i] != pat_bytes[i]))
-                    return false;
-
                 if (MEM_UNLIKELY(i == 0))
                     return true;
+            }
 
-                --i;
-            } while (true);
+            return false;
         }
     }
 

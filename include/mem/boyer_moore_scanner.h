@@ -212,18 +212,11 @@ namespace mem
                     if (MEM_LIKELY(skip != 0))
                         continue;
 
-                    std::size_t i = last;
-
-                    do
+                    for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                     {
-                        if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
-
-                        --i;
-                    } while (true);
+                    }
 
                     ++current;
                 }
@@ -234,18 +227,11 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
-                    std::size_t i = last;
-
-                    do
+                    for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                     {
-                        if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
-
-                        --i;
-                    } while (true);
+                    }
 
                     ++current;
                 }
@@ -255,7 +241,7 @@ namespace mem
         }
         else
         {
-            if (!gs_skips_.empty())
+            if (pat_skips && !gs_skips_.empty())
             {
                 const std::size_t* const pat_suffixes = gs_skips_.data();
 
@@ -266,17 +252,14 @@ namespace mem
                 {
                     std::size_t i = last;
 
-                    do
+                    while (MEM_LIKELY(*current == pat_bytes[i]))
                     {
-                        if (MEM_LIKELY(*current != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
 
                         --current;
                         --i;
-                    } while (true);
+                    }
 
                     const std::size_t bc_skip = pat_skips[*current];
                     const std::size_t gs_skip = pat_suffixes[i];
@@ -297,18 +280,11 @@ namespace mem
                     if (MEM_LIKELY(skip != 0))
                         continue;
 
-                    std::size_t i = last;
-
-                    do
+                    for (std::size_t i = last; MEM_LIKELY(current[i] == pat_bytes[i]); --i)
                     {
-                        if (MEM_LIKELY(current[i] != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
-
-                        --i;
-                    } while (true);
+                    }
 
                     ++current;
                 }
@@ -319,18 +295,11 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
-                    std::size_t i = last;
-
-                    do
+                    for (std::size_t i = last; MEM_LIKELY(current[i] == pat_bytes[i]); --i)
                     {
-                        if (MEM_LIKELY(current[i] != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
-
-                        --i;
-                    } while (true);
+                    }
 
                     ++current;
                 }

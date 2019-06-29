@@ -126,18 +126,11 @@ namespace mem
 
                 while (MEM_LIKELY(current < end))
                 {
-                    std::size_t i = last;
-
-                    do
+                    for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                     {
-                        if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
-
-                        --i;
-                    } while (true);
+                    }
 
                     ++current;
                     current =
@@ -151,18 +144,11 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
-                    std::size_t i = last;
-
-                    do
+                    for (std::size_t i = last; MEM_LIKELY(current[i] == pat_bytes[i]); --i)
                     {
-                        if (MEM_LIKELY(current[i] != pat_bytes[i]))
-                            break;
-
                         if (MEM_UNLIKELY(i == 0))
                             return current;
-
-                        --i;
-                    } while (true);
+                    }
 
                     ++current;
                     current =
@@ -179,19 +165,11 @@ namespace mem
 
             while (MEM_LIKELY(current < end))
             {
-                std::size_t i = last;
-
-                do
+                for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                 {
-                    if (MEM_LIKELY((current[i] & pat_masks[i]) != pat_bytes[i]))
-                        break;
-
                     if (MEM_UNLIKELY(i == 0))
                         return current;
-
-                    --i;
-                    break;
-                } while (true);
+                }
 
                 ++current;
             }
