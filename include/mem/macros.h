@@ -38,7 +38,7 @@
 #define mem_str_(VALUE) #VALUE
 #define mem_str(VALUE) mem_str_(VALUE)
 
-#define run_once(body) static mem::init_function mem_paste(run_once_, __LINE__)(body)
+#define run_once static mem::init_function mem_paste(run_once_, __LINE__)
 
 #if defined(_MSC_VER)
 #    define define_dummy_symbol(NAME)             \
