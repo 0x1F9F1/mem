@@ -80,6 +80,11 @@ namespace mem
 
         template <typename Func>
         void enum_segments(Func func);
+
+#if defined(_WIN32)
+        template <typename Func>
+        void enum_exports(Func func);
+#endif
     };
 
 #if defined(_WIN32)
@@ -189,6 +194,36 @@ namespace mem
 
             if (func(range, prot))
                 return;
+        }
+    }
+
+    template <typename Func>
+    MEM_STRONG_INLINE void module::enum_exports(Func func)
+    {
+        const IMAGE_DATA_DIRECTORY& export_data_dir =
+            nt_headers().OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+
+        if (export_data_dir.Size < sizeof(IMAGE_EXPORT_DIRECTORY))
+            return;
+
+        const IMAGE_EXPORT_DIRECTORY& export_dir =
+            start.add(export_data_dir.VirtualAddress).as<const IMAGE_EXPORT_DIRECTORY&>();
+
+        const uint32_t name_count = export_dir.NumberOfNames;
+        const uint32_t func_count = export_dir.NumberOfFunctions;
+
+        const uint32_t* const names = start.add(export_dir.AddressOfNames).as<const uint32_t*>();
+        const uint16_t* const ordinals = start.add(export_dir.AddressOfNameOrdinals).as<const uint16_t*>();
+        const uint32_t* const functions = start.add(export_dir.AddressOfFunctions).as<const uint32_t*>();
+
+        for (uint32_t i = 0; i < func_count; ++i)
+        {
+            const char* name = (i < name_count) ? start.add(names[i]).as<const char*>() : nullptr;
+            const uint16_t ordinal = ordinals[i];
+            const pointer function = start.add(functions[ordinal]);
+
+            if (func(name, ordinal, function))
+                break;
         }
     }
 
