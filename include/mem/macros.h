@@ -30,7 +30,9 @@
     typename std::add_lvalue_reference<TYPE>::type NAME = \
         mem::pointer(ADDRESS).as<typename std::add_lvalue_reference<TYPE>::type>()
 
-#define check_size(type, size) static_assert(sizeof(type) == (size), "sizeof(" #type ") != " #size)
+#define check_size(type, size)                                           \
+    static_assert(sizeof(type) >= (size), "sizeof(" #type ") < " #size); \
+    static_assert(sizeof(type) <= (size), "sizeof(" #type ") > " #size)
 
 #define mem_paste_(LHS, RHS) LHS##RHS
 #define mem_paste(LHS, RHS) mem_paste_(LHS, RHS)
