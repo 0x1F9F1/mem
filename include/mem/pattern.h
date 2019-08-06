@@ -89,6 +89,20 @@ namespace mem
         if ((temp = xctoi(current)) != -1) { input.pop(); value = (value << 4) | static_cast<byte>(temp); mask = (mask << 4) | 0x0F; }
         else if (current == wildcard)      { input.pop(); value = (value << 4);                           mask = (mask << 4);        }
 
+        while (input.peek() == '|')
+        {
+            input.pop();
+
+            byte extra_value = 0x00;
+
+            if ((temp = xctoi(input.peek())) != -1) { input.pop(); extra_value = static_cast<byte>(temp); }
+            else                                    { return false; }
+
+            if ((temp = xctoi(input.peek())) != -1) { input.pop(); extra_value = (extra_value << 4) | static_cast<byte>(temp); }
+
+            mask &= ~(value ^ extra_value);
+        }
+
         if (input.peek() == '&')
         {
             input.pop();
