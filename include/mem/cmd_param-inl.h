@@ -32,14 +32,14 @@ namespace mem
 {
     cmd_param* cmd_param::ROOT {nullptr};
 
-    inline bool cmd_is_digit(int c)
+    static inline bool cmd_is_digit(char c)
     {
-        return (static_cast<unsigned int>(c) - '0') < 10;
+        return (static_cast<unsigned char>(c) - '0') < 10;
     }
 
-    inline int cmd_to_lower(int c)
+    static inline int cmd_to_lower(char c)
     {
-        if ((static_cast<unsigned int>(c) - 'A') < 26)
+        if ((static_cast<unsigned char>(c) - 'A') < 26)
         {
             c += ('a' - 'A');
         }
@@ -47,28 +47,12 @@ namespace mem
         return c;
     }
 
-    int cmd_strcmp(const char* lhs, const char* rhs)
+    static inline bool cmd_is_option(const char* arg)
     {
-        int a, b;
-
-        do
-        {
-            a = cmd_to_lower(static_cast<unsigned char>(*lhs++));
-            b = cmd_to_lower(static_cast<unsigned char>(*rhs++));
-        } while (a && a == b);
-
-        if (a == '\0' && b == '=')
-            b = '\0';
-
-        return a - b;
+        return (arg[0] == '-') && !cmd_is_digit(arg[1]);
     }
 
-    inline bool cmd_is_option(const char* arg)
-    {
-        return (arg[0] == '-') && !cmd_is_digit(static_cast<unsigned char>(arg[1]));
-    }
-
-    inline char* cmd_unquote(char* arg)
+    static char* cmd_unquote(char* arg)
     {
         if (arg[0] == '"')
         {
@@ -83,7 +67,23 @@ namespace mem
         return arg;
     }
 
-    char* cmd_strdup(const char* value)
+    static int cmd_strcmp(const char* lhs, const char* rhs)
+    {
+        int a, b;
+
+        do
+        {
+            a = cmd_to_lower(*lhs++);
+            b = cmd_to_lower(*rhs++);
+        } while (a && a == b);
+
+        if (a == '\0' && b == '=')
+            b = '\0';
+
+        return a - b;
+    }
+
+    static char* cmd_strdup(const char* value)
     {
         char* result = nullptr;
 
