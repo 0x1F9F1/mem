@@ -102,7 +102,7 @@ namespace mem
         return result;
     }
 
-    void cmd_param::init(char** argv)
+    void cmd_param::init(const char* const* argv)
     {
         int argc = 0;
 
@@ -114,7 +114,7 @@ namespace mem
         init(argc, argv);
     }
 
-    void cmd_param::init(int argc, char** argv)
+    void cmd_param::init(int argc, const char* const* argv)
     {
         if (argc < 2)
             return;

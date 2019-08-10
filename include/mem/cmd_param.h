@@ -55,8 +55,8 @@ namespace mem
         template <typename T>
         T get_or(T value);
 
-        static void init(char** argv);
-        static void init(int argc, char** argv);
+        static void init(const char* const* argv);
+        static void init(int argc, const char* const* argv);
     };
 
     MEM_STRONG_INLINE cmd_param::cmd_param(const char* name, int pos) noexcept
