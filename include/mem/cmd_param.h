@@ -90,7 +90,7 @@ namespace mem
             {
                 T* source = const_cast<T*>(ptr);
 
-                setg(source, source, source + num);
+                std::basic_streambuf<T>::setg(source, source, source + num);
             }
         };
 
@@ -120,6 +120,22 @@ namespace mem
         {
             out = true;
         }
+
+        return true;
+    }
+
+    template <>
+    MEM_STRONG_INLINE bool parse_cmd<short>(const char* value, short& out)
+    {
+        out = static_cast<short>(std::strtol(value, nullptr, 0));
+
+        return true;
+    }
+
+    template <>
+    MEM_STRONG_INLINE bool parse_cmd<unsigned short>(const char* value, unsigned short& out)
+    {
+        out = static_cast<unsigned short>(std::strtoul(value, nullptr, 0));
 
         return true;
     }
