@@ -83,6 +83,25 @@ namespace mem
         return arg;
     }
 
+    char* cmd_strdup(const char* value)
+    {
+        char* result = nullptr;
+
+        if (value)
+        {
+            size_t length = std::strlen(value) + 1;
+
+            result = new char[length];
+
+            if (result)
+            {
+                std::memcpy(result, value, length);
+            }
+        }
+
+        return result;
+    }
+
     void cmd_param::init(char** argv)
     {
         int argc = 0;
@@ -97,11 +116,21 @@ namespace mem
 
     void cmd_param::init(int argc, char** argv)
     {
+        if (argc < 2)
+            return;
+
+        char** args = new char*[argc];
+
+        args[0] = nullptr;
+
+        for (int i = 1; i < argc; ++i)
+            args[i] = cmd_strdup(argv[i]);
+
         bool done_positionals = false;
 
         for (int i = 1; i < argc; ++i)
         {
-            char* arg = argv[i];
+            char* arg = args[i];
 
             if (cmd_is_option(arg))
             {
@@ -126,7 +155,7 @@ namespace mem
                             }
                             else if (i + 1 < argc)
                             {
-                                char* next_arg = argv[i + 1];
+                                char* next_arg = args[i + 1];
 
                                 if (!cmd_is_option(next_arg))
                                 {
@@ -171,5 +200,7 @@ namespace mem
                 }
             }
         }
+
+        delete[] args;
     }
 } // namespace mem
