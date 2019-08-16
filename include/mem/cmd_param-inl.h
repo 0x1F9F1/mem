@@ -34,17 +34,19 @@ namespace mem
 
     static inline bool cmd_is_digit(char c)
     {
-        return (static_cast<unsigned char>(c) - '0') < 10;
+        return (c >= '0') && (c <= '9');
     }
 
     static inline int cmd_to_lower(char c)
     {
-        if ((static_cast<unsigned char>(c) - 'A') < 26)
+        int v = static_cast<unsigned char>(c);
+
+        if ((v >= 'A') && (v <= 'Z'))
         {
-            c += ('a' - 'A');
+            v += ('a' - 'A');
         }
 
-        return c;
+        return v;
     }
 
     static inline bool cmd_is_option(const char* arg)
