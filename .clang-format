@@ -34,4 +34,5 @@ IndentPPDirectives: AfterHash
 KeepEmptyLinesAtTheStartOfBlocks: false
 NamespaceIndentation: All
 SpaceAfterCStyleCast: true
+SpaceInEmptyBlock: false
 TabWidth: 4
