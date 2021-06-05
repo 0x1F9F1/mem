@@ -85,6 +85,24 @@
 #    define MEM_NOINLINE
 #endif
 
+#if defined(__cplusplus) && defined(__has_cpp_attribute)
+#    define MEM_HAS_ATTRIBUTE(attrib, value) (__has_cpp_attribute(attrib) >= value)
+#else
+#    define MEM_HAS_ATTRIBUTE(attrib, value) (0)
+#endif
+
+#if MEM_HAS_ATTRIBUTE(likely, 201803L)
+#    define MEM_ATTR_LIKELY likely
+#else
+#    define MEM_ATTR_LIKELY
+#endif
+
+#if MEM_HAS_ATTRIBUTE(unlikely, 201803L)
+#    define MEM_ATTR_UNLIKELY unlikely
+#else
+#    define MEM_ATTR_UNLIKELY
+#endif
+
 #include <climits>
 #include <cstddef>
 #include <cstdint>

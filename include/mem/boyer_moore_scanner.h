@@ -205,16 +205,19 @@ namespace mem
 
                 while (MEM_LIKELY(current < end))
                 {
-                    std::size_t skip = pat_skips[current[pat_skip_pos]];
+                    [[MEM_ATTR_LIKELY]];
 
+                    std::size_t skip = pat_skips[current[pat_skip_pos]];
                     current += skip;
 
-                    if (MEM_LIKELY(skip != 0))
+                    if (MEM_LIKELY(skip != 0)) [[MEM_ATTR_LIKELY]]
                         continue;
 
                     for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
                     }
 
@@ -227,9 +230,14 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
+                    [[MEM_ATTR_LIKELY]];
+
                     for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
+
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
                     }
 
@@ -250,11 +258,15 @@ namespace mem
 
                 while (MEM_LIKELY(current < end_plus_last))
                 {
+                    [[MEM_ATTR_LIKELY]];
+
                     std::size_t i = last;
 
                     while (MEM_LIKELY(*current == pat_bytes[i]))
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
 
                         --current;
@@ -273,16 +285,19 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
-                    std::size_t skip = pat_skips[current[last]];
+                    [[MEM_ATTR_LIKELY]];
 
+                    std::size_t skip = pat_skips[current[last]];
                     current += skip;
 
-                    if (MEM_LIKELY(skip != 0))
+                    if (MEM_LIKELY(skip != 0)) [[MEM_ATTR_LIKELY]]
                         continue;
 
                     for (std::size_t i = last; MEM_LIKELY(current[i] == pat_bytes[i]); --i)
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
                     }
 
@@ -295,9 +310,13 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
+                    [[MEM_ATTR_LIKELY]];
+
                     for (std::size_t i = last; MEM_LIKELY(current[i] == pat_bytes[i]); --i)
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
                     }
 

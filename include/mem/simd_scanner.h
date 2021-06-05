@@ -126,9 +126,13 @@ namespace mem
 
                 while (MEM_LIKELY(current < end))
                 {
+                    [[MEM_ATTR_LIKELY]];
+
                     for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
                     }
 
@@ -144,9 +148,13 @@ namespace mem
             {
                 while (MEM_LIKELY(current < end))
                 {
+                    [[MEM_ATTR_LIKELY]];
+
                     for (std::size_t i = last; MEM_LIKELY(current[i] == pat_bytes[i]); --i)
                     {
-                        if (MEM_UNLIKELY(i == 0))
+                        [[MEM_ATTR_LIKELY]];
+
+                        if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                             return current;
                     }
 
@@ -165,9 +173,13 @@ namespace mem
 
             while (MEM_LIKELY(current < end))
             {
+                [[MEM_ATTR_LIKELY]];
+
                 for (std::size_t i = last; MEM_LIKELY((current[i] & pat_masks[i]) == pat_bytes[i]); --i)
                 {
-                    if (MEM_UNLIKELY(i == 0))
+                    [[MEM_ATTR_LIKELY]];
+
+                    if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
                         return current;
                 }
 
@@ -202,10 +214,14 @@ namespace mem
 
         if (MEM_LIKELY(num >= l_SIMD_SIZEOF(1)))
         {
+            [[MEM_ATTR_LIKELY]];
+
             const l_SIMD_TYPE simd_value = l_SIMD_FILL(value);
 
             while (MEM_LIKELY(num >= l_SIMD_SIZEOF(4)))
             {
+                [[MEM_ATTR_LIKELY]];
+
                 num -= l_SIMD_SIZEOF(4);
 
                 const l_SIMD_TYPE value0 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr));
@@ -218,50 +234,54 @@ namespace mem
                 {
                     const auto mask = l_SIMD_CMPEQ_MASK(value0, simd_value);
 
-                    if (MEM_UNLIKELY(mask != 0))
+                    if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
                         return ptr - l_SIMD_SIZEOF(4) + bsf(mask);
                 }
 
                 {
                     const auto mask = l_SIMD_CMPEQ_MASK(value1, simd_value);
 
-                    if (MEM_UNLIKELY(mask != 0))
+                    if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
                         return ptr - l_SIMD_SIZEOF(3) + bsf(mask);
                 }
 
                 {
                     const auto mask = l_SIMD_CMPEQ_MASK(value2, simd_value);
 
-                    if (MEM_UNLIKELY(mask != 0))
+                    if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
                         return ptr - l_SIMD_SIZEOF(2) + bsf(mask);
                 }
 
                 {
                     const auto mask = l_SIMD_CMPEQ_MASK(value3, simd_value);
 
-                    if (MEM_UNLIKELY(mask != 0))
+                    if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
                         return ptr - l_SIMD_SIZEOF(1) + bsf(mask);
                 }
             }
 
             while (MEM_LIKELY(num >= l_SIMD_SIZEOF(1)))
             {
+                [[MEM_ATTR_LIKELY]];
+
                 num -= l_SIMD_SIZEOF(1);
 
                 const auto mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value);
 
                 ptr += l_SIMD_SIZEOF(1);
 
-                if (MEM_UNLIKELY(mask != 0))
+                if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
                     return ptr - l_SIMD_SIZEOF(1) + bsf(mask);
             }
         }
 
         while (MEM_LIKELY(num != 0))
         {
+            [[MEM_ATTR_LIKELY]];
+
             --num;
 
-            if (MEM_UNLIKELY(*ptr == value))
+            if (MEM_UNLIKELY(*ptr == value)) [[MEM_ATTR_UNLIKELY]]
                 return ptr;
 
             ++ptr;
@@ -280,7 +300,7 @@ namespace mem
 #else
         const byte* result = static_cast<const byte*>(std::memchr(ptr, value, num));
 
-        if (MEM_UNLIKELY(result == nullptr))
+        if (MEM_UNLIKELY(result == nullptr)) [[MEM_ATTR_UNLIKELY]]
             result = ptr + num;
 
         return result;
