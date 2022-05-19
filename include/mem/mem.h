@@ -25,6 +25,7 @@
 #include <cstring>
 #include <type_traits>
 #include <utility>
+#include <array>
 
 namespace mem
 {
@@ -116,7 +117,7 @@ namespace mem
         template <typename Container>
         constexpr pointer put_bytes(const Container& obj) const noexcept {
             using value_t = typename Container::value_type;
-            constexpr auto size_e  = sizeof uint8_t;
+            constexpr auto size_e  = sizeof value_t;
             region(*this, size_e * std::size(obj)).copy(std::data(obj));
             return *this;
         }
