@@ -117,8 +117,8 @@ namespace mem
         template <typename Container>
         constexpr pointer put_bytes(const Container& obj) const noexcept {
             using value_t = typename Container::value_type;
-            constexpr auto size_e  = sizeof value_t;
-            region(*this, size_e * std::size(obj)).copy(std::data(obj));
+            constexpr auto size_e  = sizeof(value_t);
+            region(*this, size_e * obj.size()).copy(obj.data());
             return *this;
         }
 
