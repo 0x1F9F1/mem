@@ -114,10 +114,36 @@ namespace mem
         rcast() & noexcept;
 
         template <typename Func>
-        constexpr pointer and_then(Func&& func) const;
+        constexpr std::enable_if_t<!std::is_void_v<std::invoke_result_t<Func>>, pointer> 
+        or_else(Func&& func) const
+        {
+            return value_ ? *this : std::forward<Func>(func)();
+        }
 
         template <typename Func>
-        constexpr pointer or_else(Func&& func) const;
+        constexpr std::enable_if_t<!std::is_void_v<std::invoke_result_t<Func, pointer>>, pointer> 
+        and_then(Func&& func) const
+        {
+            return value_ ? std::forward<Func>(func)(*this) : nullptr;
+        }
+
+        template <typename Func>
+        constexpr std::enable_if_t<std::is_void_v<std::invoke_result_t<Func, pointer>>, pointer> 
+        and_then(Func&& func) const
+        {
+            if (value_) 
+                std::forward<Func>(func)(*this);
+            return *this;
+        }
+
+        template <typename Func>
+        constexpr std::enable_if_t<std::is_void_v<std::invoke_result_t<Func>>, pointer> 
+        or_else(Func&& func) const
+        {
+            if (!value_) 
+                std::forward<Func>(func)();
+            return *this;
+        }
 
         constexpr any_pointer any() const noexcept;
     };
@@ -389,18 +415,6 @@ namespace mem
         static_assert(sizeof(T) == sizeof(pointer), "That's no pointer. It's a space station.");
 
         return *reinterpret_cast<typename std::add_pointer<T>::type>(this);
-    }
-
-    template <typename Func>
-    MEM_STRONG_INLINE constexpr pointer pointer::and_then(Func&& func) const
-    {
-        return value_ ? std::forward<Func>(func)(*this) : nullptr;
-    }
-
-    template <typename Func>
-    MEM_STRONG_INLINE constexpr pointer pointer::or_else(Func&& func) const
-    {
-        return value_ ? *this : std::forward<Func>(func)();
     }
 
     MEM_STRONG_INLINE constexpr any_pointer pointer::any() const noexcept
