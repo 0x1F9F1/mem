@@ -88,6 +88,7 @@ namespace mem
 
     public:
         signal_handler();
+        signal_handler(size_t stack_size);
         ~signal_handler();
 
         signal_handler(const signal_handler&) = delete;
@@ -216,12 +217,16 @@ namespace mem
 
 #elif defined(__unix__)
     inline signal_handler::signal_handler()
-        : sig_stack_(new char[MINSIGSTKSZ])
+        : signal_handler(static_cast<size_t>(MINSIGSTKSZ))
+    {}
+
+    inline signal_handler::signal_handler(size_t stack_size)
+        : sig_stack_(new char[stack_size])
     {
         stack_t new_stack {};
 
         new_stack.ss_sp = sig_stack_.get();
-        new_stack.ss_size = MINSIGSTKSZ;
+        new_stack.ss_size = stack_size;
         new_stack.ss_flags = 0;
         sigaltstack(&new_stack, &old_stack_);
 
