@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.4...4.2)
 
 option(MEM_TEST "Generate the test target." OFF)
 
