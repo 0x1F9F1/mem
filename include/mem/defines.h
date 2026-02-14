@@ -24,31 +24,37 @@
 #    define MEM_ARCH_X86_64
 #elif defined(__i386) || defined(_M_IX86)
 #    define MEM_ARCH_X86
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#    define MEM_ARCH_AARCH64
 #endif
 
-#if defined(__AVX2__)
+#if defined(__APPLE__) && !defined(__unix__)
+#    define __unix__
+#endif
+
+#if !defined(MEM_SIMD_AVX2) && defined(__AVX2__)
 #    define MEM_SIMD_AVX2
 #endif
 
-#if defined(__AVX__) || defined(MEM_SIMD_AVX2)
+#if !defined(MEM_SIMD_AVX) && (defined(__AVX__) || defined(MEM_SIMD_AVX2))
 #    define MEM_SIMD_AVX
 #endif
 
-#if defined(__SSSE3__) || defined(MEM_SIMD_AVX)
+#if !defined(MEM_SIMD_SSSE3) && (defined(__SSSE3__) || defined(MEM_SIMD_AVX))
 #    define MEM_SIMD_SSSE3
 #endif
 
-#if defined(__SSE3__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || \
-    defined(MEM_SIMD_SSSE3)
+#if !defined(MEM_SIMD_SSE3) && (defined(__SSE3__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || \
+    defined(MEM_SIMD_SSSE3))
 #    define MEM_SIMD_SSE3
 #endif
 
-#if defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || \
-    defined(MEM_SIMD_SSE3)
+#if !defined(MEM_SIMD_SSE2) && (defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2)) || \
+    defined(MEM_SIMD_SSE3))
 #    define MEM_SIMD_SSE2
 #endif
 
-#if defined(__SSE__) || (defined(_M_IX86_FP) && (_M_IX86_FP == 1)) || defined(MEM_SIMD_SSE2)
+#if !defined(MEM_SIMD_SSE) && (defined(__SSE__) || (defined(_M_IX86_FP) && (_M_IX86_FP == 1)) || defined(MEM_SIMD_SSE2))
 #    define MEM_SIMD_SSE
 #endif
 
