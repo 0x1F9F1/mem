@@ -64,8 +64,6 @@ namespace mem
 
         bool needs_masks() const noexcept;
 
-        std::size_t get_skip_pos(const byte* frequencies) const noexcept;
-
         explicit operator bool() const noexcept;
 
         std::string to_string() const;
@@ -329,28 +327,6 @@ namespace mem
     MEM_STRONG_INLINE bool pattern::needs_masks() const noexcept
     {
         return needs_masks_;
-    }
-
-    MEM_STRONG_INLINE std::size_t pattern::get_skip_pos(const byte* frequencies) const noexcept
-    {
-        std::size_t min = SIZE_MAX;
-        std::size_t result = SIZE_MAX;
-
-        for (std::size_t i = 0; i < size(); ++i)
-        {
-            if (masks_[i] == 0xFF)
-            {
-                std::size_t f = frequencies[bytes_[i]];
-
-                if (f <= min)
-                {
-                    result = i;
-                    min = f;
-                }
-            }
-        }
-
-        return result;
     }
 
     MEM_STRONG_INLINE pattern::operator bool() const noexcept
