@@ -70,12 +70,13 @@ namespace mem
         const byte* const masks = pattern_->masks();
 
         // Try to pick a byte which is uncommon in both the needle and haystack
-        std::size_t pat_freq[256] {};
+        std::size_t hist[256] {};
+        const std::size_t hist_factor = 50;
 
         for (std::size_t i = 0; i < trimmed_size; ++i)
         {
             if (masks[i] == 0xFF)
-                ++pat_freq[bytes[i]];
+                hist[bytes[i]] += hist_factor;
         }
 
         std::size_t min_freq = SIZE_MAX;
@@ -85,7 +86,7 @@ namespace mem
             if (masks[i] == 0xFF)
             {
                 std::uint8_t v = bytes[i];
-                std::size_t f = (pat_freq[v] << 8) | frequencies[v];
+                std::size_t f = hist[v] + frequencies[v];
 
                 if (f <= min_freq)
                 {
@@ -213,13 +214,11 @@ namespace mem
         }
 
         const std::size_t* suffix_skips = suffix_skips_.data();
-        const std::size_t min_skip = suffix_skips[last];
+        const std::size_t last_skip = suffix_skips[last];
 
         ptr += skip_pos;
         end += skip_pos;
         const byte skip_value = pat_bytes[skip_pos];
-
-        std::size_t num = static_cast<std::size_t>(end - ptr);
 
 #if !defined(MEM_SIMD_SCANNER_USE_STD_FIND)
 #    if defined(MEM_SIMD_AVX2)
@@ -244,11 +243,9 @@ namespace mem
         const l_SIMD_TYPE simd_value = l_SIMD_FILL(skip_value);
 
     retry:
-        while (MEM_LIKELY(num >= l_SIMD_SIZEOF(4)))
+        while (MEM_LIKELY((end - ptr) >= l_SIMD_SIZEOF(4)))
         {
             [[MEM_ATTR_LIKELY]];
-
-            num -= l_SIMD_SIZEOF(4);
 
             const l_SIMD_TYPE value0 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr));
             const l_SIMD_TYPE value1 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr + l_SIMD_SIZEOF(1)));
@@ -298,11 +295,9 @@ namespace mem
             }
         }
 
-        while (MEM_LIKELY(num >= l_SIMD_SIZEOF(1)))
+        while (MEM_LIKELY((end - ptr) >= l_SIMD_SIZEOF(1)))
         {
             [[MEM_ATTR_LIKELY]];
-
-            num -= l_SIMD_SIZEOF(1);
 
             const auto mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value);
 
@@ -315,11 +310,9 @@ namespace mem
             };
         }
 
-        while (MEM_LIKELY(num != 0))
+        while (MEM_LIKELY(ptr != end))
         {
             [[MEM_ATTR_LIKELY]];
-
-            --num;
 
             if (MEM_UNLIKELY(*ptr == skip_value)) [[MEM_ATTR_UNLIKELY]]
                 goto match;
@@ -348,33 +341,36 @@ namespace mem
 #endif
 
     match:
-        num = static_cast<std::size_t>(end - ptr);
         const byte* here = ptr - skip_pos;
-        std::size_t skip = min_skip;
 
-        if (MEM_UNLIKELY((here[last] & pat_masks[last]) == pat_bytes[last])) [[MEM_ATTR_UNLIKELY]]
+        if (MEM_LIKELY((here[last] & pat_masks[last]) != pat_bytes[last])) [[MEM_ATTR_LIKELY]]
         {
-            std::size_t i = last;
+            if (MEM_UNLIKELY((end - ptr) <= last_skip)) [[MEM_ATTR_UNLIKELY]]
+                return nullptr;
 
-            while (true)
-            {
-                if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
-                    return here;
-
-                --i;
-
-                if (MEM_LIKELY((here[i] & pat_masks[i]) != pat_bytes[i])) [[MEM_ATTR_LIKELY]]
-                    break;
-            }
-
-            skip = suffix_skips[i];
+            ptr += last_skip;
+            goto retry;
         }
 
-        if (MEM_UNLIKELY(num <= skip)) [[MEM_ATTR_UNLIKELY]]
+        std::size_t i = last;
+
+        while (true)
+        {
+            if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
+                return here;
+
+            --i;
+
+            if (MEM_LIKELY((here[i] & pat_masks[i]) != pat_bytes[i])) [[MEM_ATTR_LIKELY]]
+                break;
+        }
+
+        std::size_t skip = suffix_skips[i];
+
+        if (MEM_UNLIKELY((end - ptr) <= skip)) [[MEM_ATTR_UNLIKELY]]
             return nullptr;
 
         ptr += skip;
-        num -= skip;
         goto retry;
     }
 } // namespace mem
