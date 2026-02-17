@@ -243,7 +243,7 @@ namespace mem
         const l_SIMD_TYPE simd_value = l_SIMD_FILL(skip_value);
 
     retry:
-        while (MEM_LIKELY((end - ptr) >= l_SIMD_SIZEOF(4)))
+        while (MEM_LIKELY(static_cast<std::size_t>(end - ptr) >= l_SIMD_SIZEOF(4)))
         {
             [[MEM_ATTR_LIKELY]];
 
@@ -295,7 +295,7 @@ namespace mem
             }
         }
 
-        while (MEM_LIKELY((end - ptr) >= l_SIMD_SIZEOF(1)))
+        while (MEM_LIKELY(static_cast<std::size_t>(end - ptr) >= l_SIMD_SIZEOF(1)))
         {
             [[MEM_ATTR_LIKELY]];
 
@@ -345,7 +345,7 @@ namespace mem
 
         if (MEM_LIKELY((here[last] & pat_masks[last]) != pat_bytes[last])) [[MEM_ATTR_LIKELY]]
         {
-            if (MEM_UNLIKELY((end - ptr) <= last_skip)) [[MEM_ATTR_UNLIKELY]]
+            if (MEM_UNLIKELY(static_cast<std::size_t>(end - ptr) <= last_skip)) [[MEM_ATTR_UNLIKELY]]
                 return nullptr;
 
             ptr += last_skip;
@@ -367,7 +367,7 @@ namespace mem
 
         std::size_t skip = suffix_skips[i];
 
-        if (MEM_UNLIKELY((end - ptr) <= skip)) [[MEM_ATTR_UNLIKELY]]
+        if (MEM_UNLIKELY(static_cast<std::size_t>(end - ptr) <= skip)) [[MEM_ATTR_UNLIKELY]]
             return nullptr;
 
         ptr += skip;
