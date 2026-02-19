@@ -22,21 +22,21 @@
 
 #include "pattern.h"
 
-#if !defined(MEM_SIMD_SCANNER_USE_STD_FIND)
+#if !defined(MEM_SIMD_SCANNER_USE_GENERIC)
 #    if defined(MEM_SIMD_AVX2)
 #        include <immintrin.h>
 #    elif defined(MEM_SIMD_SSE2)
 #        include <emmintrin.h>
 #    else
-#        define MEM_SIMD_SCANNER_USE_STD_FIND
+#        define MEM_SIMD_SCANNER_USE_GENERIC
 #    endif
 #endif
 
-#if defined(MEM_SIMD_SCANNER_USE_STD_FIND)
-#    include <algorithm>
-#else
+#if !defined(MEM_SIMD_SCANNER_USE_GENERIC)
 #    include "arch.h"
 #endif
+
+#include <algorithm>
 
 namespace mem
 {
@@ -44,8 +44,20 @@ namespace mem
     {
     private:
         const pattern* pattern_ {nullptr};
-        std::size_t skip_pos_ {SIZE_MAX};
-        std::vector<std::size_t> suffix_skips_ {};
+
+        struct scan_byte
+        {
+            std::uint8_t value;
+            std::uint8_t mask;
+            std::uint16_t skip;
+            std::uint32_t offset;
+        };
+
+        std::vector<scan_byte> bytes_ {};
+        std::size_t num_literals_ {};
+
+        const byte* scan_literals(const byte* start, const byte* end) const;
+        const byte* scan_fallback(const byte* start, const byte* end) const;
 
     public:
         simd_scanner() = default;
@@ -69,41 +81,42 @@ namespace mem
         const byte* const bytes = pattern_->bytes();
         const byte* const masks = pattern_->masks();
 
-        // Try to pick a byte which is uncommon in both the needle and haystack
         std::size_t hist[256] {};
         const std::size_t hist_factor = 50;
 
+        // Order bytes based on their frequency in the needle, the haystack, and their position in the needle.
+        // The lower the rating, the more uncommon the byte is expected to be.
+        const auto get_rating = [&](scan_byte v) {
+            return hist[v.value] + frequencies[v.value] + (trimmed_size - v.offset);
+        };
+
+        bytes_.reserve(trimmed_size);
+
         for (std::size_t i = 0; i < trimmed_size; ++i)
         {
-            if (masks[i] == 0xFF)
-                hist[bytes[i]] += hist_factor;
-        }
+            std::uint8_t v = bytes[i];
+            std::uint8_t m = masks[i];
 
-        std::size_t min_freq = SIZE_MAX;
-
-        for (std::size_t i = 0; i < trimmed_size; ++i)
-        {
-            if (masks[i] == 0xFF)
+            if (m == 0xFF)
             {
-                std::uint8_t v = bytes[i];
-                std::size_t f = hist[v] + frequencies[v];
-
-                if (f <= min_freq)
-                {
-                    skip_pos_ = i;
-                    min_freq = f;
-                }
+                hist[v] += hist_factor;
+                bytes_.push_back({v, m, 1, static_cast<std::uint32_t>(i)});
             }
         }
 
-        if (skip_pos_ == SIZE_MAX)
-            return;
+        std::sort(bytes_.begin(), bytes_.end(),
+            [&](const scan_byte& lhs, const scan_byte& rhs) { return get_rating(lhs) < get_rating(rhs); });
 
-        // Once we've found a match for data[skip_pos], we need to check the rest.
-        // If it isn't a full match, calculate how far forward we can skip, based on how much of the suffix was correct.
-        // This is a similar idea to the Boyer-Moore good-suffix rule, but also incorporates the match at skip_pos.
+        num_literals_ = bytes_.size();
 
-        suffix_skips_.resize(trimmed_size);
+        for (std::size_t i = 0; i < trimmed_size; ++i)
+        {
+            std::uint8_t v = bytes[i];
+            std::uint8_t m = masks[i];
+
+            if (m != 0x00 && m != 0xFF)
+                bytes_.push_back({v, m, 1, static_cast<std::uint32_t>(i)});
+        }
 
         std::size_t skip = 1;
 
@@ -114,18 +127,15 @@ namespace mem
             return ((bytes[i] ^ bytes[j]) & (masks[i] & masks[j])) == 0;
         };
 
-        for (std::size_t i = trimmed_size; i > 0; --i)
+        for (std::size_t i = 0; i < bytes_.size(); ++i)
         {
             for (; skip < trimmed_size; ++skip)
             {
-                if (!matches(skip_pos_))
-                    continue;
-
                 bool could_match = true;
 
-                for (std::size_t j = i; j < trimmed_size; ++j)
+                for (std::size_t j = 0; j < i; ++j)
                 {
-                    if (!matches(j))
+                    if (!matches(bytes_[j].offset))
                     {
                         could_match = false;
                         break;
@@ -136,7 +146,7 @@ namespace mem
                     break;
             }
 
-            suffix_skips_[i - 1] = skip;
+            bytes_[i].skip = static_cast<std::uint16_t>(std::min<std::size_t>(skip, UINT16_MAX));
         }
     }
 
@@ -167,6 +177,155 @@ namespace mem
         return frequencies;
     }
 
+    MEM_NOINLINE inline const byte* simd_scanner::scan_literals(const byte* ptr, const byte* end) const
+    {
+#if !defined(MEM_SIMD_SCANNER_USE_GENERIC)
+#    if defined(MEM_SIMD_AVX2)
+#        define l_SIMD_TYPE __m256i
+#        define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_LOAD(x) _mm256_loadu_si256(reinterpret_cast<const l_SIMD_TYPE*>(x))
+#        define l_SIMD_AND(x, y) _mm256_and_si256(x, y)
+#        define l_SIMD_CMPEQ(x, y) _mm256_cmpeq_epi8(x, y)
+#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm256_movemask_epi8(x))
+#    elif defined(MEM_SIMD_SSE2)
+#        define l_SIMD_TYPE __m128i
+#        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_LOAD(x) _mm_loadu_si128(reinterpret_cast<const l_SIMD_TYPE*>(x))
+#        define l_SIMD_AND(x, y) _mm_and_si128(x, y)
+#        define l_SIMD_CMPEQ(x, y) _mm_cmpeq_epi8(x, y)
+#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm_movemask_epi8(x))
+#    else
+#        error Sorry, No Potatoes
+#    endif
+
+#    define l_SIMD_SIZEOF(N) (sizeof(l_SIMD_TYPE) * N)
+#    define l_SIMD_LOAD_EQ(x, y) l_SIMD_CMPEQ(l_SIMD_LOAD(x), y)
+
+        const std::size_t num_literals = num_literals_;
+
+        if ((num_literals < 2) || ((end - ptr) < static_cast<std::ptrdiff_t>(l_SIMD_SIZEOF(4))))
+        {
+        fallback:
+            return scan_fallback(ptr, end);
+        }
+
+        const byte* const simd_end = end - l_SIMD_SIZEOF(4);
+        const scan_byte* const bytes = bytes_.data();
+        const std::size_t anchor_offset0 = bytes[0].offset;
+        const std::size_t anchor_offset1 = bytes[1].offset;
+        const l_SIMD_TYPE anchor_value0 = l_SIMD_FILL(bytes[0].value);
+        const l_SIMD_TYPE anchor_value1 = l_SIMD_FILL(bytes[1].value);
+        unsigned int mask = 0;
+
+#    define l_SIMD_TEST(x, y, n)                           \
+        mask = l_SIMD_MOVEMASK(l_SIMD_AND(x, y));          \
+        if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]] \
+        {                                                  \
+            ptr -= l_SIMD_SIZEOF(n);                       \
+            break;                                         \
+        }
+
+    retry:
+        while (true)
+        {
+            if (MEM_UNLIKELY(ptr > simd_end)) [[MEM_ATTR_UNLIKELY]]
+                goto fallback;
+
+            const l_SIMD_TYPE value0 = l_SIMD_LOAD_EQ(ptr + anchor_offset0, anchor_value0);
+            const l_SIMD_TYPE value1 = l_SIMD_LOAD_EQ(ptr + anchor_offset1, anchor_value1);
+            const l_SIMD_TYPE value2 = l_SIMD_LOAD_EQ(ptr + anchor_offset0 + l_SIMD_SIZEOF(1), anchor_value0);
+            const l_SIMD_TYPE value3 = l_SIMD_LOAD_EQ(ptr + anchor_offset1 + l_SIMD_SIZEOF(1), anchor_value1);
+            ptr += l_SIMD_SIZEOF(4);
+
+            l_SIMD_TEST(value0, value1, 3);
+
+            const l_SIMD_TYPE value4 = l_SIMD_LOAD_EQ(ptr + anchor_offset0 - l_SIMD_SIZEOF(2), anchor_value0);
+            const l_SIMD_TYPE value5 = l_SIMD_LOAD_EQ(ptr + anchor_offset1 - l_SIMD_SIZEOF(2), anchor_value1);
+            const l_SIMD_TYPE value6 = l_SIMD_LOAD_EQ(ptr + anchor_offset0 - l_SIMD_SIZEOF(1), anchor_value0);
+            const l_SIMD_TYPE value7 = l_SIMD_LOAD_EQ(ptr + anchor_offset1 - l_SIMD_SIZEOF(1), anchor_value1);
+
+            l_SIMD_TEST(value2, value3, 2);
+            l_SIMD_TEST(value4, value5, 1);
+            l_SIMD_TEST(value6, value7, 0);
+        }
+
+        const byte* here = ptr - l_SIMD_SIZEOF(1);
+        std::size_t i = 2;
+
+        for (; MEM_LIKELY((mask & (mask - 1)) != 0) && MEM_LIKELY(i != num_literals); ++i) [[MEM_ATTR_LIKELY]]
+        {
+            const unsigned int prev_mask = mask;
+            mask &= l_SIMD_MOVEMASK(l_SIMD_LOAD_EQ(here + bytes[i].offset, l_SIMD_FILL(bytes[i].value)));
+
+            if (MEM_LIKELY(mask == 0)) [[MEM_ATTR_LIKELY]]
+            {
+                ptr = (std::max) (ptr, here + bsr(prev_mask) + bytes[i].skip);
+                goto retry;
+            }
+        }
+
+        here += bsf(mask);
+
+        for (; MEM_LIKELY(i != num_literals); ++i) [[MEM_ATTR_LIKELY]]
+        {
+            if (MEM_LIKELY(here[bytes[i].offset] != bytes[i].value)) [[MEM_ATTR_LIKELY]]
+            {
+                ptr = (std::max) (ptr, here + bytes[i].skip);
+                goto retry;
+            }
+        }
+
+        return here;
+
+#    undef l_SIMD_TYPE
+#    undef l_SIMD_FILL
+#    undef l_SIMD_LOAD
+#    undef l_SIMD_CMPEQ
+#    undef l_SIMD_MOVEMASK
+#    undef l_SIMD_SIZEOF
+#    undef l_SIMD_LOAD_EQ
+#    undef l_SIMD_TEST
+#else
+        return scan_fallback(ptr, end);
+#endif
+    }
+
+    inline const byte* simd_scanner::scan_fallback(const byte* ptr, const byte* end) const
+    {
+        const std::size_t num_literals = num_literals_;
+
+        if (num_literals == 0)
+            return ptr;
+
+        const scan_byte* bytes = bytes_.data();
+        const scan_byte anchor = bytes[0];
+
+        while (ptr < end)
+        {
+            ptr = static_cast<const byte*>(
+                std::memchr(ptr + anchor.offset, anchor.value, static_cast<std::size_t>(end - ptr)));
+
+            if (ptr == nullptr)
+                break;
+
+            ptr -= anchor.offset;
+
+            for (std::size_t i = 1;; ++i)
+            {
+                if (i == num_literals)
+                    return ptr;
+
+                if (ptr[bytes[i].offset] != bytes[i].value)
+                {
+                    ptr += bytes[i].skip;
+                    break;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
     MEM_NOINLINE inline pointer simd_scanner::scan(region range) const
     {
         const std::size_t trimmed_size = pattern_->trimmed_size();
@@ -186,192 +345,27 @@ namespace mem
         const byte* ptr = region_base;
         const byte* end = region_end - original_size + 1;
 
-        const std::size_t last = trimmed_size - 1;
-
-        const byte* const pat_bytes = pattern_->bytes();
-        const byte* const pat_masks = pattern_->masks();
-
-        const std::size_t skip_pos = skip_pos_;
-
-        if (skip_pos == SIZE_MAX)
+        while (ptr < end)
         {
-            while (MEM_LIKELY(ptr < end))
+            ptr = scan_literals(ptr, end);
+
+            if (ptr == nullptr)
+                return nullptr;
+
+            for (std::size_t i = num_literals_;; ++i)
             {
-                [[MEM_ATTR_LIKELY]];
+                if (i == bytes_.size())
+                    return ptr;
 
-                for (std::size_t i = last; MEM_LIKELY((ptr[i] & pat_masks[i]) == pat_bytes[i]); --i)
+                if ((ptr[bytes_[i].offset] & bytes_[i].mask) != bytes_[i].value)
                 {
-                    [[MEM_ATTR_LIKELY]];
-
-                    if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
-                        return ptr;
-                }
-
-                ++ptr;
-            }
-
-            return nullptr;
-        }
-
-        const std::size_t* suffix_skips = suffix_skips_.data();
-        const std::size_t last_skip = suffix_skips[last];
-
-        ptr += skip_pos;
-        end += skip_pos;
-        const byte skip_value = pat_bytes[skip_pos];
-
-#if !defined(MEM_SIMD_SCANNER_USE_STD_FIND)
-#    if defined(MEM_SIMD_AVX2)
-#        define l_SIMD_TYPE __m256i
-#        define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
-#        define l_SIMD_LOAD(x) _mm256_loadu_si256(x)
-#        define l_SIMD_CMPEQ(x, y) _mm256_cmpeq_epi8(x, y)
-#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm256_movemask_epi8(x))
-#    elif defined(MEM_SIMD_SSE2)
-#        define l_SIMD_TYPE __m128i
-#        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
-#        define l_SIMD_LOAD(x) _mm_loadu_si128(x)
-#        define l_SIMD_CMPEQ(x, y) _mm_cmpeq_epi8(x, y)
-#        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm_movemask_epi8(x))
-#    else
-#        error Sorry, No Potatoes
-#    endif
-
-#    define l_SIMD_SIZEOF(N) (sizeof(l_SIMD_TYPE) * N)
-#    define l_SIMD_CMPEQ_MASK(x, y) l_SIMD_MOVEMASK(l_SIMD_CMPEQ(x, y))
-
-        const l_SIMD_TYPE simd_value = l_SIMD_FILL(skip_value);
-
-    retry:
-        while (MEM_LIKELY(static_cast<std::size_t>(end - ptr) >= l_SIMD_SIZEOF(4)))
-        {
-            [[MEM_ATTR_LIKELY]];
-
-            const l_SIMD_TYPE value0 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr));
-            const l_SIMD_TYPE value1 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr + l_SIMD_SIZEOF(1)));
-            const l_SIMD_TYPE value2 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr + l_SIMD_SIZEOF(2)));
-            const l_SIMD_TYPE value3 = l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr + l_SIMD_SIZEOF(3)));
-
-            ptr += l_SIMD_SIZEOF(4);
-
-            {
-                const auto mask = l_SIMD_CMPEQ_MASK(value0, simd_value);
-
-                if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
-                {
-                    ptr = ptr - l_SIMD_SIZEOF(4) + bsf(mask);
-                    goto match;
+                    ptr += bytes_[i].skip;
+                    break;
                 }
             }
-
-            {
-                const auto mask = l_SIMD_CMPEQ_MASK(value1, simd_value);
-
-                if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
-                {
-                    ptr = ptr - l_SIMD_SIZEOF(3) + bsf(mask);
-                    goto match;
-                }
-            }
-
-            {
-                const auto mask = l_SIMD_CMPEQ_MASK(value2, simd_value);
-
-                if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
-                {
-                    ptr = ptr - l_SIMD_SIZEOF(2) + bsf(mask);
-                    goto match;
-                }
-            }
-
-            {
-                const auto mask = l_SIMD_CMPEQ_MASK(value3, simd_value);
-
-                if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
-                {
-                    ptr = ptr - l_SIMD_SIZEOF(1) + bsf(mask);
-                    goto match;
-                }
-            }
-        }
-
-        while (MEM_LIKELY(static_cast<std::size_t>(end - ptr) >= l_SIMD_SIZEOF(1)))
-        {
-            [[MEM_ATTR_LIKELY]];
-
-            const auto mask = l_SIMD_CMPEQ_MASK(l_SIMD_LOAD(reinterpret_cast<const l_SIMD_TYPE*>(ptr)), simd_value);
-
-            ptr += l_SIMD_SIZEOF(1);
-
-            if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]]
-            {
-                ptr = ptr - l_SIMD_SIZEOF(1) + bsf(mask);
-                goto match;
-            };
-        }
-
-        while (MEM_LIKELY(ptr != end))
-        {
-            [[MEM_ATTR_LIKELY]];
-
-            if (MEM_UNLIKELY(*ptr == skip_value)) [[MEM_ATTR_UNLIKELY]]
-                goto match;
-
-            ++ptr;
         }
 
         return nullptr;
-
-#    undef l_SIMD_TYPE
-#    undef l_SIMD_FILL
-#    undef l_SIMD_LOAD
-#    undef l_SIMD_LOADU
-#    undef l_SIMD_CMPEQ
-#    undef l_SIMD_MOVEMASK
-#    undef l_SIMD_SIZEOF
-#    undef l_SIMD_CMPEQ_MASK
-#else
-    retry:
-        ptr = std::find(ptr, end, skip_value);
-
-        if (ptr == end)
-            return nullptr;
-
-        goto match;
-#endif
-
-    match:
-        const byte* here = ptr - skip_pos;
-
-        if (MEM_LIKELY((here[last] & pat_masks[last]) != pat_bytes[last])) [[MEM_ATTR_LIKELY]]
-        {
-            if (MEM_UNLIKELY(static_cast<std::size_t>(end - ptr) <= last_skip)) [[MEM_ATTR_UNLIKELY]]
-                return nullptr;
-
-            ptr += last_skip;
-            goto retry;
-        }
-
-        std::size_t i = last;
-
-        while (true)
-        {
-            if (MEM_UNLIKELY(i == 0)) [[MEM_ATTR_UNLIKELY]]
-                return here;
-
-            --i;
-
-            if (MEM_LIKELY((here[i] & pat_masks[i]) != pat_bytes[i])) [[MEM_ATTR_LIKELY]]
-                break;
-        }
-
-        std::size_t skip = suffix_skips[i];
-
-        if (MEM_UNLIKELY(static_cast<std::size_t>(end - ptr) <= skip)) [[MEM_ATTR_UNLIKELY]]
-            return nullptr;
-
-        ptr += skip;
-        goto retry;
     }
 } // namespace mem
 
