@@ -47,9 +47,19 @@ namespace mem
 
         struct scan_byte
         {
-            std::uint8_t value;
-            std::uint8_t mask;
-            std::uint16_t skip;
+            union
+            {
+                std::uint32_t value32;
+                std::uint8_t value;
+            };
+
+            union
+            {
+                std::uint32_t mask32;
+                std::uint8_t mask;
+            };
+
+            std::uint32_t skip;
             std::uint32_t offset;
         };
 
@@ -57,7 +67,6 @@ namespace mem
         std::size_t num_literals_ {};
 
         const byte* scan_literals(const byte* start, const byte* end) const;
-        const byte* scan_fallback(const byte* start, const byte* end) const;
 
     public:
         simd_scanner() = default;
@@ -100,7 +109,8 @@ namespace mem
             if (m == 0xFF)
             {
                 hist[v] += hist_factor;
-                bytes_.push_back({v, m, 1, static_cast<std::uint32_t>(i)});
+                bytes_.push_back(
+                    {{v * UINT32_C(0x01010101)}, {m * UINT32_C(0x01010101)}, 1, static_cast<std::uint32_t>(i)});
             }
         }
 
@@ -115,7 +125,10 @@ namespace mem
             std::uint8_t m = masks[i];
 
             if (m != 0x00 && m != 0xFF)
-                bytes_.push_back({v, m, 1, static_cast<std::uint32_t>(i)});
+            {
+                bytes_.push_back(
+                    {{v * UINT32_C(0x01010101)}, {m * UINT32_C(0x01010101)}, 1, static_cast<std::uint32_t>(i)});
+            }
         }
 
         std::size_t skip = 1;
@@ -146,7 +159,7 @@ namespace mem
                     break;
             }
 
-            bytes_[i].skip = static_cast<std::uint16_t>(std::min<std::size_t>(skip, UINT16_MAX));
+            bytes_[i].skip = static_cast<std::uint32_t>(skip);
         }
     }
 
@@ -179,17 +192,24 @@ namespace mem
 
     MEM_NOINLINE inline const byte* simd_scanner::scan_literals(const byte* ptr, const byte* end) const
     {
+        const std::size_t num_literals = num_literals_;
+
+        if (num_literals == 0)
+            return ptr;
+
+        const scan_byte* const bytes = bytes_.data();
+
 #if !defined(MEM_SIMD_SCANNER_USE_GENERIC)
 #    if defined(MEM_SIMD_AVX2)
 #        define l_SIMD_TYPE __m256i
-#        define l_SIMD_FILL(x) _mm256_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_FILL32(x) _mm256_set1_epi32(static_cast<int>(x))
 #        define l_SIMD_LOAD(x) _mm256_loadu_si256(reinterpret_cast<const l_SIMD_TYPE*>(x))
 #        define l_SIMD_AND(x, y) _mm256_and_si256(x, y)
 #        define l_SIMD_CMPEQ(x, y) _mm256_cmpeq_epi8(x, y)
 #        define l_SIMD_MOVEMASK(x) static_cast<unsigned int>(_mm256_movemask_epi8(x))
 #    elif defined(MEM_SIMD_SSE2)
 #        define l_SIMD_TYPE __m128i
-#        define l_SIMD_FILL(x) _mm_set1_epi8(static_cast<char>(x))
+#        define l_SIMD_FILL32(x) _mm_set1_epi32(static_cast<int>(x))
 #        define l_SIMD_LOAD(x) _mm_loadu_si128(reinterpret_cast<const l_SIMD_TYPE*>(x))
 #        define l_SIMD_AND(x, y) _mm_and_si128(x, y)
 #        define l_SIMD_CMPEQ(x, y) _mm_cmpeq_epi8(x, y)
@@ -201,84 +221,129 @@ namespace mem
 #    define l_SIMD_SIZEOF(N) (sizeof(l_SIMD_TYPE) * N)
 #    define l_SIMD_LOAD_EQ(x, y) l_SIMD_CMPEQ(l_SIMD_LOAD(x), y)
 
-        const std::size_t num_literals = num_literals_;
-
-        if ((num_literals < 2) || ((end - ptr) < static_cast<std::ptrdiff_t>(l_SIMD_SIZEOF(4))))
+        if ((end - ptr) < static_cast<std::ptrdiff_t>(l_SIMD_SIZEOF(1)))
         {
-        fallback:
-            return scan_fallback(ptr, end);
+            const scan_byte anchor = bytes[0];
+
+            while (MEM_LIKELY(ptr < end)) [[MEM_ATTR_LIKELY]]
+            {
+                if (MEM_LIKELY(ptr[anchor.offset] != anchor.value))
+                {
+                    ptr += anchor.skip;
+                    continue;
+                }
+
+                for (std::size_t i = 1;; ++i)
+                {
+                    if (i == num_literals)
+                        return ptr;
+
+                    if (ptr[bytes[i].offset] != bytes[i].value)
+                    {
+                        ptr += bytes[i].skip;
+                        break;
+                    }
+                }
+            }
+
+            return nullptr;
         }
 
-        const byte* const simd_end = end - l_SIMD_SIZEOF(4);
-        const scan_byte* const bytes = bytes_.data();
+        const byte* const simd_end = end - l_SIMD_SIZEOF(1);
+        const scan_byte* const bytes_start = &bytes[(num_literals > 1) ? 2 : 1];
+        const scan_byte* const bytes_end = &bytes[num_literals];
         const std::size_t anchor_offset0 = bytes[0].offset;
-        const std::size_t anchor_offset1 = bytes[1].offset;
-        const l_SIMD_TYPE anchor_value0 = l_SIMD_FILL(bytes[0].value);
-        const l_SIMD_TYPE anchor_value1 = l_SIMD_FILL(bytes[1].value);
+        const std::size_t anchor_offset1 = bytes[(num_literals > 1) ? 1 : 0].offset;
+        const l_SIMD_TYPE anchor_value0 = l_SIMD_FILL32(bytes[0].value32);
+        const l_SIMD_TYPE anchor_value1 = l_SIMD_FILL32(bytes[(num_literals > 1) ? 1 : 0].value32);
         unsigned int mask = 0;
+        bool tailed = false;
 
-#    define l_SIMD_TEST(x, y, n)                           \
-        mask = l_SIMD_MOVEMASK(l_SIMD_AND(x, y));          \
-        if (MEM_UNLIKELY(mask != 0)) [[MEM_ATTR_UNLIKELY]] \
-        {                                                  \
-            ptr -= l_SIMD_SIZEOF(n);                       \
-            break;                                         \
-        }
+#    define l_SIMD_TEST(x, y)                     \
+        mask = l_SIMD_MOVEMASK(l_SIMD_AND(x, y)); \
+        if (mask != 0)                            \
+            goto match;
 
     retry:
-        while (true)
+        while (MEM_LIKELY(ptr < simd_end)) [[MEM_ATTR_LIKELY]]
         {
-            if (MEM_UNLIKELY(ptr > simd_end)) [[MEM_ATTR_UNLIKELY]]
-                goto fallback;
-
             const l_SIMD_TYPE value0 = l_SIMD_LOAD_EQ(ptr + anchor_offset0, anchor_value0);
             const l_SIMD_TYPE value1 = l_SIMD_LOAD_EQ(ptr + anchor_offset1, anchor_value1);
-            const l_SIMD_TYPE value2 = l_SIMD_LOAD_EQ(ptr + anchor_offset0 + l_SIMD_SIZEOF(1), anchor_value0);
-            const l_SIMD_TYPE value3 = l_SIMD_LOAD_EQ(ptr + anchor_offset1 + l_SIMD_SIZEOF(1), anchor_value1);
-            ptr += l_SIMD_SIZEOF(4);
+            l_SIMD_TEST(value0, value1);
+            ptr += l_SIMD_SIZEOF(1);
 
-            l_SIMD_TEST(value0, value1, 3);
+            if (ptr >= simd_end)
+                break;
+            const l_SIMD_TYPE value2 = l_SIMD_LOAD_EQ(ptr + anchor_offset0, anchor_value0);
+            const l_SIMD_TYPE value3 = l_SIMD_LOAD_EQ(ptr + anchor_offset1, anchor_value1);
+            l_SIMD_TEST(value2, value3);
+            ptr += l_SIMD_SIZEOF(1);
 
-            const l_SIMD_TYPE value4 = l_SIMD_LOAD_EQ(ptr + anchor_offset0 - l_SIMD_SIZEOF(2), anchor_value0);
-            const l_SIMD_TYPE value5 = l_SIMD_LOAD_EQ(ptr + anchor_offset1 - l_SIMD_SIZEOF(2), anchor_value1);
-            const l_SIMD_TYPE value6 = l_SIMD_LOAD_EQ(ptr + anchor_offset0 - l_SIMD_SIZEOF(1), anchor_value0);
-            const l_SIMD_TYPE value7 = l_SIMD_LOAD_EQ(ptr + anchor_offset1 - l_SIMD_SIZEOF(1), anchor_value1);
+            if (ptr >= simd_end)
+                break;
+            const l_SIMD_TYPE value4 = l_SIMD_LOAD_EQ(ptr + anchor_offset0, anchor_value0);
+            const l_SIMD_TYPE value5 = l_SIMD_LOAD_EQ(ptr + anchor_offset1, anchor_value1);
+            l_SIMD_TEST(value4, value5);
+            ptr += l_SIMD_SIZEOF(1);
 
-            l_SIMD_TEST(value2, value3, 2);
-            l_SIMD_TEST(value4, value5, 1);
-            l_SIMD_TEST(value6, value7, 0);
+            if (ptr >= simd_end)
+                break;
+            const l_SIMD_TYPE value6 = l_SIMD_LOAD_EQ(ptr + anchor_offset0, anchor_value0);
+            const l_SIMD_TYPE value7 = l_SIMD_LOAD_EQ(ptr + anchor_offset1, anchor_value1);
+            l_SIMD_TEST(value6, value7);
+            ptr += l_SIMD_SIZEOF(1);
         }
 
-        const byte* here = ptr - l_SIMD_SIZEOF(1);
-        std::size_t i = 2;
-
-        for (; MEM_LIKELY((mask & (mask - 1)) != 0) && MEM_LIKELY(i != num_literals); ++i) [[MEM_ATTR_LIKELY]]
+        if (MEM_LIKELY(!tailed)) [[MEM_ATTR_LIKELY]]
         {
-            const unsigned int prev_mask = mask;
-            mask &= l_SIMD_MOVEMASK(l_SIMD_LOAD_EQ(here + bytes[i].offset, l_SIMD_FILL(bytes[i].value)));
+            tailed = true;
+            ptr = simd_end;
+            const l_SIMD_TYPE value0 = l_SIMD_LOAD_EQ(ptr + anchor_offset0, anchor_value0);
+            const l_SIMD_TYPE value1 = l_SIMD_LOAD_EQ(ptr + anchor_offset1, anchor_value1);
+            l_SIMD_TEST(value0, value1);
+        }
 
-            if (MEM_LIKELY(mask == 0)) [[MEM_ATTR_LIKELY]]
+        return nullptr;
+
+    match:
+        if ((mask & (mask - 1)) != 0)
+        {
+            const scan_byte* needle = bytes_start;
+            std::size_t skip = l_SIMD_SIZEOF(1);
+
+            while (MEM_LIKELY(needle < bytes_end)) [[MEM_ATTR_LIKELY]]
             {
-                ptr = (std::max) (ptr, here + bsr(prev_mask) + bytes[i].skip);
+                ++needle;
+                skip = std::max<std::size_t>(skip, bsr(mask) + needle[-1].skip);
+                mask &= l_SIMD_MOVEMASK(l_SIMD_LOAD_EQ(ptr + needle[-1].offset, l_SIMD_FILL32(needle[-1].value32)));
+                if (mask != 0)
+                    continue;
+                ptr += skip;
                 goto retry;
             }
+
+            return ptr + bsf(mask);
         }
-
-        here += bsf(mask);
-
-        for (; MEM_LIKELY(i != num_literals); ++i) [[MEM_ATTR_LIKELY]]
+        else
         {
-            if (MEM_LIKELY(here[bytes[i].offset] != bytes[i].value)) [[MEM_ATTR_LIKELY]]
+            const byte* here = ptr + bsf(mask);
+            ptr += l_SIMD_SIZEOF(1);
+            const scan_byte* needle = bytes_start;
+
+            while (MEM_LIKELY(needle < bytes_end)) [[MEM_ATTR_LIKELY]]
             {
-                ptr = (std::max) (ptr, here + bytes[i].skip);
+                ++needle;
+                if (here[needle[-1].offset] == needle[-1].value)
+                    continue;
+                ptr = (std::max) (ptr, here + needle[-1].skip);
                 goto retry;
             }
-        }
 
-        return here;
+            return here;
+        }
 
 #    undef l_SIMD_TYPE
-#    undef l_SIMD_FILL
+#    undef l_SIMD_FILL32
 #    undef l_SIMD_LOAD
 #    undef l_SIMD_CMPEQ
 #    undef l_SIMD_MOVEMASK
@@ -286,18 +351,6 @@ namespace mem
 #    undef l_SIMD_LOAD_EQ
 #    undef l_SIMD_TEST
 #else
-        return scan_fallback(ptr, end);
-#endif
-    }
-
-    inline const byte* simd_scanner::scan_fallback(const byte* ptr, const byte* end) const
-    {
-        const std::size_t num_literals = num_literals_;
-
-        if (num_literals == 0)
-            return ptr;
-
-        const scan_byte* bytes = bytes_.data();
         const scan_byte anchor = bytes[0];
 
         while (ptr < end)
@@ -324,6 +377,7 @@ namespace mem
         }
 
         return nullptr;
+#endif
     }
 
     MEM_NOINLINE inline pointer simd_scanner::scan(region range) const
