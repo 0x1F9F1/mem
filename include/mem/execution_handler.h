@@ -183,7 +183,7 @@ namespace mem
                 ep->ContextRecord->R8,  ep->ContextRecord->R9,  ep->ContextRecord->R10, ep->ContextRecord->R11,
                 ep->ContextRecord->R12, ep->ContextRecord->R13, ep->ContextRecord->R14, ep->ContextRecord->R15
 #else /*if defined(MEM_ARCH_X86)*/
-                "%s (0x%08X) at 0x%08X\n"
+                "%s (0x%08X) at 0x%08lX\n"
                 "EAX = 0x%08lX EBX = 0x%08lX ECX = 0x%08lX EDX = 0x%08lX\n"
                 "ESP = 0x%08lX EBP = 0x%08lX ESI = 0x%08lX EDI = 0x%08lX\n",
                 code_name, code,
