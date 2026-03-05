@@ -56,21 +56,6 @@ namespace mem
         return result;
 #endif
     }
-
-    MEM_STRONG_INLINE unsigned int bsr(unsigned int x) noexcept
-    {
-#if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
-        return static_cast<unsigned int>(__builtin_clz(x) ^ 31);
-#elif defined(_MSC_VER)
-        unsigned long result;
-        _BitScanReverse(&result, static_cast<unsigned long>(x));
-        return static_cast<unsigned int>(result);
-#else
-        unsigned int result;
-        asm("bsr %1, %0" : "=r"(result) : "rm"(x));
-        return result;
-#endif
-    }
 } // namespace mem
 
 #endif // MEM_ARCH_BRICK_H

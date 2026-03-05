@@ -375,27 +375,27 @@ namespace mem
     class scanner_base
     {
     public:
-        pointer operator()(region range) const;
+        pointer operator()(region range);
 
         template <typename Func>
-        pointer operator()(region range, Func func) const;
+        pointer operator()(region range, Func func);
 
-        std::vector<pointer> scan_all(region range) const;
+        std::vector<pointer> scan_all(region range);
     };
 
     template <typename Scanner>
-    MEM_STRONG_INLINE pointer scanner_base<Scanner>::operator()(region range) const
+    MEM_STRONG_INLINE pointer scanner_base<Scanner>::operator()(region range)
     {
-        return static_cast<const Scanner*>(this)->scan(range);
+        return static_cast<Scanner*>(this)->scan(range);
     }
 
     template <typename Scanner>
     template <typename Func>
-    inline pointer scanner_base<Scanner>::operator()(region range, Func func) const
+    inline pointer scanner_base<Scanner>::operator()(region range, Func func)
     {
         while (true)
         {
-            const pointer result = static_cast<const Scanner*>(this)->scan(range);
+            const pointer result = static_cast<Scanner*>(this)->scan(range);
 
             if (result)
             {
@@ -416,7 +416,7 @@ namespace mem
     }
 
     template <typename Scanner>
-    inline std::vector<pointer> scanner_base<Scanner>::scan_all(region range) const
+    inline std::vector<pointer> scanner_base<Scanner>::scan_all(region range)
     {
         std::vector<pointer> results;
 
