@@ -86,7 +86,7 @@ namespace mem
         }
         else
         {
-            if      (flags & prot_flags::C) { result = PAGE_EXECUTE_WRITECOPY; }
+            if      (flags & prot_flags::C) { result = PAGE_WRITECOPY; }
             else if (flags & prot_flags::W) { result = PAGE_READWRITE; }
             else if (flags & prot_flags::R) { result = PAGE_READONLY;  }
             else                            { result = PAGE_NOACCESS;  }
